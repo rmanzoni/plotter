@@ -1,4 +1,8 @@
-baseline = ' & '.join([
+from collections import OrderedDict
+
+selections = OrderedDict()
+
+selections['baseline'] = ' & '.join([
     'l0_pt > 25'                               ,
     'abs(l0_eta) < 2.4'                        ,
     'abs(l0_dxy) < 0.05'                       ,
@@ -66,20 +70,20 @@ baseline = ' & '.join([
     'abs(l2_dxy) > 0.01',
 ])
 
-tight = ' & '.join([
+selections['tight'] = ' & '.join([
      'l1_reliso_rho_03 < 0.2',
      'l2_reliso_rho_03 < 0.2',
 ])
 
-ispromptlepton = ' & '.join([
-    '(l1_gen_match_isPrompt==1 || l1_gen_match_pdgid==22)',
-    '(l2_gen_match_isPrompt==1 || l2_gen_match_pdgid==22)',
+selections['ispromptlepton'] = ' & '.join([
+    '(l1_gen_match_isPrompt==1 | l1_gen_match_pdgid==22)',
+    '(l2_gen_match_isPrompt==1 | l2_gen_match_pdgid==22)',
 #     'l1_gen_match_isPrompt==1',
 #     'l2_gen_match_isPrompt==1',
 ])
 
 
-zmm = ' & '.join([
+selections['zmm'] = ' & '.join([
     'l0_pt > 40'                               ,
     'abs(l0_eta) < 2.4'                        ,
     'abs(l0_dxy) < 0.05'                       ,
@@ -96,3 +100,9 @@ zmm = ' & '.join([
 
     'hnl_q_01==0'                              ,
 ])
+
+# convert to pandas readable queries
+selections_df = OrderedDict()
+for k, v in selections.iteritems():
+    vv = v.replace('&', 'and').replace('|', 'or').replace('!', 'not') 
+    selections_df[k] = vv
