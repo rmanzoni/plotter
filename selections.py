@@ -25,7 +25,8 @@ selections['baseline'] = ' & '.join([
     'hnl_q_12 == 0'                            ,
 #     'abs(hnl_dphi_hnvis0) > 1.'                ,
     'nbj == 0'                                 ,
-    '!(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' ,
+#     '!(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' , # HACK! FIXME!
+    '(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' ,
     'hnl_dr_12 < 1.'                           ,
 #     'hnl_q_01 == 0'                            ,
     'hnl_m_12 < 12'                            ,
@@ -58,7 +59,9 @@ selections['baseline'] = ' & '.join([
     '!(hnl_q_02==0 & abs(hnl_m_02-1.0190) < 0.08)', # phi veto
     
 #     'hlt_IsoMu24'                              ,
-    'min(abs(hnl_dphi_01), abs(hnl_dphi_02))>1.', # dphi a la facon belgique
+#     'min(abs(hnl_dphi_01), abs(hnl_dphi_02))>1.', # dphi a la facon belgique
+    'abs(hnl_dphi_01)>1',
+    'abs(hnl_dphi_02)>1.', # dphi a la facon belgique
     
 #     'sv_prob>0.005',
 #     'hnl_2d_disp>=0.',
@@ -103,6 +106,6 @@ selections['zmm'] = ' & '.join([
 
 # convert to pandas readable queries
 selections_df = OrderedDict()
-for k, v in selections.iteritems():
+for k, v in selections.items():
     vv = v.replace('&', 'and').replace('|', 'or').replace('!', 'not') 
     selections_df[k] = vv
