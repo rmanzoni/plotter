@@ -66,9 +66,11 @@ mc.sort(key = lambda x : x.position_in_stack)
 # now we plot
 canvas = Canvas(width=700, height=700)
 
-for variable, bins, xlabel, ylabel in variables:
+for ivar in variables:
     
-    print('plotting', variable)
+    variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
+    
+    print('plotting', label)
 
     # clean the figure
     plt.clf()
@@ -81,9 +83,16 @@ for variable, bins, xlabel, ylabel in variables:
     stack_nonprompt = []
     
     for imc in mc:
-
+        
+        if extra_sel:
+            mc_df_tight = imc.df_tight.query(extra_sel) 
+            mc_df_loose = imc.df_loose.query(extra_sel) 
+        else:
+            mc_df_tight = imc.df_tight
+            mc_df_loose = imc.df_loose
+        
         histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name)
-        histo_tight.fill_array(imc.df_tight[variable], weights=lumi * imc.df_tight.weight * imc.lumi_scaling * imc.df_tight.lhe_weight)
+        histo_tight.fill_array(mc_df_tight[variable], weights=lumi * mc_df_tight.weight * imc.lumi_scaling * mc_df_tight.lhe_weight)
 
         histo_tight.fillstyle = 'solid'
         histo_tight.fillcolor = 'steelblue'
@@ -92,7 +101,7 @@ for variable, bins, xlabel, ylabel in variables:
         stack_prompt.append(histo_tight)
 
         histo_loose = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
-        histo_loose.fill_array(imc.df_tight[variable], weights=-1.* lumi * imc.df_loose.weight * imc.lumi_scaling * imc.df_loose.lhe_weight * imc.df_loose.fr_corr)
+        histo_loose.fill_array(mc_df_loose[variable], weights=-1.* lumi * mc_df_loose.weight * imc.lumi_scaling * mc_df_loose.lhe_weight * mc_df_loose.fr_corr)
 
         histo_loose.fillstyle = 'solid'
         histo_loose.fillcolor = 'skyblue'
@@ -108,8 +117,14 @@ for variable, bins, xlabel, ylabel in variables:
     signals_to_plot = []
     
     for isig in signal:
+
+        if extra_sel:
+            isig_df_tight = isig.df_tight.query(extra_sel) 
+        else:
+            isig_df_tight = isig.df_tight
+
         histo_tight = Hist(bins, title=isig.label, markersize=0, legendstyle='L', name=isig.datacard_name)
-        histo_tight.fill_array(isig.df_tight[variable], weights=lumi * isig.df_tight.weight * isig.lumi_scaling * isig.df_tight.lhe_weight)
+        histo_tight.fill_array(isig_df_tight[variable], weights=lumi * isig_df_tight.weight * isig.lumi_scaling * isig_df_tight.lhe_weight)
         histo_tight.color     = isig.colour
         histo_tight.fillstyle = 'hollow'
         histo_tight.linewidth = 2
@@ -127,13 +142,21 @@ for variable, bins, xlabel, ylabel in variables:
     data_nonprompt = []
     
     for idata in data:
+
+        if extra_sel:
+            idata_df_tight = idata.df_tight.query(extra_sel) 
+            idata_df_loose = idata.df_loose.query(extra_sel) 
+        else:
+            idata_df_tight = idata.df_tight
+            idata_df_loose = idata.df_loose
+
         histo_tight = Hist(bins, title=idata.label, markersize=1, legendstyle='LEP')
-        histo_tight.fill_array(idata.df_tight[variable])
+        histo_tight.fill_array(idata_df_tight[variable])
         
         data_prompt.append(histo_tight)
 
         histo_loose = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
-        histo_loose.fill_array(idata.df_loose[variable], weights=idata.df_loose.fr_corr)
+        histo_loose.fill_array(idata_df_loose[variable], weights=idata_df_loose.fr_corr)
         
         data_nonprompt.append(histo_loose)
 
@@ -171,10 +194,10 @@ for variable, bins, xlabel, ylabel in variables:
         legend.Draw('same')
         canvas.Modified()
         canvas.Update()
-        canvas.SaveAs('%s%s.pdf' %(variable, islogy*'_log'))
+        canvas.SaveAs('%s%s.pdf' %(label, islogy*'_log'))
 
     # save a ROOT file with histograms, aka datacard
-    outfile = ROOT.TFile.Open('datacard_%s.root' %variable, 'recreate')
+    outfile = ROOT.TFile.Open('datacard_%s.root' %label, 'recreate')
     outfile.cd()
     
     # data in tight
@@ -184,18 +207,21 @@ for variable, bins, xlabel, ylabel in variables:
     # non prompt backgrounds in tight
     all_exp_nonprompt.name = 'nonprompt'
     all_exp_nonprompt.drawstyle = 'HIST E'
+    all_exp_nonprompt.color = 'black'
     all_exp_nonprompt.linewidth = 2
     all_exp_nonprompt.Write()
 
     # prompt backgrounds in tight
     all_exp_prompt.name = 'prompt'
     all_exp_prompt.drawstyle = 'HIST E'
+    all_exp_prompt.color = 'black'
     all_exp_prompt.linewidth = 2
     all_exp_prompt.Write()
     
     # signals
     for isig in all_signals:
         isig.drawstyle = 'HIST E'
+        isig.color = 'black'
         isig.Write()
         
     outfile.Close()
