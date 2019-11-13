@@ -29,7 +29,7 @@ ROOT.gROOT.SetBatch(True)
 # style.SetEndErrorSize(3)
 # set_style(style)
 
-basedir        = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/'
+basedir        = '/Users/cesareborgia/cernbox/2018_new/mmm/'
 postfix        = 'HNLTreeProducer/tree.root'
 lumi           = 59700. # fb-1
 selection_data = selections['baseline']
@@ -37,9 +37,9 @@ selection_data = selections['baseline']
 selection_mc   = '&'.join([selections['baseline'], selections['ispromptlepton']])
 
 # NN evaluator
-model          = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/net_model_weighted.h5'
-transformation = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/input_tranformation_weighted.pck'
-features       = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/input_features.pck'
+model          = 'net_model_weighted.h5'
+transformation = 'input_tranformation_weighted.pck'
+features       = 'input_features.pck'
 evaluator      = Evaluator(model, transformation, features)
 
 print('============> starting reading the trees')
@@ -92,7 +92,7 @@ for variable, bins, xlabel, ylabel in variables:
         stack_prompt.append(histo_tight)
 
         histo_loose = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
-        histo_loose.fill_array(imc.df_tight[variable], weights=-1.* lumi * imc.df_loose.weight * imc.lumi_scaling * imc.df_loose.lhe_weight * imc.df_loose.fr_corr)
+        histo_loose.fill_array(imc.df_loose[variable], weights=-1.* lumi * imc.df_loose.weight * imc.lumi_scaling * imc.df_loose.lhe_weight * imc.df_loose.fr_corr)
 
         histo_loose.fillstyle = 'solid'
         histo_loose.fillcolor = 'skyblue'
@@ -171,10 +171,10 @@ for variable, bins, xlabel, ylabel in variables:
         legend.Draw('same')
         canvas.Modified()
         canvas.Update()
-        canvas.SaveAs('%s%s.pdf' %(variable, islogy*'_log'))
+        canvas.SaveAs('plots/%s%s.pdf' %(variable, islogy*'_log'))
 
     # save a ROOT file with histograms, aka datacard
-    outfile = ROOT.TFile.Open('datacard_%s.root' %variable, 'recreate')
+    outfile = ROOT.TFile.Open('plots/datacard_%s.root' %variable, 'recreate')
     outfile.cd()
     
     # data in tight

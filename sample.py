@@ -56,11 +56,14 @@ class Sample(object):
 
 
 def get_data_samples(basedir, postfix, selection):
+    # if   ch [0] == 'm': lep = 'mu'
+    # elif ch [0] == 'e': lep = 'ele'
+    lep = 'mu'
     data = [
-        Sample('Single_mu_2018A', '2018A', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-        Sample('Single_mu_2018B', '2018B', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-        Sample('Single_mu_2018C', '2018C', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-        Sample('Single_mu_2018D', '2018D', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018A'.format(lep=lep), '2018A', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018B'.format(lep=lep), '2018B', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018C'.format(lep=lep), '2018C', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018D'.format(lep=lep), '2018D', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
     ]
     return data
 
