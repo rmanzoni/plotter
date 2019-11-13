@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from collections import OrderedDict
-from selections import selections_df
+from selections import Selections
 from evaluate_nn import Evaluator
 from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
@@ -28,21 +28,17 @@ class Plotter(object):
 
     def __init__(self          , 
                  channel       , 
-                 basedir       ,
-                 postfix       ,
+                 base_dir       ,
+                 post_fix       ,
                  lumi          ,
-                 selection_data,
-                 selection_mc  ,
                  model         , 
                  transformation,
                  features       ):
 
         self.channel        = channel 
-        self.basedir        = basedir 
-        self.postfix        = postfix 
+        self.base_dir        = base_dir 
+        self.post_fix        = post_fix 
         self.lumi           = lumi
-        self.selection_data = selection_data
-        self.selection_mc   = selection_mc
         self.model          = model          
         self.transformation = transformation 
         self.features       = features       
@@ -51,13 +47,17 @@ class Plotter(object):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
 
+        cuts = Selections(self.channel)
+        selection_data = cuts.selections['baseline']
+        selection_mc   = ' & '.join( [cuts.selections['baseline'], cuts.selections['is_prompt_lepton']] )
+
 # NN evaluator
 
         print('============> starting reading the trees')
         now = time.time()
-        signal = get_signal_samples(self.basedir, self.postfix, self.selection_data)
-        data   = get_data_samples  (self.basedir, self.postfix, self.selection_data)
-        mc     = get_mc_samples    (self.basedir, self.postfix, self.selection_mc)
+        signal = get_signal_samples(self.base_dir, self.post_fix, selection_data)
+        data   = get_data_samples  (self.base_dir, self.post_fix, selection_data)
+        mc     = get_mc_samples    (self.base_dir, self.post_fix, selection_mc)
         print('============> it took %.2f seconds' %(time.time() - now))
 
 # evaluate FR
@@ -68,8 +68,8 @@ class Plotter(object):
 
 # split the dataframe in tight and loose-not-tight (called simply loose for short)
         for isample in (mc+data+signal):
-            isample.df_tight = isample.df.query(selections_df['tight'])
-            isample.df_loose = isample.df.query('not(%s)'%selections_df['tight'])
+            isample.df_tight = isample.df.query(cuts.selections_df['tight'])
+            isample.df_loose = isample.df.query('not(%s)'%cuts.selections_df['tight'])
 
 # sort depending on their position in the stack
         mc.sort(key = lambda x : x.position_in_stack)
