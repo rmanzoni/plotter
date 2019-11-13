@@ -1,5 +1,5 @@
 from selections import selections
-from plotter_cfgable import Plotter
+from plotter import Plotter
 
 plotter = Plotter (channel        = 'mmm',
                    basedir        = '/Users/cesareborgia/cernbox/2018_new/mmm/',
