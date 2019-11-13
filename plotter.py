@@ -1,6 +1,3 @@
-# https://indico.cern.ch/event/759388/contributions/3306849/attachments/1816254/2968550/root_conda_forge.pdf
-# https://conda-forge.org/feedstocks/
-
 import re
 import time
 import ROOT
@@ -196,17 +193,6 @@ for ivar in variables:
     legend.SetBorderSize(0)
     legend.SetFillColor(0)
 
-#     legend = Legend([all_obs_prompt, stack, hist_error], pad=main_pad, leftmargin=0.05, rightmargin=0.5, topmargin=-0.02, textsize=0.023, textfont=42, entrysep=0.012)
-#     legend.SetBorderSize(0)
-#     legend.SetFillColor(0)
-# 
-#     # fake the two columns
-#     legend_signals = Legend(signals_to_plot, pad=main_pad, leftmargin=0.3, topmargin=-0.02, textsize=0.023, textfont=42, entrysep=0.012)
-#     legend_signals.SetBorderSize(0)
-#     legend_signals.SetFillColor(0)
-
-    #legend.SetNColumns(2)
-
     # plot with ROOT, linear and log scale
     for islogy in [False, True]:
     
@@ -221,23 +207,17 @@ for ivar in variables:
         yaxis_max = 1.4 * max([ithing.max() for ithing in things_to_plot])
         for ithing in things_to_plot:
             ithing.SetMaximum(yaxis_max)   
-
-        # do magic for the xaxis... ROOT...
-        # https://root-forum.cern.ch/t/removing-only-x-axis-from-a-histogram/4934
-        newxaxis = all_obs_prompt.GetXaxis()
-        newxaxis.SetLabelSize(0)
-        newxaxis.SetLabelOffset(999)
                     
-        draw(things_to_plot, xaxis=newxaxis, xtitle=xlabel, ytitle=ylabel, pad=main_pad, logy=islogy) #, ylimits=(0., yaxis_max))
+        draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=main_pad, logy=islogy)
 
         # expectation uncertainty in the ratio pad
         ratio_exp_error = Hist(bins)
         ratio_data = Hist(bins)
         for ibin in hist_error.bins_range():
             ratio_exp_error.set_bin_content(ibin, 1.)
-            ratio_exp_error.set_bin_error(ibin, hist_error.get_bin_error(ibin)/hist_error.get_bin_content(ibin))
-            ratio_data.set_bin_content(ibin, all_obs_prompt.get_bin_content(ibin)/hist_error.get_bin_content(ibin))
-            ratio_data.set_bin_error(ibin, all_obs_prompt.get_bin_error(ibin)/hist_error.get_bin_content(ibin))
+            ratio_exp_error.set_bin_error  (ibin, hist_error.get_bin_error(ibin)      / hist_error.get_bin_content(ibin) if hist_error.get_bin_content(ibin)!=0. else 0.)
+            ratio_data.set_bin_content     (ibin, all_obs_prompt.get_bin_content(ibin)/ hist_error.get_bin_content(ibin) if hist_error.get_bin_content(ibin)!=0. else 0.)
+            ratio_data.set_bin_error       (ibin, all_obs_prompt.get_bin_error(ibin)  / hist_error.get_bin_content(ibin) if hist_error.get_bin_content(ibin)!=0. else 0.)
 
         ratio_data.drawstyle = 'EP'
         ratio_data.title     = ''
