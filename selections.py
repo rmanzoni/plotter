@@ -14,15 +14,31 @@ class Selections(object):
                                     'l1_Medium == 1',
                                     'l2_Medium == 1',])
 
-        if self.channel == 'eee':
-            self.base = ' & '.join(['l0_pt > 25'    ,
-                                    'l2_pt > 5'     ,
-                                    'l1_pt > 5'     ,]) #TODO ADD PT & ID SELECTIONS!
-                                    # 'l0_id_m == 1'  ,
-                                    # 'l1_Medium == 1',
-                                    # 'l2_Medium == 1',])
+        if self.channel == 'mem':
+            self.base = ' & '.join(['l0_pt > 25'         ,
+                                    'l2_pt > 5'          ,
+                                    'l1_pt > 5'          ,
+                                    'l0_id_m == 1'       ,
+                                    'l1_MediumNoIso == 1',
+                                    'l2_Medium == 1'     ,])
 
-        assert self.base, 'Error, no channel specific selection applied!'
+        if self.channel == 'eem':
+            self.base = ' & '.join(['l0_pt > 25'               ,
+                                    'l2_pt > 5'                ,
+                                    'l1_pt > 5'                ,
+                                    'l0_eid_mva_iso_wp90 == 1' ,
+                                    'l1_MediumNoIso == 1'      ,
+                                    'l2_Medium == 1'           ,])
+
+        if self.channel == 'eee':
+            self.base = ' & '.join(['l0_pt > 25'               ,
+                                    'l2_pt > 5'                ,
+                                    'l1_pt > 5'                ,
+                                    'l0_eid_mva_iso_wp90 == 1' ,
+                                    'l1_MediumNoIso == 1'      ,
+                                    'l2_MediumNoIso == 1'      ,])
+
+        assert self.base, 'Error: No channel specific selection applied!'
 
         self.selections = OrderedDict()
 

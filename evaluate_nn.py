@@ -39,7 +39,7 @@ class Evaluator(object):
 
     def evaluate(self, df):
         if not len(df):
-            print('empty DartaFrame, returning None')
+            print('empty DataFrame, returning None')
             return None
         # calculate predictions on the data sample
         print('predicting on', df.shape[0], 'events')

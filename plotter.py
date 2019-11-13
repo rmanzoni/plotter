@@ -18,6 +18,7 @@ from variables import variables
 from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph
 from rootpy.plotting.style import get_style, set_style
 from rootpy.plotting.utils import draw
+from pdb import set_trace
 
 import logging
 logging.disable(logging.DEBUG)
@@ -55,9 +56,10 @@ class Plotter(object):
 
         print('============> starting reading the trees')
         now = time.time()
-        signal = get_signal_samples(self.base_dir, self.post_fix, selection_data)
-        data   = get_data_samples  (self.base_dir, self.post_fix, selection_data)
-        mc     = get_mc_samples    (self.base_dir, self.post_fix, selection_mc)
+        # signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, selection_data)
+        signal = []
+        data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, selection_data)
+        mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, selection_mc)
         print('============> it took %.2f seconds' %(time.time() - now))
 
 # evaluate FR
@@ -206,10 +208,10 @@ class Plotter(object):
                 legend.Draw('same')
                 canvas.Modified()
                 canvas.Update()
-                canvas.SaveAs('plots/%s%s.pdf' %(variable, islogy*'_log'))
+                canvas.SaveAs('plots/%s_%s%s.pdf' %(self.channel, label, islogy*'_log'))
 
             # save a ROOT file with histograms, aka datacard
-            outfile = ROOT.TFile.Open('plots/datacard_%s.root' %variable, 'recreate')
+            outfile = ROOT.TFile.Open('plots/%s_%s.datacard.root' %(self.channel, label), 'recreate')
             outfile.cd()
             
             # data in tight
