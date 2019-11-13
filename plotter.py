@@ -1,124 +1,304 @@
+# https://indico.cern.ch/event/759388/contributions/3306849/attachments/1816254/2968550/root_conda_forge.pdf
+# https://conda-forge.org/feedstocks/
+
 import re
 import time
 import ROOT
-# import uproot
-# import rootpy
 import root_pandas
 import numpy as np
 import pandas as pd
-# from rootpy.plotting import Hist
-from root_numpy import root2array
-from collections import OrderedDict
-from selections import baseline, tight, ispromptlepton, zmm
-from evaluate_nn import Evaluator
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
+from collections import OrderedDict
+from selections import selections, selections_df
+from evaluate_nn import Evaluator
+from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
+from variables import variables
 
-basedir   = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/'
-postfix   = 'HNLTreeProducer/tree.root'
-lumi      = 59700. # fb-1
-selection = zmm
+from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
+from rootpy.plotting.style import get_style, set_style
+from rootpy.plotting.utils import draw
+
+import logging
+logging.disable(logging.DEBUG)
+
+ROOT.gROOT.SetBatch(True)
+ROOT.gStyle.SetOptStat(False)
+
+basedir        = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/'
+postfix        = 'HNLTreeProducer/tree.root'
+lumi           = 59700. # fb-1
+selection_data = selections['baseline']
+# selection_mc   = selections['baseline'] 
+selection_mc   = '&'.join([selections['baseline'], selections['ispromptlepton']])
+plot_signals   = True
+
+# NN evaluator
+model          = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/net_model_weighted.h5'
+transformation = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/input_tranformation_weighted.pck'
+features       = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/input_features.pck'
+evaluator      = Evaluator(model, transformation, features)
+
+print('============> starting reading the trees')
 now = time.time()
-                   
-data = [
-    Sample('Single_mu_2018A', '2018A', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-    Sample('Single_mu_2018B', '2018B', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-    Sample('Single_mu_2018C', '2018C', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-    Sample('Single_mu_2018D', '2018D', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-]
-
-mc = [
-    Sample('DYJetsToLL_M50_ext', r'DY$\to\ell\ell$', selection, 'DY', 'gold'     ,10, basedir, postfix, False, True, False, 1.,  6077.22),
-    Sample('TTJets_ext'        , r'$t\bar{t}$'     , selection, 'TT', 'slateblue', 0, basedir, postfix, False, True, False, 1.,   831.76),
-    Sample('WW'                , 'WW'              , selection, 'WW', 'blue'     , 5, basedir, postfix, False, True, False, 1.,    75.88),
-    Sample('WZ'                , 'WZ'              , selection, 'WZ', 'blue'     , 5, basedir, postfix, False, True, False, 1.,    27.6 ),
-    Sample('ZZ'                , 'ZZ'              , selection, 'ZZ', 'blue'     , 5, basedir, postfix, False, True, False, 1.,    12.14),
-
-#     Sample('WJetsToLNu'        , r'$W\to\ell\nu$'             ,        'W', 'firebrick'    , 2, basedir, postfix, False, True, False, 1., 59850.  ),
-#     Sample('ST_sch_lep'        , r'single $t$ s-channel'      ,    'STsch', 'darkslateblue', 3, basedir, postfix, False, True, False, 1.,     3.68),
-#     Sample('ST_tW_inc'         , 'tW'                         ,       'TW', 'darkslateblue', 3, basedir, postfix, False, True, False, 1.,    35.6 ),
-#     Sample('ST_tch_inc'        , r'single $t$ t-channel'      ,    'STtch', 'darkslateblue', 3, basedir, postfix, False, True, False, 1.,    44.07),
-#     Sample('STbar_tW_inc'      , r'$\bar{t}$W'                ,    'TbarW', 'darkslateblue', 3, basedir, postfix, False, True, False, 1.,    35.6 ),
-#     Sample('STbar_tch_inc'     , r'single $\bar{t}$ t-channel', 'STbartch', 'darkslateblue', 3, basedir, postfix, False, True, False, 1.,    26.23),
-
-#     Sample('DYJetsToLL_M5to50' , r'DY$\to\ell\ell$ low mass', 'gold'     , 1, basedir, postfix, False, True, False, 1., 81880.0 ),
-#     Sample('DYJetsToLL_M50' , r'DY$\to\ell\ell$'         , 'gold'     , 2, basedir, postfix, False, True, False, 1.,  6077.22),
-#     Sample('TTJets'         , r'$t\bar{t}$'              , 'slateblue', 0, basedir, postfix, False, True, False, 1.,   831.76),
-#     Sample('WGamma'         , r'$t\bar{t}$'              , 'slateblue', 0, basedir, postfix, False, True, False, 1.,   831.76),
-#     Sample('ZGamma'            , r'$t\bar{t}$'              , 'slateblue', 0, basedir, postfix, False, True, False, 1.,   831.76),
-]            
-
-signal = [
-]
-
-print '============> it took %.2f seconds' %(time.time() - now)
+signal = get_signal_samples(basedir, postfix, selection_data)
+data   = get_data_samples  (basedir, postfix, selection_data)
+mc     = get_mc_samples    (basedir, postfix, selection_mc)
+print('============> it took %.2f seconds' %(time.time() - now))
 
 # evaluate FR
-model = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/net_model_weighted.h5'
-transformation = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/input_tranformation_weighted.pck'
-evaluator = Evaluator(model, transformation)
-
-for isample in (data+mc+signal):
+for isample in (mc+data):
     isample.df['fr'] = evaluator.evaluate(isample.df)
+    # already corrected, ready to be applied in loose-not-tight
+    isample.df['fr_corr'] = isample.df['fr'] / (1. - isample.df['fr']) 
 
-# merge the data together
-df_data = pd.concat([idata.df for idata in data])
+# split the dataframe in tight and loose-not-tight (called simply loose for short)
+for isample in (mc+data+signal):
+    isample.df_tight = isample.df.query(selections_df['tight'])
+    isample.df_loose = isample.df.query('not(%s)'%selections_df['tight'])
 
-# variables
-variables = [
-    ('hnl_m_01'       , np.linspace(0.,120., 30 + 1), r'$m_{01}$ (GeV)'      , 'events'),
-    ('hnl_m_12'       , np.linspace(0., 12., 12 + 1), r'$m_{12}$ (GeV)'      , 'events'),
-    ('hnl_m_02'       , np.linspace(0.,120., 30 + 1), r'$m_{02}$ (GeV)'      , 'events'),
-
-    ('hnl_2d_disp'    , np.linspace( 0, 30, 25 + 1) , r'$L_{xy}$ (cm)'       , 'events'),
-    ('hnl_2d_disp_sig', np.linspace( 0,200, 25 + 1) , r'$L_{xy}/\sigma_{xy}$', 'events'),
-    ('nbj'            , np.linspace( 0,  5,  5 + 1) , '#b-jet'               , 'events'),
-    ('hnl_w_vis_m'    , np.linspace( 0,150, 40 + 1) , r'$m_{3l}$'            , 'events'),
-    ('hnl_q_01'       , np.linspace(-3,  3,  3 + 1) , r'$q_{01}$'            , 'events'),
-    ('sv_cos'         , np.linspace( 0,  1, 30 + 1) , r'$\cos\alpha$'        , 'events'),
-    ('sv_prob'        , np.linspace( 0,  1, 30 + 1) , 'SV probability'       , 'events'),
-]
+# sort depending on their position in the stack
+mc.sort(key = lambda x : x.position_in_stack)
 
 # now we plot
-plt.figure()
-for variable, bins, xlabel, ylabel in variables:
-    
-    print 'plotting', variable
-      
-    plt.clf()
-    
-    # sort depending on their position in the stack
-    mc.sort(key = lambda x : x.position_in_stack)
+canvas = Canvas(width=700, height=700) ; canvas.Draw()
+canvas.cd() ; main_pad  = Pad(0., 0.25, 1., 1.  ) ; main_pad .Draw()
+canvas.cd() ; ratio_pad = Pad(0., 0.  , 1., 0.25) ; ratio_pad.Draw()
 
-    # plot MC stack
-    stack   = [getattr(imc.df, variable)                                   for imc in mc] 
-    labels  = [imc.label                                                   for imc in mc]
-    colours = [imc.colour                                                  for imc in mc] 
-    weights = [lumi * imc.df.weight * imc.lumi_scaling * imc.df.lhe_weight for imc in mc] 
-    
-    plt.hist(stack, bins, stacked=True, label=labels, weights=weights, color=colours)
+main_pad.SetBottomMargin(0.)
+main_pad.SetLeftMargin(0.15)
+main_pad.SetRightMargin(0.15)
+ratio_pad.SetLeftMargin(0.15)
+ratio_pad.SetRightMargin(0.15)
+ratio_pad.SetTopMargin(0.)   
+ratio_pad.SetGridy()
+ratio_pad.SetBottomMargin(0.3)
 
-    # plot data
-    bin_centres = np.array([0.5*(bins[i] + bins[i+1]) for i in np.arange(len(bins)-1)])
-    counts = np.array([df_data.query( '%s > %f and %s <= %f' %(variable, bins[i], variable, bins[i+1]) ).shape[0] for i in np.arange(len(bins)-1)])
-    plt.errorbar(bin_centres, counts, yerr=np.sqrt(counts), fmt='o', color='black', label='observed')
+for ivar in variables:
+    
+    variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
+    
+    print('plotting', label)
+    
+    ######################################################################################
+    # plot MC stacks, in tight and loose
+    ######################################################################################
+    
+    stack_prompt    = []
+    stack_nonprompt = []
+    
+    for imc in mc:
+        
+        if extra_sel:
+            mc_df_tight = imc.df_tight.query(extra_sel) 
+            mc_df_loose = imc.df_loose.query(extra_sel) 
+        else:
+            mc_df_tight = imc.df_tight
+            mc_df_loose = imc.df_loose
+        
+        histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name)
+        histo_tight.fill_array(mc_df_tight[variable], weights=lumi * mc_df_tight.weight * imc.lumi_scaling * mc_df_tight.lhe_weight)
+
+        histo_tight.fillstyle = 'solid'
+        histo_tight.fillcolor = 'steelblue'
+        histo_tight.linewidth = 0
+
+        stack_prompt.append(histo_tight)
+
+        histo_loose = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
+        histo_loose.fill_array(mc_df_loose[variable], weights=-1.* lumi * mc_df_loose.weight * imc.lumi_scaling * mc_df_loose.lhe_weight * mc_df_loose.fr_corr)
+
+        histo_loose.fillstyle = 'solid'
+        histo_loose.fillcolor = 'skyblue'
+        histo_loose.linewidth = 0
+
+        stack_nonprompt.append(histo_loose)
+
+    ######################################################################################
+    # plot the signals
+    ######################################################################################
+    
+    all_signals     = []
+    signals_to_plot = []
+    
+    for isig in signal:
+
+        if extra_sel:
+            isig_df_tight = isig.df_tight.query(extra_sel) 
+        else:
+            isig_df_tight = isig.df_tight
+
+        histo_tight = Hist(bins, title=isig.label, markersize=0, legendstyle='L', name=isig.datacard_name)
+        histo_tight.fill_array(isig_df_tight[variable], weights=lumi * isig_df_tight.weight * isig.lumi_scaling * isig_df_tight.lhe_weight)
+        histo_tight.color     = isig.colour
+        histo_tight.fillstyle = 'hollow'
+        histo_tight.linewidth = 2
+        histo_tight.linestyle = 'dashed'
+        histo_tight.drawstyle = 'HIST'
+
+        all_signals.append(histo_tight)
+        if isig.toplot: signals_to_plot.append(histo_tight)
+    
+    ######################################################################################
+    # plot the data
+    ######################################################################################
+
+    data_prompt    = []
+    data_nonprompt = []
+    
+    for idata in data:
+
+        if extra_sel:
+            idata_df_tight = idata.df_tight.query(extra_sel) 
+            idata_df_loose = idata.df_loose.query(extra_sel) 
+        else:
+            idata_df_tight = idata.df_tight
+            idata_df_loose = idata.df_loose
+
+        histo_tight = Hist(bins, title=idata.label, markersize=1, legendstyle='LEP')
+        histo_tight.fill_array(idata_df_tight[variable])
+        
+        data_prompt.append(histo_tight)
+
+        histo_loose = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
+        histo_loose.fill_array(idata_df_loose[variable], weights=idata_df_loose.fr_corr)
+        
+        data_nonprompt.append(histo_loose)
+
+    # put the prompt backgrounds together
+    all_exp_prompt = sum(stack_prompt)
+    all_exp_prompt.title = 'prompt'
+
+    # put the nonprompt backgrounds together
+    all_exp_nonprompt = sum(stack_nonprompt+data_nonprompt)
+    all_exp_nonprompt.title = 'nonprompt'
+
+    # create the stacks
+    stack = HistStack([all_exp_prompt, all_exp_nonprompt], drawstyle='HIST', title='')
+
+    # stat uncertainty
+    hist_error = sum([all_exp_prompt, all_exp_nonprompt])    
+    hist_error.drawstyle = 'E2'
+    hist_error.fillstyle = '/'
+    hist_error.color     = 'gray'
+    hist_error.title     = 'stat. unc.'
+    hist_error.legendstyle = 'F'
+
+    # put the data together
+    all_obs_prompt = sum(data_prompt)
+    all_obs_prompt.title = 'observed'
+
+    # prepare the legend
+    if len(signals_to_plot):
+        legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=main_pad, leftmargin=0.28, rightmargin=0.3, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
+    else:
+        legend = Legend([all_obs_prompt, stack, hist_error], pad=main_pad, leftmargin=0.33, rightmargin=0.1, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.012, entryheight=0.06)
+    legend.SetBorderSize(0)
+    legend.SetFillColor(0)
+
+#     legend = Legend([all_obs_prompt, stack, hist_error], pad=main_pad, leftmargin=0.05, rightmargin=0.5, topmargin=-0.02, textsize=0.023, textfont=42, entrysep=0.012)
+#     legend.SetBorderSize(0)
+#     legend.SetFillColor(0)
+# 
+#     # fake the two columns
+#     legend_signals = Legend(signals_to_plot, pad=main_pad, leftmargin=0.3, topmargin=-0.02, textsize=0.023, textfont=42, entrysep=0.012)
+#     legend_signals.SetBorderSize(0)
+#     legend_signals.SetFillColor(0)
+
+    #legend.SetNColumns(2)
+
+    # plot with ROOT, linear and log scale
+    for islogy in [False, True]:
+    
+        things_to_plot = [stack, hist_error, all_obs_prompt]
+        
+        # plot signals, as an option
+        if plot_signals: 
+            things_to_plot += signals_to_plot
+        
+        # set the y axis range 
+        # FIXME! setting it by hand to each object as it doesn't work if passed to draw
+        yaxis_max = 1.4 * max([ithing.max() for ithing in things_to_plot])
+        for ithing in things_to_plot:
+            ithing.SetMaximum(yaxis_max)   
+
+        # do magic for the xaxis... ROOT...
+        # https://root-forum.cern.ch/t/removing-only-x-axis-from-a-histogram/4934
+        newxaxis = all_obs_prompt.GetXaxis()
+        newxaxis.SetLabelSize(0)
+        newxaxis.SetLabelOffset(999)
+                    
+        draw(things_to_plot, xaxis=newxaxis, xtitle=xlabel, ytitle=ylabel, pad=main_pad, logy=islogy) #, ylimits=(0., yaxis_max))
+
+        # expectation uncertainty in the ratio pad
+        ratio_exp_error = Hist(bins)
+        ratio_data = Hist(bins)
+        for ibin in hist_error.bins_range():
+            ratio_exp_error.set_bin_content(ibin, 1.)
+            ratio_exp_error.set_bin_error(ibin, hist_error.get_bin_error(ibin)/hist_error.get_bin_content(ibin))
+            ratio_data.set_bin_content(ibin, all_obs_prompt.get_bin_content(ibin)/hist_error.get_bin_content(ibin))
+            ratio_data.set_bin_error(ibin, all_obs_prompt.get_bin_error(ibin)/hist_error.get_bin_content(ibin))
+
+        ratio_data.drawstyle = 'EP'
+        ratio_data.title     = ''
+
+        ratio_exp_error.drawstyle  = 'E2'
+        ratio_exp_error.markersize = 0
+        ratio_exp_error.title      = ''
+        ratio_exp_error.fillstyle  = '/'
+        ratio_exp_error.color      = 'gray'
+
+        for ithing in [ratio_data, ratio_exp_error]:
+            ithing.xaxis.set_label_size(ithing.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+            ithing.yaxis.set_label_size(ithing.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+            ithing.xaxis.set_title_size(ithing.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+            ithing.yaxis.set_title_size(ithing.yaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+            ithing.yaxis.set_ndivisions(405)
+            ithing.yaxis.set_title_offset(0.4)
             
-    # legend and save it!
-    plt.legend()
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.savefig('%s.pdf' %variable)
+        draw([ratio_exp_error, ratio_data], xtitle=xlabel, ytitle='obs/exp', pad=ratio_pad, logy=False, ylimits=(0.5, 1.5))
+
+        line = ROOT.TLine(min(bins), 1., max(bins), 1.)
+        line.SetLineColor(ROOT.kBlack)
+        line.SetLineWidth(1)
+        ratio_pad.cd()
+        line.Draw('same')
+
+        canvas.cd()
+        legend.Draw('same')
+        #legend_signals.Draw('same')
+        canvas.Modified()
+        canvas.Update()
+        canvas.SaveAs('%s%s.pdf' %(label, islogy*'_log'))
+
 
     # save a ROOT file with histograms, aka datacard
-#     outfile = ROOT.TFile.Open('datacard_%s.root' %variable, 'recreate')
-#     outfile.cd()
-#     h_data = ROOT.TH1F(variable+'_data', '', len(bins)-1, bins)
-#     array2hist(counts, h_data, errors=np.sqrt(counts))
-#     h_data = Hist(bins, name='data_obs')
-#     h_data.fill_array(df_data[variable])
-#     h_data.Write()
-#     for imc in mc:
-#         h_mc = Hist(bins, name=imc.datacard_name)
-#         h_mc.fill_array(imc.df[variable], imc.df.weight * imc.df.lumi_scaling * imc.df.lhe_weight)
-#         h_mc.Write()
-#     outfile.Close()
+    outfile = ROOT.TFile.Open('datacard_%s.root' %label, 'recreate')
+    outfile.cd()
+    
+    # data in tight
+    all_obs_prompt.name = 'data_obs'
+    all_obs_prompt.Write()
+    
+    # non prompt backgrounds in tight
+    all_exp_nonprompt.name = 'nonprompt'
+    all_exp_nonprompt.drawstyle = 'HIST E'
+    all_exp_nonprompt.color = 'black'
+    all_exp_nonprompt.linewidth = 2
+    all_exp_nonprompt.Write()
+
+    # prompt backgrounds in tight
+    all_exp_prompt.name = 'prompt'
+    all_exp_prompt.drawstyle = 'HIST E'
+    all_exp_prompt.color = 'black'
+    all_exp_prompt.linewidth = 2
+    all_exp_prompt.Write()
+    
+    # signals
+    for isig in all_signals:
+        isig.drawstyle = 'HIST E'
+        isig.color = 'black'
+        isig.Write()
+        
+    outfile.Close()
 
