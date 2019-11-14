@@ -67,6 +67,7 @@ canvas = Canvas(width=700, height=700) ; canvas.Draw()
 canvas.cd() ; main_pad  = Pad(0., 0.25, 1., 1.  ) ; main_pad .Draw()
 canvas.cd() ; ratio_pad = Pad(0., 0.  , 1., 0.25) ; ratio_pad.Draw()
 
+main_pad.SetTicks(True)
 main_pad.SetBottomMargin(0.)
 main_pad.SetLeftMargin(0.15)
 main_pad.SetRightMargin(0.15)
@@ -251,7 +252,7 @@ for ivar in variables:
 
         canvas.cd()
 
-        finalstate = ROOT.TLatex(0.2, 0.85, '\mu\mu\mu')
+        finalstate = ROOT.TLatex(0.7, 0.85, '\mu\mu\mu')
         finalstate.SetTextFont(43)
         finalstate.SetTextSize(25)
         finalstate.SetNDC()

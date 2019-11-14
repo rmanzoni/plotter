@@ -5,7 +5,7 @@ import ROOT as rt
 #   Translated in Python by: Joshua Hardenbrook (Princeton)
 
 def CMS_lumi(pad, iPeriod, iPosX, cmsText = "CMS", extraText = 'Preliminary', 
-             lumi_13TeV = "2018, L = 57.9 fb^{-1}", lumi_8TeV  = "19.7 fb^{-1}", lumi_7TeV  = "5.1 fb^{-1}"):
+             lumi_13TeV = "2018, L = 59.7 fb^{-1}", lumi_8TeV  = "19.7 fb^{-1}", lumi_7TeV  = "5.1 fb^{-1}"):
 
     cmsText = cmsText
     cmsTextFont = 61  
