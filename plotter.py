@@ -268,6 +268,8 @@ for ivar in variables:
     # save a ROOT file with histograms, aka datacard
     outfile = ROOT.TFile.Open('datacard_%s.root' %label, 'recreate')
     outfile.cd()
+#     outfile.mkdir(label)
+#     outfile.cd(label)
     
     # data in tight
     all_obs_prompt.name = 'data_obs'
@@ -301,7 +303,7 @@ imax 1 number of bins
 jmax * number of processes minus 1
 kmax * number of nuisance parameters
 --------------------------------------------------------------------------------------------------------------------------------------------
-shapes *    hnl_{cat} datacard_{cat}.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes *    {cat} datacard_{cat}.root $PROCESS $PROCESS_$SYSTEMATIC
 --------------------------------------------------------------------------------------------------------------------------------------------
 bin               {cat}
 observation       {obs:d}
@@ -316,7 +318,7 @@ norm_prompt_{cat}                       lnN             -                       
 norm_nonprompt_{cat}                    lnN             -                              1.20                             -   
 norm_sig_{cat}                          lnN             1.2                            -                                -   
 --------------------------------------------------------------------------------------------------------------------------------------------
-hnl_{cat} autoMCStats 0 0 1
+{cat} autoMCStats 0 0 1
 '''.format(cat         = label,
            obs         = all_obs_prompt.integral() if blinded==False else -1,
            signal_name = isig.name,

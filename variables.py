@@ -11,16 +11,25 @@ class Variable(object):
         self.label = self.var if label is None else self.label
         if self.extra_label is not None:
             self.label = '_'.join([self.label, self.extra_label])
-        
+    
+    
+m12_bins_displaced_1 = np.linspace(0., 10., 10 + 1)    
+m12_bins_displaced_2 = np.array([0., 1., 2., 3., 4., 5., 10]) 
+m12_bins_displaced_3 = np.array([0., 1., 2., 3., 10])     
+    
 # variables
 variables = [
 #     Variable('hnl_m_01', np.linspace(0.,120., 30 + 1), 'm_{12} (GeV)', 'events'),
 #     Variable('hnl_m_02', np.linspace(0.,120., 30 + 1), 'm_{12} (GeV)', 'events'),
 #     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events'),
 
-    Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
-    Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=2.0', extra_label='lxy_0p5_to_2p0'),
-    Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>2.0'                   , extra_label='lxy_mt_2p0'    ),
+    Variable('hnl_m_12', m12_bins_displaced_1, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
+    Variable('hnl_m_12', m12_bins_displaced_2, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=2.0', extra_label='lxy_0p5_to_2p0'),
+    Variable('hnl_m_12', m12_bins_displaced_3, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>2.0'                   , extra_label='lxy_mt_2p0'    ),
+
+#     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
+#     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=2.0', extra_label='lxy_0p5_to_2p0'),
+#     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>2.0'                   , extra_label='lxy_mt_2p0'    ),
 
 #     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=2.0'                  , extra_label='lxy_lt_2p0'    ),
 #     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>2.0 & hnl_2d_disp<=5.0', extra_label='lxy_0p5_to_2p0'),
