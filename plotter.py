@@ -12,8 +12,9 @@ from selections import Selections
 from evaluate_nn import Evaluator
 from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
+from cmsstyle import CMS_lumi
 
-from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph
+from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
 from rootpy.plotting.style import get_style, set_style
 from rootpy.plotting.utils import draw
 from pdb import set_trace
@@ -49,12 +50,15 @@ class Plotter(object):
         cuts = Selections(self.channel)
         selection_data = cuts.selections['baseline']
         selection_mc   = ' & '.join( [cuts.selections['baseline'], cuts.selections['is_prompt_lepton']] )
+        plot_signals   = True
+        blinded        = True
 
 # NN evaluator
 
         print('============> starting reading the trees')
         now = time.time()
-        signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, selection_data)
+        # signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, selection_data)  #FOR LATER
+        signal = get_signal_samples(self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', selection_data)
         data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', selection_data)
         mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, selection_mc)
         print('============> it took %.2f seconds' %(time.time() - now))
@@ -274,11 +278,11 @@ class Plotter(object):
                 CMS_lumi(main_pad, 4, 0)
                 canvas.Modified()
                 canvas.Update()
-                canvas.SaveAs('%s%s.pdf' %(label, islogy*'_log'))
+                canvas.SaveAs('plots/%s%s.pdf' %(label, islogy*'_log'))
 
 
             # save a ROOT file with histograms, aka datacard
-            outfile = ROOT.TFile.Open('datacard_%s.root' %label, 'recreate')
+            outfile = ROOT.TFile.Open('plots/datacard_%s.root' %label, 'recreate')
             outfile.cd()
 #     outfile.mkdir(label)
 #     outfile.cd(label)

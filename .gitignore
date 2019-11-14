@@ -1,4 +1,6 @@
 *.pyc
+*.txt
+
 plots/
 *.swp
 *.pdf
