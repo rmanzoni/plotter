@@ -1,14 +1,15 @@
 # https://indico.cern.ch/event/759388/contributions/3306849/attachments/1816254/2968550/root_conda_forge.pdf
 # https://conda-forge.org/feedstocks/
 from os import environ as env
-import re
+from os import mkdir
+from os.path import exists as ensure_path
+from datetime import datetime
 import time
 import ROOT
 import root_pandas
 import numpy as np
 import pandas as pd
 from collections import OrderedDict
-from selections import Selections
 from evaluate_nn import Evaluator
 from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
@@ -26,32 +27,33 @@ ROOT.gROOT.SetBatch(True)
 
 class Plotter(object):
 
-    def __init__(self          , 
-                 channel       , 
+    def __init__(self           , 
+                 channel        , 
                  base_dir       ,
                  post_fix       ,
-                 lumi          ,
-                 model         , 
-                 transformation,
+                 selection_data ,
+                 selection_mc   ,
+                 selection_tight,
+                 lumi           ,
+                 model          , 
+                 transformation ,
                  features       ):
 
-        self.channel        = channel 
-        self.base_dir       = base_dir 
-        self.post_fix       = post_fix 
-        self.lumi           = lumi
-        self.model          = model          
-        self.transformation = transformation 
-        self.features       = features       
+        self.channel         = channel 
+        self.base_dir        = base_dir 
+        self.post_fix        = post_fix 
+        self.selection_data  = selection_data
+        self.selection_mc    = selection_mc
+        self.selection_tight = selections_tight 
+        self.lumi            = lumi
+        self.model           = model          
+        self.transformation  = transformation 
+        self.features        = features       
+        self.selections_lnt  = 'not (%s)' %self.selections_tight
 
     def plot(self, plot_signals=True, blinded=True):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
-
-        cuts = Selections(self.channel)
-        selection_data = cuts.selections['baseline']
-        selection_mc   = ' & '.join( [cuts.selections['baseline'], cuts.selections['is_prompt_lepton']] )
-
-        plot_dir = env['PLOT_DIR']
 
 # NN evaluator
 
@@ -71,8 +73,8 @@ class Plotter(object):
 
 # split the dataframe in tight and loose-not-tight (called simply loose for short)
         for isample in (mc+data+signal):
-            isample.df_tight = isample.df.query(cuts.selections_df['tight'])
-            isample.df_loose = isample.df.query('not(%s)'%cuts.selections_df['tight'])
+            isample.df_tight = isample.df.query(selections_tight)
+            isample.df_loose = isample.df.query(selections_lnt)
 
 # sort depending on their position in the stack
         mc.sort(key = lambda x : x.position_in_stack)
@@ -278,11 +280,11 @@ class Plotter(object):
                 CMS_lumi(main_pad, 4, 0)
                 canvas.Modified()
                 canvas.Update()
-                canvas.SaveAs('plots/%s%s.pdf' %(label, islogy*'_log'))
+                canvas.SaveAs(plot_dir() + '%s%s.pdf' %(label, islogy*'_log'))
 
 
             # save a ROOT file with histograms, aka datacard
-            outfile = ROOT.TFile.Open('plots/datacard_%s.root' %label, 'recreate')
+            outfile = ROOT.TFile.Open(plot_dir() + 'datacard_%s.root' %label, 'recreate')
             outfile.cd()
 #     outfile.mkdir(label)
 #     outfile.cd(label)
@@ -312,7 +314,7 @@ class Plotter(object):
                 isig.Write()
 
                 # print out the txt datacard
-                with open('datacard_%s_%s.txt' %(label, isig.name) , 'w') as card:
+                with open(plot_dir() + 'datacard_%s_%s.txt' %(label, isig.name) , 'w') as card:
                     card.write(
         '''
         imax 1 number of bins
@@ -345,3 +347,16 @@ class Plotter(object):
                 )
 
             outfile.Close()
+
+def get_time_str():
+    today   = datetime.now()
+    date    = today.strftime('%y%m%d')
+    hour    = str(today.hour)
+    minit   = str(today.minute)
+    time_str = date + '_' + hour + 'h_' + minit + 'm/'
+    return time_str
+
+def plot_dir():
+    plot_dir = env['PLOT_DIR'] + '_' + get_time_str()
+    if not ensure_path(plot_dir): mkdir(plot_dir)
+    return  plot_dir
