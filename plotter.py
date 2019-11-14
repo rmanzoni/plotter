@@ -1,9 +1,5 @@
 # https://indico.cern.ch/event/759388/contributions/3306849/attachments/1816254/2968550/root_conda_forge.pdf
 # https://conda-forge.org/feedstocks/
-from os import environ as env
-from os import mkdir
-from os.path import exists as ensure_path
-from datetime import datetime
 import time
 import ROOT
 import root_pandas
@@ -13,6 +9,7 @@ from collections import OrderedDict
 from evaluate_nn import Evaluator
 from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
+from utils import plot_dir
 from cmsstyle import CMS_lumi
 
 from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
@@ -37,32 +34,37 @@ class Plotter(object):
                  lumi           ,
                  model          , 
                  transformation ,
-                 features       ):
+                 features       , 
+                 plot_signals   ,
+                 blinded        ,):
 
         self.channel         = channel 
         self.base_dir        = base_dir 
         self.post_fix        = post_fix 
         self.selection_data  = selection_data
         self.selection_mc    = selection_mc
-        self.selection_tight = selections_tight 
+        self.selection_tight = selection_tight 
         self.lumi            = lumi
         self.model           = model          
         self.transformation  = transformation 
         self.features        = features       
-        self.selections_lnt  = 'not (%s)' %self.selections_tight
+        self.plot_signals    = plot_signals 
+        self.blinded         = blinded      
+        self.selection_lnt  = 'not (%s)' %self.selection_tight
 
-    def plot(self, plot_signals=True, blinded=True):
+    def plot(self):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
 
 # NN evaluator
 
         print('============> starting reading the trees')
+        print ('Plots will stored in: ', plot_dir())
         now = time.time()
         # signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, selection_data)  #FOR LATER
-        signal = get_signal_samples(self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', selection_data)
-        data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', selection_data)
-        mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, selection_mc)
+        signal = get_signal_samples(self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', self.selection_data)
+        data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', self.selection_data)
+        mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_mc)
         print('============> it took %.2f seconds' %(time.time() - now))
 
 # evaluate FR
@@ -73,8 +75,8 @@ class Plotter(object):
 
 # split the dataframe in tight and loose-not-tight (called simply loose for short)
         for isample in (mc+data+signal):
-            isample.df_tight = isample.df.query(selections_tight)
-            isample.df_loose = isample.df.query(selections_lnt)
+            isample.df_tight = isample.df.query(self.selection_tight)
+            isample.df_loose = isample.df.query(self.selection_lnt)
 
 # sort depending on their position in the stack
         mc.sort(key = lambda x : x.position_in_stack)
@@ -223,7 +225,7 @@ class Plotter(object):
                 things_to_plot = [stack, hist_error, all_obs_prompt]
                 
                 # plot signals, as an option
-                if plot_signals: 
+                if self.plot_signals: 
                     things_to_plot += signals_to_plot
                 
                 # set the y axis range 
@@ -286,8 +288,6 @@ class Plotter(object):
             # save a ROOT file with histograms, aka datacard
             outfile = ROOT.TFile.Open(plot_dir() + 'datacard_%s.root' %label, 'recreate')
             outfile.cd()
-#     outfile.mkdir(label)
-#     outfile.cd(label)
             
             # data in tight
             all_obs_prompt.name = 'data_obs'
@@ -338,7 +338,7 @@ class Plotter(object):
         --------------------------------------------------------------------------------------------------------------------------------------------
         {cat} autoMCStats 0 0 1
         '''.format(cat         = label,
-                   obs         = all_obs_prompt.integral() if blinded==False else -1,
+                   obs         = all_obs_prompt.integral() if self.blinded==False else -1,
                    signal_name = isig.name,
                    signal      = isig.integral(),
                    prompt      = all_exp_prompt.integral(),
@@ -347,16 +347,3 @@ class Plotter(object):
                 )
 
             outfile.Close()
-
-def get_time_str():
-    today   = datetime.now()
-    date    = today.strftime('%y%m%d')
-    hour    = str(today.hour)
-    minit   = str(today.minute)
-    time_str = date + '_' + hour + 'h_' + minit + 'm/'
-    return time_str
-
-def plot_dir():
-    plot_dir = env['PLOT_DIR'] + '_' + get_time_str()
-    if not ensure_path(plot_dir): mkdir(plot_dir)
-    return  plot_dir

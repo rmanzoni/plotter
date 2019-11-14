@@ -6,16 +6,6 @@ class Selections(object):
         self.channel = channel
         self.base    = None
 
-        if user == 'manzoni': 
-            env['BASE_DIR'] = '/Users/manzoni/Documents/efficiencyNN/HNL/%s/ntuples/' %self.channel
-            env['PLOT_DIR'] = '/Users/manzoni/Documents/efficiencyNN/HNL/%s/plots/'   %self.channel
-            env['NN_DIR']   = '/Users/manzoni/Documents/efficiencyNN/HNL/plotter/NN/'
-
-        if user == 'cesareborgia': 
-            env['BASE_DIR'] = '/Users/cesareborgia/cernbox/ntuples/2018/'
-            env['PLOT_DIR'] = '/Users/cesareborgia/cernbox/plots/plotter/%s/' %self.channel
-            env['NN_DIR']   = '/Users/cesareborgia/HNL/plotter/NN/%s/'        %self.channel
-
         self.selections = OrderedDict()
 
         if self.channel == 'mmm':
@@ -50,10 +40,9 @@ class Selections(object):
                                                     'l1_MediumNoIso == 1'      ,
                                                     'l2_MediumNoIso == 1'      ,])
 
-        assert self.seletions['pt_iso'], 'Error: No channel specific selection applied!'
+        assert self.selections['pt_iso'], 'Error: No channel specific selection applied!'
 
         self.selections['baseline'] = ' & '.join([
-            self.base                                  , 
             'abs(l0_eta) < 2.4'                        ,
             'abs(l0_dxy) < 0.05'                       ,
             'abs(l0_dz) < 0.2'                         ,
@@ -147,4 +136,3 @@ class Selections(object):
         for k, v in self.selections.items():
             vv = v.replace('&', 'and').replace('|', 'or').replace('!', 'not') 
             self.selections_pd[k] = vv
-

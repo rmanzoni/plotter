@@ -1,4 +1,4 @@
-import re
+from re import findall
 import numpy as np
 import pandas as pd
 from root_pandas import read_root
@@ -44,7 +44,7 @@ class Sample(object):
                 lines = ff.readlines()
                 for line in lines:
                     if 'Sum Norm Weights' in line:
-                        self.nevents = float(re.findall(r'\d+', lines[2])[0])
+                        self.nevents = float(findall(r'\d+', lines[2])[0])
                         break
         tree_file = '/'.join([self.base_dir, self.name, self.post_fix])
         

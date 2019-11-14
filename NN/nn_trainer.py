@@ -37,10 +37,9 @@ from keras.optimizers import SGD, Adam
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, roc_auc_score
-       
-from getpass import getuser as user
 
 from selections import Selections
+from utils import set_paths, plot_dir
 
 # fix random seed for reproducibility (FIXME! not really used by Keras)
 np.random.seed(1986)
@@ -50,14 +49,11 @@ lumi = 59700.
 
 channel = 'eee'
 
-base_dir = None; out_dir = None
-if user() =='manzoni':      
-    base_dir = '/Users/manzoni/Documents/efficiencyNN/HNL/%s/ntuples/'%channel
-    out_dir  = '' 
-if user() =='cesareborgia': 
-    base_dir = '/Users/cesareborgia/cernbox/ntuples/2018/%s/'%channel
-    out_dir  = '/Users/cesareborgia/Dropbox/HNL/plotter/NN/%s/'%channel
-assert base_dir; assert out_dir
+cuts           = Selections(channel)
+baseline       = cuts.selections['baseline']
+tight          = cuts.selections['tight']
+is_prompt_lepton = cuts.selections['is_prompt_lepton']
+
 
 # define input features
 # TODO make this cfg'able
@@ -165,11 +161,6 @@ filein = [
     base_dir + '/Single_{lep}_2018C/HNLTreeProducer/tree.root'.format(lep=lep),
     base_dir + '/Single_{lep}_2018D/HNLTreeProducer/tree.root'.format(lep=lep),
 ]
-
-cuts           = Selections(channel)
-baseline       = cuts.selections['baseline']
-tight          = cuts.selections['tight']
-is_prompt_lepton = cuts.selections['is_prompt_lepton']
 
 # load dataset including all event, both passing and failing
 passing = pd.DataFrame( root2array(filein, 'tree', branches=branches, selection= baseline + ' &  (%s)' %tight) )
