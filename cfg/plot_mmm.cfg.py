@@ -11,10 +11,10 @@ plotter = Plotter (channel         = 'mmm',
                    post_fix        = 'HNLTreeProducer_mmm/tree.root',
 
                    selection_data  = ' & '.join([ cuts.selections['pt_iso'], cuts.selections['baseline'], cuts.selections['vetoes_12_OS'], cuts.selections['vetoes_01_OS'], 
-                                                  cuts.selections['vetoes_02_OS'], cuts.selections['zmm'] ]),
+                                                  cuts.selections['vetoes_02_OS'], ]),
 
                    selection_mc    = ' & '.join([ cuts.selections['pt_iso'], cuts.selections['baseline'], cuts.selections['vetoes_12_OS'], cuts.selections['vetoes_01_OS'], 
-                                                  cuts.selections['vetoes_02_OS'], cuts.selections['zmm'], cuts.selections['is_prompt_lepton'] ]),
+                                                  cuts.selections['vetoes_02_OS'], cuts.selections['is_prompt_lepton'] ]),
 
                    selection_tight = cuts.selections_pd['tight'],
 
@@ -25,5 +25,5 @@ plotter = Plotter (channel         = 'mmm',
                    plot_signals    = True,
                    blinded         = True,
                    )
-
+# from pdb import set_trace; set_trace()
 plotter.plot()
