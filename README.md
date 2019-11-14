@@ -12,6 +12,7 @@ conda install -n alt_root keras -c conda-forge
 conda install -n alt_root matplotlib
 conda install -n alt_root scikit-learn
 python -m pip install rootpy --user
+python -m pip install modin --user
 ```
 
 and `conda info` returns

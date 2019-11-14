@@ -1,9 +1,11 @@
+import os
 import re
 import time
 import ROOT
 import root_pandas
 import numpy as np
 import pandas as pd
+# import modin.pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from collections import OrderedDict
@@ -11,6 +13,8 @@ from selections import selections, selections_df
 from evaluate_nn import Evaluator
 from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
+
+# os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
 
 from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
 from rootpy.plotting.style import get_style, set_style
@@ -26,9 +30,9 @@ basedir        = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/'
 postfix        = 'HNLTreeProducer/tree.root'
 lumi           = 59700. # fb-1
 selection_data = selections['baseline']
-# selection_mc   = selections['baseline'] 
 selection_mc   = '&'.join([selections['baseline'], selections['ispromptlepton']])
 plot_signals   = True
+blinded        = True
 
 # NN evaluator
 model          = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/net_model_weighted.h5'
@@ -245,8 +249,14 @@ for ivar in variables:
         line.Draw('same')
 
         canvas.cd()
+
+        finalstate = ROOT.TLatex(0.2, 0.85, '\mu\mu\mu')
+        finalstate.SetTextFont(43)
+        finalstate.SetTextSize(25)
+        finalstate.SetNDC()
+        finalstate.Draw('same')
+
         legend.Draw('same')
-        #legend_signals.Draw('same')
         canvas.Modified()
         canvas.Update()
         canvas.SaveAs('%s%s.pdf' %(label, islogy*'_log'))
@@ -279,6 +289,38 @@ for ivar in variables:
         isig.drawstyle = 'HIST E'
         isig.color = 'black'
         isig.Write()
-        
-    outfile.Close()
 
+        # print out the txt datacard
+        with open('datacard_%s_%s.txt' %(label, isig.name) , 'w') as card:
+            card.write(
+'''
+imax 1 number of bins
+jmax * number of processes minus 1
+kmax * number of nuisance parameters
+--------------------------------------------------------------------------------------------------------------------------------------------
+shapes *    hnl_{cat} datacard_{cat}.root $PROCESS $PROCESS_$SYSTEMATIC
+--------------------------------------------------------------------------------------------------------------------------------------------
+bin               {cat}
+observation       {obs:d}
+--------------------------------------------------------------------------------------------------------------------------------------------
+bin                                                     {cat}                          {cat}                            {cat}
+process                                                 {signal_name}                  nonprompt                        prompt
+process                                                 0                              1                                2
+rate                                                    {signal:.4f}                   {nonprompt:.4f}                  {prompt:.4f}
+--------------------------------------------------------------------------------------------------------------------------------------------
+lumi                                    lnN             1.025                          -                                -   
+norm_prompt_{cat}                       lnN             -                              -                                1.15   
+norm_nonprompt_{cat}                    lnN             -                              1.20                             -   
+norm_sig_{cat}                          lnN             1.2                            -                                -   
+--------------------------------------------------------------------------------------------------------------------------------------------
+hnl_{cat} autoMCStats 0 0 1
+'''.format(cat         = label,
+           obs         = all_obs_prompt.integral() if blinded==False else -1,
+           signal_name = isig.name,
+           signal      = isig.integral(),
+           prompt      = all_exp_prompt.integral(),
+           nonprompt   = all_exp_nonprompt.integral(),
+           )
+        )
+
+    outfile.Close()
