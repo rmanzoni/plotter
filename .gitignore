@@ -1,5 +1,6 @@
 *.pyc
 *.txt
+*.DS_Store
 
 plots/
 *.swp

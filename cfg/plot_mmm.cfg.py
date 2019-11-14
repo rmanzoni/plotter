@@ -3,12 +3,14 @@ from selections import Selections
 from utils import set_paths
 from os import environ as env
 
-set_paths('mmm')
-cuts = Selections('mmm')
+ch = 'mmm'
 
-plotter = Plotter (channel         = 'mmm',
+set_paths(ch)
+cuts = Selections(ch)
+
+plotter = Plotter (channel         = ch,
                    base_dir        = env['BASE_DIR'],
-                   post_fix        = 'HNLTreeProducer_mmm/tree.root',
+                   post_fix        = 'HNLTreeProducer_%s/tree.root' %ch,
 
                    selection_data  = ' & '.join([ cuts.selections['pt_iso'], cuts.selections['baseline'], cuts.selections['vetoes_12_OS'], cuts.selections['vetoes_01_OS'], 
                                                   cuts.selections['vetoes_02_OS'], ]),
@@ -25,5 +27,5 @@ plotter = Plotter (channel         = 'mmm',
                    plot_signals    = True,
                    blinded         = True,
                    )
-# from pdb import set_trace; set_trace()
+
 plotter.plot()

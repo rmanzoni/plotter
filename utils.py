@@ -28,3 +28,8 @@ def plot_dir():
     plot_dir = env['PLOT_DIR'] + get_time_str()
     if not ensure_path(plot_dir): mkdir(plot_dir)
     return  plot_dir
+
+def nn_dir():
+    nn_dir = env['NN_DIR'] + get_time_str()
+    if not ensure_path(nn_dir): mkdir(nn_dir)
+    return  nn_dir

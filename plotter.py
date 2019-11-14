@@ -1,13 +1,13 @@
 # https://indico.cern.ch/event/759388/contributions/3306849/attachments/1816254/2968550/root_conda_forge.pdf
 # https://conda-forge.org/feedstocks/
-import time
+from time import time
 import ROOT
 import root_pandas
 import numpy as np
 import pandas as pd
 from collections import OrderedDict
 from evaluate_nn import Evaluator
-from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
+from sample import get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
 from utils import plot_dir
 from cmsstyle import CMS_lumi
@@ -50,33 +50,33 @@ class Plotter(object):
         self.features        = features       
         self.plot_signals    = plot_signals 
         self.blinded         = blinded      
-        self.selection_lnt  = 'not (%s)' %self.selection_tight
+        self.selection_lnt   = 'not (%s)' %self.selection_tight
 
     def plot(self):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
-
+        plt_dir = plot_dir()
 # NN evaluator
 
         print('============> starting reading the trees')
-        print ('Plots will stored in: ', plot_dir())
-        now = time.time()
-        # signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, selection_data)  #FOR LATER
+        print ('Plots will be stored in: ', plt_dir)
+        now = time()
+        # signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_data)  
         signal = get_signal_samples(self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', self.selection_data)
         data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', self.selection_data)
         mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_mc)
-        print('============> it took %.2f seconds' %(time.time() - now))
+        print('============> it took %.2f seconds' %(time() - now))
 
 # evaluate FR
         for isample in (mc+data):
             isample.df['fr'] = evaluator.evaluate(isample.df)
-            # already corrected, ready to be applied in loose-not-tight
+            # already corrected, ready to be applied in lnt-not-tight
             isample.df['fr_corr'] = isample.df['fr'] / (1. - isample.df['fr']) 
 
-# split the dataframe in tight and loose-not-tight (called simply loose for short)
+# split the dataframe in tight and lnt-not-tight (called simply lnt for short)
         for isample in (mc+data+signal):
             isample.df_tight = isample.df.query(self.selection_tight)
-            isample.df_loose = isample.df.query(self.selection_lnt)
+            isample.df_lnt = isample.df.query(self.selection_lnt)
 
 # sort depending on their position in the stack
         mc.sort(key = lambda x : x.position_in_stack)
@@ -103,7 +103,7 @@ class Plotter(object):
             print('plotting', label)
             
             ######################################################################################
-            # plot MC stacks, in tight and loose
+            # plot MC stacks, in tight and lnt
             ######################################################################################
             
             stack_prompt    = []
@@ -113,10 +113,10 @@ class Plotter(object):
                 
                 if extra_sel:
                     mc_df_tight = imc.df_tight.query(extra_sel) 
-                    mc_df_loose = imc.df_loose.query(extra_sel) 
+                    mc_df_lnt = imc.df_lnt.query(extra_sel) 
                 else:
                     mc_df_tight = imc.df_tight
-                    mc_df_loose = imc.df_loose
+                    mc_df_lnt = imc.df_lnt
                 
                 histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name)
                 histo_tight.fill_array(mc_df_tight[variable], weights=self.lumi * mc_df_tight.weight * imc.lumi_scaling * mc_df_tight.lhe_weight)
@@ -127,15 +127,15 @@ class Plotter(object):
 
                 stack_prompt.append(histo_tight)
 
-                histo_loose = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
+                histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
                 # histo_tight.fill_array(mc_df_tight[variable], weights=self.lumi * mc_df_tight.weight * imc.lumi_scaling * mc_df_tight.lhe_weight) ## BEFORE MERGE
-                histo_loose.fill_array(mc_df_loose[variable], weights=-1.* self.lumi * mc_df_loose.weight * imc.lumi_scaling * mc_df_loose.lhe_weight * mc_df_loose.fr_corr) ## AFTER MERGE
+                histo_lnt.fill_array(mc_df_lnt[variable], weights=-1.* self.lumi * mc_df_lnt.weight * imc.lumi_scaling * mc_df_lnt.lhe_weight * mc_df_lnt.fr_corr) ## AFTER MERGE
 
-                histo_loose.fillstyle = 'solid'
-                histo_loose.fillcolor = 'skyblue'
-                histo_loose.linewidth = 0
+                histo_lnt.fillstyle = 'solid'
+                histo_lnt.fillcolor = 'skyblue'
+                histo_lnt.linewidth = 0
 
-                stack_nonprompt.append(histo_loose)
+                stack_nonprompt.append(histo_lnt)
 
             ######################################################################################
             # plot the signals
@@ -173,20 +173,20 @@ class Plotter(object):
 
                 if extra_sel:
                     idata_df_tight = idata.df_tight.query(extra_sel) 
-                    idata_df_loose = idata.df_loose.query(extra_sel) 
+                    idata_df_lnt = idata.df_lnt.query(extra_sel) 
                 else:
                     idata_df_tight = idata.df_tight
-                    idata_df_loose = idata.df_loose
+                    idata_df_lnt = idata.df_lnt
 
                 histo_tight = Hist(bins, title=idata.label, markersize=1, legendstyle='LEP')
                 histo_tight.fill_array(idata_df_tight[variable])
                 
                 data_prompt.append(histo_tight)
 
-                histo_loose = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
-                histo_loose.fill_array(idata_df_loose[variable], weights=idata_df_loose.fr_corr)
+                histo_lnt = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
+                histo_lnt.fill_array(idata_df_lnt[variable], weights=idata_df_lnt.fr_corr)
                 
-                data_nonprompt.append(histo_loose)
+                data_nonprompt.append(histo_lnt)
 
             # put the prompt backgrounds together
             all_exp_prompt = sum(stack_prompt)
@@ -272,7 +272,12 @@ class Plotter(object):
 
                 canvas.cd()
 
-                finalstate = ROOT.TLatex(0.7, 0.85, '\mu\mu\mu')
+                if   self.channel == 'mmm': channel = '\mu\mu\mu'
+                elif self.channel == 'mem': channel = '\mue\mu'
+                elif self.channel == 'eem': channel = 'ee\mu'
+                elif self.channel == 'eee': channel = 'eee'
+                else: assert False, 'ERROR: Channel not valid.'
+                finalstate = ROOT.TLatex(0.7, 0.85, channel)
                 finalstate.SetTextFont(43)
                 finalstate.SetTextSize(25)
                 finalstate.SetNDC()
@@ -282,11 +287,11 @@ class Plotter(object):
                 CMS_lumi(main_pad, 4, 0)
                 canvas.Modified()
                 canvas.Update()
-                canvas.SaveAs(plot_dir() + '%s%s.pdf' %(label, islogy*'_log'))
+                canvas.SaveAs(plt_dir + '%s%s.pdf' %(label, islogy*'_log'))
 
 
             # save a ROOT file with histograms, aka datacard
-            outfile = ROOT.TFile.Open(plot_dir() + 'datacard_%s.root' %label, 'recreate')
+            outfile = ROOT.TFile.Open(plt_dir + 'datacard_%s.root' %label, 'recreate')
             outfile.cd()
             
             # data in tight
@@ -314,7 +319,7 @@ class Plotter(object):
                 isig.Write()
 
                 # print out the txt datacard
-                with open(plot_dir() + 'datacard_%s_%s.txt' %(label, isig.name) , 'w') as card:
+                with open(plt_dir + 'datacard_%s_%s.txt' %(label, isig.name) , 'w') as card:
                     card.write(
         '''
         imax 1 number of bins
