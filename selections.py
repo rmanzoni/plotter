@@ -6,6 +6,15 @@ class Selections(object):
         self.channel = channel
         self.base    = None
 
+        if user == 'manzoni': 
+             env['BASE_DIR'] = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/'
+             env['PLOT_DIR'] = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/plots/'
+             env['NN_DIR']   = '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/NN/'
+
+        if user == 'cesareborgia': 
+            env['BASE_DIR'] = '/Users/cesareborgia/cernbox/ntuples/2018/'
+            env['BASE_DIR'] = '/Users/cesareborgia/cernbox/ntuples/2018/'
+
         if self.channel == 'mmm':
             self.base = ' & '.join(['l0_pt > 25'    ,
                                     'l2_pt > 5'     ,

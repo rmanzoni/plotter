@@ -1,6 +1,6 @@
 # https://indico.cern.ch/event/759388/contributions/3306849/attachments/1816254/2968550/root_conda_forge.pdf
 # https://conda-forge.org/feedstocks/
-import os
+from os import environ as env
 import re
 import time
 import ROOT
@@ -36,22 +36,22 @@ class Plotter(object):
                  features       ):
 
         self.channel        = channel 
-        self.base_dir        = base_dir 
-        self.post_fix        = post_fix 
+        self.base_dir       = base_dir 
+        self.post_fix       = post_fix 
         self.lumi           = lumi
         self.model          = model          
         self.transformation = transformation 
         self.features       = features       
 
-    def plot(self):
+    def plot(self, plot_signals=True, blinded=True):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
 
         cuts = Selections(self.channel)
         selection_data = cuts.selections['baseline']
         selection_mc   = ' & '.join( [cuts.selections['baseline'], cuts.selections['is_prompt_lepton']] )
-        plot_signals   = True
-        blinded        = True
+
+        plot_dir = env['PLOT_DIR']
 
 # NN evaluator
 
