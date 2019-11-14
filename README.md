@@ -12,6 +12,7 @@ conda install -n alt_root keras -c conda-forge
 conda install -n alt_root matplotlib
 conda install -n alt_root scikit-learn
 python -m pip install rootpy --user
+python -m pip install modin --user
 ```
 
 and `conda info` returns
@@ -245,4 +246,16 @@ zeromq                    4.3.2                h6de7cb9_2    conda-forge
 zipp                      0.6.0                      py_0    conda-forge
 zlib                      1.2.11            h0b31af3_1006    conda-forge
 zstd                      1.4.0                ha9f0a20_0    conda-forge
+```
+
+
+
+# Limits
+
+```
+combineCards.py disp1=datacard_hnl_m_12_lxy_lt_0p5_hnl_m_10_v2_1p0Em06_majorana.txt disp2=datacard_hnl_m_12_lxy_0p5_to_2p0_hnl_m_10_v2_1p0Em06_majorana.txt disp3=datacard_hnl_m_12_lxy_mt_2p0_hnl_m_10_v2_1p0Em06_majorana.txt > datacard_hnl_m_12_combined_hnl_m_10_v2_1p0Em06_majorana.txt
+
+combine -M AsymptoticLimits datacard_hnl_m_12_combined_hnl_m_10_v2_1p0Em06_majorana.txt --run blind
+
+combine -M HybridNew --testStat=LHC --frequentist -d datacard_hnl_m_12_combined_hnl_m_10_v2_1p0Em06_majorana.txt -T 1000 -C 0.95 --rMin 0 --rMax 50  
 ```

@@ -1,14 +1,12 @@
 # https://indico.cern.ch/event/759388/contributions/3306849/attachments/1816254/2968550/root_conda_forge.pdf
 # https://conda-forge.org/feedstocks/
-
+import os
 import re
 import time
 import ROOT
 import root_pandas
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 from collections import OrderedDict
 from selections import Selections
 from evaluate_nn import Evaluator
@@ -57,8 +55,8 @@ class Plotter(object):
         print('============> starting reading the trees')
         now = time.time()
         signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, selection_data)
-        mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, selection_mc)
         data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', selection_data)
+        mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, selection_mc)
         print('============> it took %.2f seconds' %(time.time() - now))
 
 # evaluate FR
@@ -76,16 +74,25 @@ class Plotter(object):
         mc.sort(key = lambda x : x.position_in_stack)
 
 # now we plot
-        canvas = Canvas(width=700, height=700)
+        canvas = Canvas(width=700, height=700) ; canvas.Draw()
+        canvas.cd() ; main_pad  = Pad(0., 0.25, 1., 1.  ) ; main_pad .Draw()
+        canvas.cd() ; ratio_pad = Pad(0., 0.  , 1., 0.25) ; ratio_pad.Draw()
+
+        main_pad.SetTicks(True)
+        main_pad.SetBottomMargin(0.)
+        main_pad.SetLeftMargin(0.15)
+        main_pad.SetRightMargin(0.15)
+        ratio_pad.SetLeftMargin(0.15)
+        ratio_pad.SetRightMargin(0.15)
+        ratio_pad.SetTopMargin(0.)   
+        ratio_pad.SetGridy()
+        ratio_pad.SetBottomMargin(0.3)
 
         for ivar in variables:
             
             variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
             
             print('plotting', label)
-
-            # clean the figure
-            plt.clf()
             
             ######################################################################################
             # plot MC stacks, in tight and loose
@@ -113,8 +120,8 @@ class Plotter(object):
                 stack_prompt.append(histo_tight)
 
                 histo_loose = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
-                histo_tight.fill_array(mc_df_tight[variable], weights=self.lumi * mc_df_tight.weight * imc.lumi_scaling * mc_df_tight.lhe_weight)
-
+                # histo_tight.fill_array(mc_df_tight[variable], weights=self.lumi * mc_df_tight.weight * imc.lumi_scaling * mc_df_tight.lhe_weight) ## BEFORE MERGE
+                histo_loose.fill_array(mc_df_loose[variable], weights=-1.* self.lumi * mc_df_loose.weight * imc.lumi_scaling * mc_df_loose.lhe_weight * mc_df_loose.fr_corr) ## AFTER MERGE
 
                 histo_loose.fillstyle = 'solid'
                 histo_loose.fillcolor = 'skyblue'
@@ -197,21 +204,84 @@ class Plotter(object):
             all_obs_prompt.title = 'observed'
 
             # prepare the legend
-            legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, leftmargin=0.45, margin=0.3, textsize=0.023, textfont=42, entrysep=0.012)
+            if len(signals_to_plot):
+                legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=main_pad, leftmargin=0.28, rightmargin=0.3, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
+            else:
+                legend = Legend([all_obs_prompt, stack, hist_error], pad=main_pad, leftmargin=0.33, rightmargin=0.1, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.012, entryheight=0.06)
             legend.SetBorderSize(0)
             legend.SetFillColor(0)
 
             # plot with ROOT, linear and log scale
             for islogy in [False, True]:
-                draw([stack, hist_error, all_obs_prompt] + signals_to_plot, xtitle=xlabel, ytitle=ylabel, pad=canvas, logy=islogy)
+
+                things_to_plot = [stack, hist_error, all_obs_prompt]
+                
+                # plot signals, as an option
+                if plot_signals: 
+                    things_to_plot += signals_to_plot
+                
+                # set the y axis range 
+                # FIXME! setting it by hand to each object as it doesn't work if passed to draw
+                yaxis_max = 1.4 * max([ithing.max() for ithing in things_to_plot])
+                for ithing in things_to_plot:
+                    ithing.SetMaximum(yaxis_max)   
+                            
+                draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=main_pad, logy=islogy)
+
+                # expectation uncertainty in the ratio pad
+                ratio_exp_error = Hist(bins)
+                ratio_data = Hist(bins)
+                for ibin in hist_error.bins_range():
+                    ratio_exp_error.set_bin_content(ibin, 1.)
+                    ratio_exp_error.set_bin_error  (ibin, hist_error.get_bin_error(ibin)      / hist_error.get_bin_content(ibin) if hist_error.get_bin_content(ibin)!=0. else 0.)
+                    ratio_data.set_bin_content     (ibin, all_obs_prompt.get_bin_content(ibin)/ hist_error.get_bin_content(ibin) if hist_error.get_bin_content(ibin)!=0. else 0.)
+                    ratio_data.set_bin_error       (ibin, all_obs_prompt.get_bin_error(ibin)  / hist_error.get_bin_content(ibin) if hist_error.get_bin_content(ibin)!=0. else 0.)
+
+                ratio_data.drawstyle = 'EP'
+                ratio_data.title     = ''
+
+                ratio_exp_error.drawstyle  = 'E2'
+                ratio_exp_error.markersize = 0
+                ratio_exp_error.title      = ''
+                ratio_exp_error.fillstyle  = '/'
+                ratio_exp_error.color      = 'gray'
+
+                for ithing in [ratio_data, ratio_exp_error]:
+                    ithing.xaxis.set_label_size(ithing.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    ithing.yaxis.set_label_size(ithing.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    ithing.xaxis.set_title_size(ithing.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    ithing.yaxis.set_title_size(ithing.yaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    ithing.yaxis.set_ndivisions(405)
+                    ithing.yaxis.set_title_offset(0.4)
+                    
+                draw([ratio_exp_error, ratio_data], xtitle=xlabel, ytitle='obs/exp', pad=ratio_pad, logy=False, ylimits=(0.5, 1.5))
+
+                line = ROOT.TLine(min(bins), 1., max(bins), 1.)
+                line.SetLineColor(ROOT.kBlack)
+                line.SetLineWidth(1)
+                ratio_pad.cd()
+                line.Draw('same')
+
+                canvas.cd()
+
+                finalstate = ROOT.TLatex(0.7, 0.85, '\mu\mu\mu')
+                finalstate.SetTextFont(43)
+                finalstate.SetTextSize(25)
+                finalstate.SetNDC()
+                finalstate.Draw('same')
+
                 legend.Draw('same')
+                CMS_lumi(main_pad, 4, 0)
                 canvas.Modified()
                 canvas.Update()
-                canvas.SaveAs('plots/%s_%s%s.pdf' %(self.channel, label, islogy*'_log'))
+                canvas.SaveAs('%s%s.pdf' %(label, islogy*'_log'))
+
 
             # save a ROOT file with histograms, aka datacard
-            outfile = ROOT.TFile.Open('plots/%s_%s.datacard.root' %(self.channel, label), 'recreate')
+            outfile = ROOT.TFile.Open('datacard_%s.root' %label, 'recreate')
             outfile.cd()
+#     outfile.mkdir(label)
+#     outfile.cd(label)
             
             # data in tight
             all_obs_prompt.name = 'data_obs'
@@ -230,11 +300,44 @@ class Plotter(object):
             all_exp_prompt.color = 'black'
             all_exp_prompt.linewidth = 2
             all_exp_prompt.Write()
-            
+
             # signals
             for isig in all_signals:
                 isig.drawstyle = 'HIST E'
                 isig.color = 'black'
                 isig.Write()
-                
+
+                # print out the txt datacard
+                with open('datacard_%s_%s.txt' %(label, isig.name) , 'w') as card:
+                    card.write(
+        '''
+        imax 1 number of bins
+        jmax * number of processes minus 1
+        kmax * number of nuisance parameters
+        --------------------------------------------------------------------------------------------------------------------------------------------
+        shapes *    {cat} datacard_{cat}.root $PROCESS $PROCESS_$SYSTEMATIC
+        --------------------------------------------------------------------------------------------------------------------------------------------
+        bin               {cat}
+        observation       {obs:d}
+        --------------------------------------------------------------------------------------------------------------------------------------------
+        bin                                                     {cat}                          {cat}                            {cat}
+        process                                                 {signal_name}                  nonprompt                        prompt
+        process                                                 0                              1                                2
+        rate                                                    {signal:.4f}                   {nonprompt:.4f}                  {prompt:.4f}
+        --------------------------------------------------------------------------------------------------------------------------------------------
+        lumi                                    lnN             1.025                          -                                -   
+        norm_prompt_{cat}                       lnN             -                              -                                1.15   
+        norm_nonprompt_{cat}                    lnN             -                              1.20                             -   
+        norm_sig_{cat}                          lnN             1.2                            -                                -   
+        --------------------------------------------------------------------------------------------------------------------------------------------
+        {cat} autoMCStats 0 0 1
+        '''.format(cat         = label,
+                   obs         = all_obs_prompt.integral() if blinded==False else -1,
+                   signal_name = isig.name,
+                   signal      = isig.integral(),
+                   prompt      = all_exp_prompt.integral(),
+                   nonprompt   = all_exp_nonprompt.integral(),
+                   )
+                )
+
             outfile.Close()
