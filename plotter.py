@@ -13,6 +13,7 @@ from selections import selections, selections_df
 from evaluate_nn import Evaluator
 from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
+from cmsstyle import CMS_lumi
 
 # os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
 
@@ -257,6 +258,7 @@ for ivar in variables:
         finalstate.Draw('same')
 
         legend.Draw('same')
+        CMS_lumi(main_pad, 4, 0)
         canvas.Modified()
         canvas.Update()
         canvas.SaveAs('%s%s.pdf' %(label, islogy*'_log'))
