@@ -1,4 +1,9 @@
 *.pyc
 plots/
 *.swp
+*.pdf
+*.png
+*.root
+*val_acc*.h5
+
 

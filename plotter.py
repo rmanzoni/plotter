@@ -56,10 +56,9 @@ class Plotter(object):
 
         print('============> starting reading the trees')
         now = time.time()
-        # signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, selection_data)
-        signal = []
-        data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, selection_data)
-        mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, selection_mc)
+        signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, selection_data)
+        mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, selection_mc)
+        data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', selection_data)
         print('============> it took %.2f seconds' %(time.time() - now))
 
 # evaluate FR
