@@ -2,10 +2,9 @@
 # https://conda-forge.org/feedstocks/
 from time import time
 import ROOT
-# import root_pandas
+import root_pandas
 import numpy as np
-# import pandas as pd
-import modin.pandas as pd
+import pandas as pd
 from collections import OrderedDict
 from evaluate_nn import Evaluator
 from sample import get_data_samples, get_mc_samples, get_signal_samples

@@ -1,10 +1,7 @@
 from re import findall
 import numpy as np
-import modin.pandas as pd
-from ROOT import RDataFrame as rdf
-from ROOT.ROOT import EnableImplicitMT as multi_threading
-# import pandas as pd
-# from root_pandas import read_root
+import pandas as pd
+from root_pandas import read_root
 
 class Sample(object):
     def __init__(self, 
@@ -54,14 +51,7 @@ class Sample(object):
         # selection = self.selection.replace('&', 'and').replace('|', 'or').replace('!', 'not') 
         # self.df = uproot.open(tree_file)['tree'].pandas.df().query(selection) # can't apply any selection with uproot...
         # self.df = pd.DataFrame( root2array(tree_file, 'tree', selection=self.selection) )
-
-        # self.df = read_root( tree_file, 'tree', where=self.selection )
-
-        multi_threading()
-        df = rdf('tree', tree_file)
-        df = df.Filter(self.selection)
-        self.df = df.AsNumpy()
-
+        self.df = read_root( tree_file, 'tree', where=self.selection )
         # scale to 1/pb 
         self.lumi_scaling = 1. if self.isdata else (self.xs / self.nevents)
  
