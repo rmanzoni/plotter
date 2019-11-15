@@ -15,14 +15,23 @@ from sample import Sample, get_data_samples, get_mc_samples, get_signal_samples
 from variables import variables
 from cmsstyle import CMS_lumi
 
-# os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
-
 from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
 from rootpy.plotting.style import get_style, set_style
 from rootpy.plotting.utils import draw
 
+# os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
+
 import logging
 logging.disable(logging.DEBUG)
+
+# FIXME! move me away from here
+def total_weight_calculator(df, weight_list, scalar_weights=[]):
+    total_weight = df[weight_list[0]]
+    for iw in weight_list[1:]:
+        total_weight *= df[iw]
+    for iw in scalar_weights:
+        total_weight *= iw
+    return total_weight
 
 ROOT.gROOT.SetBatch(True)
 ROOT.gStyle.SetOptStat(False)
@@ -100,7 +109,8 @@ for ivar in variables:
             mc_df_loose = imc.df_loose
         
         histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name)
-        histo_tight.fill_array(mc_df_tight[variable], weights=lumi * mc_df_tight.weight * imc.lumi_scaling * mc_df_tight.lhe_weight)
+        weights = total_weight_calculator(mc_df_tight, ['weight', 'lhe_weight']+imc.extra_signal_weights, [lumi, imc.lumi_scaling])
+        histo_tight.fill_array(mc_df_tight[variable], weights=weights)
 
         histo_tight.fillstyle = 'solid'
         histo_tight.fillcolor = 'steelblue'
@@ -109,7 +119,8 @@ for ivar in variables:
         stack_prompt.append(histo_tight)
 
         histo_loose = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
-        histo_loose.fill_array(mc_df_loose[variable], weights=-1.* lumi * mc_df_loose.weight * imc.lumi_scaling * mc_df_loose.lhe_weight * mc_df_loose.fr_corr)
+        weights = total_weight_calculator(mc_df_loose, ['weight', 'lhe_weight', 'fr_corr']+imc.extra_signal_weights, [-1., lumi, imc.lumi_scaling])
+        histo_loose.fill_array(mc_df_loose[variable], weights=weights)
 
         histo_loose.fillstyle = 'solid'
         histo_loose.fillcolor = 'skyblue'
@@ -132,7 +143,8 @@ for ivar in variables:
             isig_df_tight = isig.df_tight
 
         histo_tight = Hist(bins, title=isig.label, markersize=0, legendstyle='L', name=isig.datacard_name)
-        histo_tight.fill_array(isig_df_tight[variable], weights=lumi * isig_df_tight.weight * isig.lumi_scaling * isig_df_tight.lhe_weight)
+        weights = total_weight_calculator(isig_df_tight, ['weight', 'lhe_weight']+isig.extra_signal_weights, [lumi, isig.lumi_scaling])
+        histo_tight.fill_array(isig_df_tight[variable], weights=weights)
         histo_tight.color     = isig.colour
         histo_tight.fillstyle = 'hollow'
         histo_tight.linewidth = 2
@@ -202,7 +214,9 @@ for ivar in variables:
     # plot with ROOT, linear and log scale
     for islogy in [False, True]:
     
-        things_to_plot = [stack, hist_error, all_obs_prompt]
+        things_to_plot = [stack, hist_error]
+        if not blinded: 
+            things_to_plot.append(all_obs_prompt)
         
         # plot signals, as an option
         if plot_signals: 
@@ -242,7 +256,11 @@ for ivar in variables:
             ithing.yaxis.set_ndivisions(405)
             ithing.yaxis.set_title_offset(0.4)
             
-        draw([ratio_exp_error, ratio_data], xtitle=xlabel, ytitle='obs/exp', pad=ratio_pad, logy=False, ylimits=(0.5, 1.5))
+        things_to_plot = [ratio_exp_error]
+        if not blinded: 
+            things_to_plot.append(ratio_data)
+
+        draw(things_to_plot, xtitle=xlabel, ytitle='obs/exp', pad=ratio_pad, logy=False, ylimits=(0.5, 1.5))
 
         line = ROOT.TLine(min(bins), 1., max(bins), 1.)
         line.SetLineColor(ROOT.kBlack)
@@ -268,9 +286,7 @@ for ivar in variables:
     # save a ROOT file with histograms, aka datacard
     outfile = ROOT.TFile.Open('datacard_%s.root' %label, 'recreate')
     outfile.cd()
-#     outfile.mkdir(label)
-#     outfile.cd(label)
-    
+
     # data in tight
     all_obs_prompt.name = 'data_obs'
     all_obs_prompt.Write()
