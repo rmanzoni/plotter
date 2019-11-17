@@ -38,13 +38,29 @@ from keras.optimizers import SGD, Adam
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, roc_auc_score
        
+from getpass import getuser as user
+
+from selections import Selections
+
 # fix random seed for reproducibility (FIXME! not really used by Keras)
 np.random.seed(1986)
 
 # luminosity
 lumi = 59700.
 
+channel = 'eee'
+
+base_dir = None; out_dir = None
+if user() =='manzoni':      
+    base_dir = '/Users/manzoni/Documents/efficiencyNN/HNL/%s/ntuples/'%channel
+    out_dir  = '' 
+if user() =='cesareborgia': 
+    base_dir = '/Users/cesareborgia/cernbox/ntuples/2018/%s/'%channel
+    out_dir  = '/Users/cesareborgia/Dropbox/HNL/plotter/NN/%s/'%channel
+assert base_dir; assert out_dir
+
 # define input features
+# TODO make this cfg'able
 features = [
     'l0_pt'              ,
 #     'l0_eta'             ,
@@ -88,8 +104,9 @@ branches = features + [
     'l0_dxy'             ,
     'l0_dz'              ,
     'l0_reliso_rho_03'   ,
-    'l0_id_t'            ,
-    'l0_id_m'            ,
+    # 'l0_id_t'            ,
+    # 'l0_id_m'            ,
+    'l0_eid_mva_iso_wp90 == 1' ,
 
     'l1_pt'              ,
     'l1_eta'             ,
@@ -97,7 +114,8 @@ branches = features + [
     'l1_dxy'             ,
     'l1_dz'              ,
     'l1_reliso_rho_03'   ,
-    'l1_Medium'          ,
+    # 'l1_Medium'          ,
+    'l1_MediumNoIso'          ,
 
     'l2_pt'              ,
     'l2_eta'             ,
@@ -105,7 +123,8 @@ branches = features + [
     'l2_dxy'             ,
     'l2_dz'              ,
     'l2_reliso_rho_03'   ,
-    'l2_Medium'          ,
+    # 'l2_Medium'          ,
+    'l2_MediumNoIso'     ,
 
     'hnl_q_12'           ,
     'hnl_dr_01'          ,
@@ -136,14 +155,21 @@ branches_mc = [
     'lhe_weight'           ,
 ]
 
+lep = None
+if   channel[0] == 'm': lep = 'mu'
+elif channel[0] == 'e': lep = 'ele'
+assert lep == 'ele' or lep == 'mu', 'ERROR: Lepton flavor.'
 filein = [
-    '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/Single_mu_2018A/HNLTreeProducer/tree.root',
-    '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/Single_mu_2018B/HNLTreeProducer/tree.root',
-    '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/Single_mu_2018C/HNLTreeProducer/tree.root',
-    '/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/Single_mu_2018D/HNLTreeProducer/tree.root',
+    base_dir + '/Single_{lep}_2018A/HNLTreeProducer/tree.root'.format(lep=lep),
+    base_dir + '/Single_{lep}_2018B/HNLTreeProducer/tree.root'.format(lep=lep),
+    base_dir + '/Single_{lep}_2018C/HNLTreeProducer/tree.root'.format(lep=lep),
+    base_dir + '/Single_{lep}_2018D/HNLTreeProducer/tree.root'.format(lep=lep),
 ]
 
-from selections import baseline, tight, ispromptlepton
+cuts           = Selections(channel)
+baseline       = cuts.selections['baseline']
+tight          = cuts.selections['tight']
+is_prompt_lepton = cuts.selections['is_prompt_lepton']
 
 # load dataset including all event, both passing and failing
 passing = pd.DataFrame( root2array(filein, 'tree', branches=branches, selection= baseline + ' &  (%s)' %tight) )
@@ -161,26 +187,26 @@ failing['ismc'] = 0
 
 # file, xsec, nevents (weighed, including negative weights! FIXME! missing)
 mcs = [
-#     ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/WGamma/HNLTreeProducer/tree.root'            ,  405.271,   6108186        ),
-#     ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/DYJetsToLL_M50_ext/HNLTreeProducer/tree.root', 6077.22 , 193215674 * 0.678),
-#     ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/TTJets_ext/HNLTreeProducer/tree.root'        ,  831.76 , 142155064 * 0.373),
+#     (base_dir + '/WGamma/HNLTreeProducer/tree.root'            ,  405.271,   6108186        ),
+#     (base_dir + '/DYJetsToLL_M50_ext/HNLTreeProducer/tree.root', 6077.22 , 193215674 * 0.678),
+#     (base_dir + '/TTJets_ext/HNLTreeProducer/tree.root'        ,  831.76 , 142155064 * 0.373),
 
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/DYJetsToLL_M50/HNLTreeProducer/tree.root'        ,  6077.22 , 676319.0   ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/DYJetsToLL_M50_ext/HNLTreeProducer/tree.root'    ,  6077.22 , 130939668.0),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/DYJetsToLL_M5to50/HNLTreeProducer/tree.root'     , 81880.0  , 9947344.0  ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/ST_sch_lep/HNLTreeProducer/tree.root'            ,     3.68 , 12447484.0 ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/ST_tW_inc/HNLTreeProducer/tree.root'             ,    35.6  , 9553912.0  ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/ST_tch_inc/HNLTreeProducer/tree.root'            ,    44.07 , 144094782.0),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/STbar_tW_inc/HNLTreeProducer/tree.root'          ,    35.6  , 7588180.0  ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/STbar_tch_inc/HNLTreeProducer/tree.root'         ,    26.23 , 74227130.0 ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/TTJets/HNLTreeProducer/tree.root'                ,   831.76 , 10234409.0 ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/TTJets_ext/HNLTreeProducer/tree.root'            ,   831.76 , 53887126.0 ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/WJetsToLNu/HNLTreeProducer/tree.root'            , 59850.76 , 70966439.0 ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/WW/HNLTreeProducer/tree.root'                    ,    75.88 , 7850000.0  ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/WZ/HNLTreeProducer/tree.root'                    ,    27.6  , 3885000.0  ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/ZZ/HNLTreeProducer/tree.root'                    ,    12.14 , 1979000.0  ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/WGamma/HNLTreeProducer/tree.root'                ,  405.271 ,  6108058.0 ),
-    ('/Users/manzoni/Documents/efficiencyNN/HNL/mmm/ntuples/ZGamma/HNLTreeProducer/tree.root'                ,  123.9   ,  8816038.0 ),
+    (base_dir + '/DYJetsToLL_M50/HNLTreeProducer/tree.root'        ,  6077.22 , 676319.0   ),
+    (base_dir + '/DYJetsToLL_M50_ext/HNLTreeProducer/tree.root'    ,  6077.22 , 130939668.0),
+    (base_dir + '/DYJetsToLL_M5to50/HNLTreeProducer/tree.root'     , 81880.0  , 9947344.0  ),
+    (base_dir + '/ST_sch_lep/HNLTreeProducer/tree.root'            ,     3.68 , 12447484.0 ),
+    (base_dir + '/ST_tW_inc/HNLTreeProducer/tree.root'             ,    35.6  , 9553912.0  ),
+    (base_dir + '/ST_tch_inc/HNLTreeProducer/tree.root'            ,    44.07 , 144094782.0),
+    (base_dir + '/STbar_tW_inc/HNLTreeProducer/tree.root'          ,    35.6  , 7588180.0  ),
+    (base_dir + '/STbar_tch_inc/HNLTreeProducer/tree.root'         ,    26.23 , 74227130.0 ),
+    (base_dir + '/TTJets/HNLTreeProducer/tree.root'                ,   831.76 , 10234409.0 ),
+    (base_dir + '/TTJets_ext/HNLTreeProducer/tree.root'            ,   831.76 , 53887126.0 ),
+    (base_dir + '/WJetsToLNu/HNLTreeProducer/tree.root'            , 59850.76 , 70966439.0 ),
+    (base_dir + '/WW/HNLTreeProducer/tree.root'                    ,    75.88 , 7850000.0  ),
+    (base_dir + '/WZ/HNLTreeProducer/tree.root'                    ,    27.6  , 3885000.0  ),
+    (base_dir + '/ZZ/HNLTreeProducer/tree.root'                    ,    12.14 , 1979000.0  ),
+    (base_dir + '/WGamma/HNLTreeProducer/tree.root'                ,  405.271 ,  6108058.0 ),
+    (base_dir + '/ZGamma/HNLTreeProducer/tree.root'                ,  123.9   ,  8816038.0 ),
 ]
 
 passing_mcs = OrderedDict()
@@ -190,8 +216,8 @@ for i, imc in enumerate(mcs):
     
     key = imc[0].split('/')[8]
     
-    passing_mcs[imc[0].split('/')[8]] = pd.DataFrame( root2array(imc[0], 'tree', branches=branches+branches_mc, selection= baseline + ' &  (%s) & (%s)' %(tight, ispromptlepton) ) )
-    failing_mcs[imc[0].split('/')[8]] = pd.DataFrame( root2array(imc[0], 'tree', branches=branches+branches_mc, selection= baseline + ' & !(%s) & (%s)' %(tight, ispromptlepton) ) )
+    passing_mcs[imc[0].split('/')[8]] = pd.DataFrame( root2array(imc[0], 'tree', branches=branches+branches_mc, selection= baseline + ' &  (%s) & (%s)' %(tight, is_prompt_lepton) ) )
+    failing_mcs[imc[0].split('/')[8]] = pd.DataFrame( root2array(imc[0], 'tree', branches=branches+branches_mc, selection= baseline + ' & !(%s) & (%s)' %(tight, is_prompt_lepton) ) )
     
     # weight by luminosityand notice minus sign (prompt MC subtraction)
     passing_mcs[key]['weight'] = -1. * lumi * imc[1] / imc[2] * passing_mcs[key]['lhe_weight']
@@ -308,7 +334,7 @@ print(model.summary())
 
 # plot the models
 # https://keras.io/visualization/
-plot_model(model, show_shapes=True, show_layer_names=True, to_file='model.png')
+plot_model(model, show_shapes=True, show_layer_names=True, to_file=out_dir+'model.png')
 
 # normalize inputs FIXME! do it, but do it wisely
 # https://scikit-learn.org/stable/auto_examples/preprocessing/plot_all_scaling.html#sphx-glr-auto-examples-preprocessing-plot-all-scaling-py
@@ -333,10 +359,10 @@ qt.fit(X[features])
 xx = qt.transform(X[features])
 
 # save the frozen transformer
-pickle.dump( qt, open( 'input_tranformation_weighted.pck', 'wb' ) )
+pickle.dump( qt, open( out_dir + 'input_tranformation_weighted.pck', 'wb' ) )
 
 # save the exact list of features
-pickle.dump( features, open( 'input_features.pck', 'wb' ) )
+pickle.dump( features, open( out_dir + 'input_features.pck', 'wb' ) )
 
 # early stopping
 # monitor = 'val_acc'
@@ -348,7 +374,7 @@ es = EarlyStopping(monitor=monitor, mode='auto', verbose=1, patience=50, restore
 reduce_lr = ReduceLROnPlateau(monitor=monitor, mode='auto', factor=0.2, patience=5, min_lr=0.00001, cooldown=10, verbose=True)
 
 # save the model every now and then
-filepath = 'saved-model-{epoch:04d}_val_loss_{val_loss:.4f}_val_acc_{val_acc:.4f}.h5'
+filepath = out_dir + 'saved-model-{epoch:04d}_val_loss_{val_loss:.4f}_val_acc_{val_acc:.4f}.h5'
 save_model = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
 # weight the events according to their displacement (favour high displacement)
@@ -369,7 +395,7 @@ plt.legend()
 center = min(history.history['val_loss'] + history.history['loss'])
 plt.ylim((center*0.98, center*1.5))
 plt.grid(True)
-plt.savefig('loss_function_history_weighted.pdf')
+plt.savefig(out_dir + 'loss_function_history_weighted.pdf')
 plt.clf()
 
 # plot accuracy trends for train and validation sample
@@ -381,7 +407,7 @@ center = max(history.history['val_acc'] +  history.history['acc'])
 plt.ylim((center*0.85, center*1.02))
 # plt.yscale('log')
 plt.grid(True)
-plt.savefig('accuracy_history_weighted.pdf')
+plt.savefig(out_dir + 'accuracy_history_weighted.pdf')
 plt.clf()
 
 # plot accuracy trends for train and validation sample
@@ -393,7 +419,7 @@ center = min(history.history['val_mae'] + history.history['mae'])
 plt.ylim((center*0.98, center*1.5))
 # plt.yscale('log')
 plt.grid(True)
-plt.savefig('mean_absolute_error_history_weighted.pdf')
+plt.savefig(out_dir + 'mean_absolute_error_history_weighted.pdf')
 plt.clf()
 
 # calculate predictions on the data sample
@@ -401,7 +427,7 @@ print('predicting on', data.shape[0], 'events')
 x = pd.DataFrame(data, columns=features)
 # y = model.predict(x)
 # load the transformation with the correct parameters!
-qt = pickle.load(open( 'input_tranformation_weighted.pck', 'rb' ))
+qt = pickle.load(open( out_dir + 'input_tranformation_weighted.pck', 'rb' ))
 xx = qt.transform(x[features])
 y = model.predict(xx)
 
@@ -419,10 +445,10 @@ plt.plot(fpr, tpr)
 xy = [i*j for i,j in product([10.**i for i in range(-8, 0)], [1,2,4,8])]+[1]
 plt.plot(xy, xy, color='grey', linestyle='--')
 plt.yscale('linear')
-plt.savefig('roc_weighted.pdf')
+plt.savefig(out_dir + 'roc_weighted.pdf')
 
 # save model and weights
-model.save('net_model_weighted.h5')
+model.save(out_dir + 'net_model_weighted.h5')
 # model.save_weights('net_model_weights.h5')
 
 # rename branches, if you want
@@ -432,5 +458,5 @@ model.save('net_model_weighted.h5')
 #     inplace=True)
 
 # save ntuple
-data.to_root('output_ntuple_weighted.root', key='tree', store_index=False)
+data.to_root(out_dir + 'output_ntuple_weighted.root', key='tree', store_index=False)
 

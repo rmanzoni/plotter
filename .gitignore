@@ -1,0 +1,12 @@
+*.pyc
+*.txt
+*.DS_Store
+
+plots/
+*.swp
+*.pdf
+*.png
+*.root
+*val_acc*.h5
+
+
