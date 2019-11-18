@@ -4,6 +4,7 @@ import ROOT
 import root_pandas
 import numpy as np
 import pandas as pd
+from os import makedirs
 from time import time
 from collections import OrderedDict
 from evaluate_nn import Evaluator
@@ -44,7 +45,8 @@ class Plotter(object):
                  lumi           ,
                  model          , 
                  transformation ,
-                 features       , 
+                 features       ,
+                 process_signals, 
                  plot_signals   ,
                  blinded        ,):
 
@@ -57,8 +59,9 @@ class Plotter(object):
         self.lumi            = lumi
         self.model           = model          
         self.transformation  = transformation 
-        self.features        = features       
-        self.plot_signals    = plot_signals 
+        self.features        = features   
+        self.process_signals = process_signals    
+        self.plot_signals    = plot_signals if self.process_signals else []
         self.blinded         = blinded      
         self.selection_lnt   = 'not (%s)' %self.selection_tight
 
@@ -71,10 +74,14 @@ class Plotter(object):
         print('============> starting reading the trees')
         print ('Plots will be stored in: ', plt_dir)
         now = time()
-        # signal = get_signal_samples(self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_data)  
-        signal = get_signal_samples(self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', self.selection_data)
-        data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', self.selection_data)
-        mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_mc)
+        signal = []
+        if self.process_signals:
+            signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
+        else:
+            signal = []        
+        data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
+        mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_mc)
         print('============> it took %.2f seconds' %(time() - now))
 
         # evaluate FR
@@ -140,8 +147,8 @@ class Plotter(object):
                 stack_prompt.append(histo_tight)
 
                 histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
-                weights = total_weight_calculator(mc_df_loose, ['weight', 'lhe_weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
-                histo_lnt.fill_array(mc_df_loose[variable], weights=weights)
+                weights = total_weight_calculator(mc_df_lnt, ['weight', 'lhe_weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
+                histo_lnt.fill_array(mc_df_lnt[variable], weights=weights)
 
                 histo_lnt.fillstyle = 'solid'
                 histo_lnt.fillcolor = 'skyblue'
@@ -236,8 +243,7 @@ class Plotter(object):
             for islogy in [False, True]:
 
                 things_to_plot = [stack, hist_error]
-                # FIXME! make 'blinded' configurabòe
-                if not blinded: 
+                if not self.blinded: 
                     things_to_plot.append(all_obs_prompt)
                 #things_to_plot = [stack, hist_error, all_obs_prompt]
                 
@@ -280,11 +286,10 @@ class Plotter(object):
                     ithing.yaxis.set_title_offset(0.4)
                     
                 things_to_plot = [ratio_exp_error]
-                # FIXME! make 'blinded' configurabòe
-                if not blinded: 
+                if not self.blinded: 
                     things_to_plot.append(ratio_data)
 
-                draw([ratio_exp_error, ratio_data], xtitle=xlabel, ytitle='obs/exp', pad=ratio_pad, logy=False, ylimits=(0.5, 1.5))
+                draw(things_to_plot, xtitle=xlabel, ytitle='obs/exp', pad=ratio_pad, logy=False, ylimits=(0.5, 1.5))
 
                 line = ROOT.TLine(min(bins), 1., max(bins), 1.)
                 line.SetLineColor(ROOT.kBlack)
@@ -314,7 +319,9 @@ class Plotter(object):
 
 
             # save a ROOT file with histograms, aka datacard
-            outfile = ROOT.TFile.Open(plt_dir + 'datacard_%s.root' %label, 'recreate')
+            datacard_dir = '/'.join([plt_dir, 'datacards'])
+            makedirs(datacard_dir, exist_ok=True)
+            outfile = ROOT.TFile.Open('/'.join([datacard_dir, 'datacard_%s.root' %label]), 'recreate')
             outfile.cd()
             
             # data in tight
@@ -342,7 +349,7 @@ class Plotter(object):
                 isig.Write()
 
                 # print out the txt datacard
-                with open(plt_dir + 'datacard_%s_%s.txt' %(label, isig.name) , 'w') as card:
+                with open('/'.join([datacard_dir, 'datacard_%s_%s.txt' %(label, isig.name)]), 'w') as card:
                     card.write(
 '''
 imax 1 number of bins
