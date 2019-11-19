@@ -25,7 +25,7 @@ class Selections(object):
                                                     'l2_Medium == 1'     ,])
 
         if self.channel == 'eem':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 25'               ,
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'               ,
                                                     'l2_pt > 5'                ,
                                                     'l1_pt > 5'                ,
                                                     'l0_eid_mva_iso_wp90 == 1' ,
@@ -33,7 +33,7 @@ class Selections(object):
                                                     'l2_Medium == 1'           ,])
 
         if self.channel == 'eee':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 25'               ,
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'               ,
                                                     'l2_pt > 5'                ,
                                                     'l1_pt > 5'                ,
                                                     'l0_eid_mva_iso_wp90 == 1' ,
@@ -57,11 +57,10 @@ class Selections(object):
             'hnl_q_12 == 0'                            ,
 
             'nbj == 0'                                 ,
-            '(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)'  , # THIS IS IMPORTANT!
             'hnl_dr_12 < 1.'                           ,
 
             'hnl_m_12 < 12'                            ,
-            'sv_cos > 0.'                              ,
+            'sv_cos > 0.9'                              ,
             
             'abs(hnl_dphi_01)>1'                       ,
             'abs(hnl_dphi_02)>1.'                      , # dphi a la facon belgique
@@ -70,6 +69,9 @@ class Selections(object):
             'abs(l2_dxy) > 0.01'                       ,
             ])
 
+        self.selections['sideband'] = '!(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' # THIS IS IMPORTANT!
+
+        self.selections['signal_region'] = '(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' # THIS IS IMPORTANT!
 
         self.selections['vetoes_12_OS'] = ' & '.join([
             # vetoes 12 (always OS anyways)
@@ -131,7 +133,7 @@ class Selections(object):
             'hnl_q_01==0'                              ,
             ])
 
-# convert to pandas readable queries
+        # convert to pandas readable queries
         self.selections_pd = OrderedDict()
         for k, v in self.selections.items():
             vv = v.replace('&', 'and').replace('|', 'or').replace('!', 'not') 

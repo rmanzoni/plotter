@@ -1,21 +1,20 @@
-from utils import set_paths
-from nn.nn_trainer import Trainer
-from selections import Selections
+from NN.nn_trainer import Trainer
+from plotter.selections import Selections
+from plotter.utils import set_paths
 from os import environ as env
 
-ch = 'eee'
+ch = 'mem'
 set_paths(ch, 2018)
 cuts = Selections(ch)
 
 selection = [ 
     cuts.selections['pt_iso'], 
-    cuts.selections['baseline'], 
-    cuts.selections['vetoes_12_OS'], 
-    cuts.selections['vetoes_01_OS'], 
+    cuts.selections['baseline'],
     cuts.selections['vetoes_02_OS'],
+    cuts.selections['sideband'], 
 ]
 
-trainer = Trainer (channel         = ch,
+trainer = Trainer (channel         = ch+'_os',
                    base_dir        = env['NTUPLE_DIR'],
                    #post_fix        = 'HNLTreeProducer_%s/tree.root' %ch,
                    post_fix        = 'HNLTreeProducer/tree.root',
@@ -37,3 +36,4 @@ trainer = Trainer (channel         = ch,
 
 if __name__ == '__main__':
     trainer.train()
+    pass

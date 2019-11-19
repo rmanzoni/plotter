@@ -14,7 +14,6 @@ selection = [
     cuts.selections['baseline'],
     cuts.selections['sideband'], 
     cuts.selections['vetoes_01_OS'],
-    'l0_q!=l1_q', 
 ]
 
 composed_features = OrderedDict()
@@ -24,9 +23,9 @@ composed_features['abs_l1_eta'    ] = lambda df : np.abs(df.l1_eta)
 composed_features['abs_l2_eta'    ] = lambda df : np.abs(df.l2_eta)
 # composed_features['log_abs_l0_dxy'] = lambda df : np.log10(np.abs(df.l0_dxy))
 # composed_features['log_abs_l0_dz' ] = lambda df : np.log10(np.abs(df.l0_dz ))
-composed_features['log_abs_l1_dxy'] = lambda df : np.log10(np.abs(df.l1_dxy))
+# composed_features['log_abs_l1_dxy'] = lambda df : np.log10(np.abs(df.l1_dxy))
 composed_features['log_abs_l1_dz' ] = lambda df : np.log10(np.abs(df.l1_dz ))
-composed_features['log_abs_l2_dxy'] = lambda df : np.log10(np.abs(df.l2_dxy))
+# composed_features['log_abs_l2_dxy'] = lambda df : np.log10(np.abs(df.l2_dxy))
 composed_features['log_abs_l2_dz' ] = lambda df : np.log10(np.abs(df.l2_dz ))
 composed_features['abs_q_01'      ] = lambda df : np.abs(df.hnl_q_01)
 

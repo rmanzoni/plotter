@@ -169,11 +169,17 @@ norm_sig_{cat}                          lnN             1.2                     
         now = time()
         signal = []
         if self.process_signals:
+        # FIXME!
             signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
+#             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_mem/tree.root', self.selection_data)
         else:
             signal = []        
         data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
-        mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
+        # FIXME!
+#         mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
+        mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eem/tree.root', self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mem/tree.root', self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eee/tree.root', self.selection_mc)
         print('============> it took %.2f seconds' %(time() - now))
 
         # evaluate FR
@@ -251,9 +257,6 @@ norm_sig_{cat}                          lnN             1.2                     
 
                 histo_tight = Hist(bins, title=isig.label, markersize=0, legendstyle='L', name=isig.datacard_name+'#'+label) # the "#" thing is a trick to give hists unique name, else ROOT complains
                 weights = self.total_weight_calculator(isig_df_tight, ['weight', 'lhe_weight']+isig.extra_signal_weights, [self.lumi, isig.lumi_scaling])
-#                 if isig.datacard_name in ['hnl_m_2_v2_1p2Em04_majorana', 'hnl_m_5_v2_2p1Em06_majorana', 'hnl_m_10_v2_1p0Em06_majorana']:
-#                     print(isig.datacard_name, len(isig_df_tight[variable]), np.average(weights), isig.lumi_scaling)
-#                     import pdb ; pdb.set_trace()
                 histo_tight.fill_array(isig_df_tight[variable], weights=weights)
                 histo_tight.color     = isig.colour
                 histo_tight.fillstyle = 'hollow'
@@ -400,7 +403,7 @@ norm_sig_{cat}                          lnN             1.2                     
                 CMS_lumi(self.main_pad, 4, 0)
                 self.canvas.Modified()
                 self.canvas.Update()
-                self.canvas.SaveAs(self.plt_dir + '%s%s.pdf' %(label, islogy*'_log'))
+                self.canvas.SaveAs(self.plt_dir + '%s%s.pdf' %(label, '_log' if islogy else '_lin'))
                 
 #                 del self.main_pad ; del self.ratio_pad ; del self.canvas # stupid ROOT
 

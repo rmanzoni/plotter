@@ -18,6 +18,7 @@ class Evaluator(object):
         self.features = pickle.load(open(features, 'rb'))
 
     def _prepare_df(self, df):
+        # FIXME! add features that we know are useful by hand. Should be automatised...
         df['abs_l0_dxy'] = np.abs(df.l0_dxy)
         df['abs_l0_dz' ] = np.abs(df.l0_dz )
         df['abs_l0_eta'] = np.abs(df.l0_eta)
@@ -34,6 +35,10 @@ class Evaluator(object):
         df['log_abs_l1_dz' ] = np.log10(np.abs(df.l1_dz ))
         df['log_abs_l2_dxy'] = np.log10(np.abs(df.l2_dxy))
         df['log_abs_l2_dz' ] = np.log10(np.abs(df.l2_dz ))
+        
+        df['abs_q_01' ] = np.abs(df.hnl_q_02)
+        df['abs_q_02' ] = np.abs(df.hnl_q_02)
+        df['abs_q_12' ] = np.abs(df.hnl_q_02)
 
         return df
 

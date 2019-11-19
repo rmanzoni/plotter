@@ -1,6 +1,8 @@
-from utils import set_paths
-from nn.nn_trainer import Trainer
-from selections import Selections
+import numpy as np
+from NN.nn_trainer import Trainer
+from plotter.selections import Selections
+from plotter.utils import set_paths
+from collections import OrderedDict
 from os import environ as env
 
 ch = 'eee'
@@ -13,7 +15,20 @@ selection = [
     cuts.selections['vetoes_12_OS'], 
     cuts.selections['vetoes_01_OS'], 
     cuts.selections['vetoes_02_OS'],
+    cuts.selections['sideband'], 
 ]
+
+composed_features = OrderedDict()
+
+composed_features['abs_l0_eta'    ] = lambda df : np.abs(df.l0_eta)
+composed_features['abs_l1_eta'    ] = lambda df : np.abs(df.l1_eta)
+composed_features['abs_l2_eta'    ] = lambda df : np.abs(df.l2_eta)
+composed_features['log_abs_l0_dxy'] = lambda df : np.log10(np.abs(df.l0_dxy))
+composed_features['log_abs_l0_dz' ] = lambda df : np.log10(np.abs(df.l0_dz ))
+composed_features['log_abs_l1_dxy'] = lambda df : np.log10(np.abs(df.l1_dxy))
+composed_features['log_abs_l1_dz' ] = lambda df : np.log10(np.abs(df.l1_dz ))
+composed_features['log_abs_l2_dxy'] = lambda df : np.log10(np.abs(df.l2_dxy))
+composed_features['log_abs_l2_dz' ] = lambda df : np.log10(np.abs(df.l2_dz ))
 
 trainer = Trainer (channel         = ch,
                    base_dir        = env['NTUPLE_DIR'],
@@ -27,7 +42,9 @@ trainer = Trainer (channel         = ch,
                                       'hnl_m_12'           ,
                                       'sv_prob'            ,
                                       'hnl_2d_disp'        ,],
-                                      
+                   
+                   composed_features = composed_features,
+                   
                    selection_data  = selection,
                    selection_mc    = selection + [cuts.selections['is_prompt_lepton']],
 
