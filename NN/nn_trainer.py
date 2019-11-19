@@ -12,7 +12,6 @@ https://ml-cheatsheet.readthedocs.io/en/latest/loss_functions.html
 https://stackoverflow.com/questions/39691902/ordering-of-batch-normalization-and-dropout
 https://stats.stackexchange.com/questions/292278/can-one-theoretically-train-a-neural-network-with-fewer-training-samples-than
 '''
-
 import root_pandas
 
 from time import time 
@@ -64,20 +63,26 @@ class Trainer(object):
         self.features        = features 
         self.base_dir        = base_dir 
         self.post_fix        = post_fix 
-        self.selection_data  = selection_data
-        self.selection_mc    = selection_mc
-        self.selection_tight = selection_tight 
+        self.selection_data  = ' & '.join(selection_data)
+        self.selection_mc    = ' & '.join(selection_mc)
+        self.selection_tight = selection_tight
         self.selection_lnt   = 'not (%s)' %self.selection_tight
         self.lumi            = lumi
 
     def train(self):
 
-        net_dir = nn_dir()
+        net_dir = nn_dir(self.channel)
         print('============> starting reading the trees')
         print ('Net will be stored in: ', net_dir)
         now = time()
-        data   = get_data_samples  (self.channel, self.base_dir+'%s/'%self.channel, 'HNLTreeProducer/tree.root', self.selection_data)
-        mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_mc)
+        data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
+        #mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
+        # FIXME! temporary hack
+        mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eee/tree.root', self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mmm/tree.root', self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mem/tree.root', self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eem/tree.root', self.selection_mc)
+
         print('============> it took %.2f seconds' %(time() - now))
 
         data_df = pd.concat([idt.df for idt in data])

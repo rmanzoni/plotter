@@ -9,7 +9,7 @@ set_paths(ch)
 cuts = Selections(ch)
 
 trainer = Trainer (channel         = ch,
-                   base_dir        = env['BASE_DIR'],
+                   base_dir        = env['NTUPLE_DIR'],
                    post_fix        = 'HNLTreeProducer_%s/tree.root' %ch,
 
                    features        = ['l0_pt'              ,
