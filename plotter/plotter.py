@@ -48,14 +48,16 @@ class Plotter(object):
                  features       ,
                  process_signals, 
                  plot_signals   ,
-                 blinded        ,):
+                 blinded        ,
+                 do_ratio=True):
 
-        self.channel         = channel 
+        self.channel         = channel.split('_')[0]
+        self.full_channel    = channel
         self.base_dir        = base_dir 
         self.post_fix        = post_fix 
-        self.selection_data  = selection_data
-        self.selection_mc    = selection_mc
-        self.selection_tight = selection_tight 
+        self.selection_data  = ' & '.join(selection_data)
+        self.selection_mc    = ' & '.join(selection_mc)
+        self.selection_tight = selection_tight
         self.lumi            = lumi
         self.model           = model          
         self.transformation  = transformation 
@@ -64,15 +66,105 @@ class Plotter(object):
         self.plot_signals    = plot_signals if self.process_signals else []
         self.blinded         = blinded      
         self.selection_lnt   = 'not (%s)' %self.selection_tight
+        self.do_ratio        = do_ratio
+
+    def create_canvas(self, ratio=True):
+        if ratio:
+            self.canvas = Canvas(width=700, height=700) ; self.canvas.Draw()
+            self.canvas.cd() ; self.main_pad  = Pad(0., 0.25, 1., 1.  ) ; self.main_pad .Draw()
+            self.canvas.cd() ; self.ratio_pad = Pad(0., 0.  , 1., 0.25) ; self.ratio_pad.Draw()
+
+            self.main_pad.SetTicks(True)
+            self.main_pad.SetBottomMargin(0.)
+            self.main_pad.SetLeftMargin(0.15)
+            self.main_pad.SetRightMargin(0.15)
+            self.ratio_pad.SetLeftMargin(0.15)
+            self.ratio_pad.SetRightMargin(0.15)
+            self.ratio_pad.SetTopMargin(0.)   
+            self.ratio_pad.SetGridy()
+            self.ratio_pad.SetBottomMargin(0.3)
+        
+        else:
+            self.canvas = Canvas(width=700, height=700) ; self.canvas.Draw()
+            self.canvas.cd() ; self.main_pad  = Pad(0. , 0. , 1., 1.  ) ; self.main_pad .Draw()
+            self.canvas.cd() ; self.ratio_pad = Pad(-1., -1., -.9, -.9) ; self.ratio_pad.Draw() # put it outside the canvas
+            self.main_pad.SetTicks(True)
+            self.main_pad.SetTopMargin(0.15)
+            self.main_pad.SetBottomMargin(0.15)
+            self.main_pad.SetLeftMargin(0.15)
+            self.main_pad.SetRightMargin(0.15)
+
+    def create_datacards(self, data, bkgs, signals, label):  
+        '''
+        FIXME! For now this is specific to the data-driven case
+        '''  
+        # save a ROOT file with histograms, aka datacard
+        datacard_dir = '/'.join([self.plt_dir, 'datacards'])
+        makedirs(datacard_dir, exist_ok=True)
+        outfile = ROOT.TFile.Open('/'.join([datacard_dir, 'datacard_%s.root' %label]), 'recreate')
+        outfile.cd()
+        
+        # data in tight
+        data.name = 'data_obs'
+        data.Write()
+        
+        # reads off a dictionary
+        for bkg_name, bkg in bkgs.items():
+            bkg.name = bkg_name
+            bkg.drawstyle = 'HIST E'
+            bkg.color = 'black'
+            bkg.linewidth = 2
+            bkg.Write()
+
+        # signals
+        for isig in signals:
+            isig.drawstyle = 'HIST E'
+            isig.color = 'black'
+            isig.Write()
+
+            # print out the txt datacard
+            with open('/'.join([datacard_dir, 'datacard_%s_%s.txt' %(label, isig.name)]), 'w') as card:
+                card.write(
+'''
+imax 1 number of bins
+jmax * number of processes minus 1
+kmax * number of nuisance parameters
+--------------------------------------------------------------------------------------------------------------------------------------------
+shapes *    {cat} datacard_{cat}.root $PROCESS $PROCESS_$SYSTEMATIC
+--------------------------------------------------------------------------------------------------------------------------------------------
+bin               {cat}
+observation       {obs:d}
+--------------------------------------------------------------------------------------------------------------------------------------------
+bin                                                     {cat}                          {cat}                            {cat}
+process                                                 {signal_name}                  nonprompt                        prompt
+process                                                 0                              1                                2
+rate                                                    {signal:.4f}                   {nonprompt:.4f}                  {prompt:.4f}
+--------------------------------------------------------------------------------------------------------------------------------------------
+lumi                                    lnN             1.025                          -                                -   
+norm_prompt_{cat}                       lnN             -                              -                                1.15   
+norm_nonprompt_{cat}                    lnN             -                              1.20                             -   
+norm_sig_{cat}                          lnN             1.2                            -                                -   
+--------------------------------------------------------------------------------------------------------------------------------------------
+{cat} autoMCStats 0 0 1
+'''.format(cat         = label,
+           obs         = all_obs_prompt.integral() if self.blinded==False else -1,
+           signal_name = isig.name,
+           signal      = isig.integral(),
+           prompt      = bkgs['prompt'].integral(),
+           nonprompt   = bkgs['nonprompt'].integral(),
+           )
+        )
+
+        outfile.Close()
 
     def plot(self):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
-        plt_dir = plot_dir()
+        self.plt_dir = plot_dir()
         # NN evaluator
 
         print('============> starting reading the trees')
-        print ('Plots will be stored in: ', plt_dir)
+        print ('Plots will be stored in: ', self.plt_dir)
         now = time()
         signal = []
         if self.process_signals:
@@ -81,7 +173,6 @@ class Plotter(object):
             signal = []        
         data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
         mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
-#         mc     = get_mc_samples    (self.channel, self.base_dir+'all_channels/', self.post_fix, self.selection_mc)
         print('============> it took %.2f seconds' %(time() - now))
 
         # evaluate FR
@@ -99,21 +190,8 @@ class Plotter(object):
         mc.sort(key = lambda x : x.position_in_stack)
 
         # now we plot 
-        # FIXME! move this to some accessory file
-        canvas = Canvas(width=700, height=700) ; canvas.Draw()
-        canvas.cd() ; main_pad  = Pad(0., 0.25, 1., 1.  ) ; main_pad .Draw()
-        canvas.cd() ; ratio_pad = Pad(0., 0.  , 1., 0.25) ; ratio_pad.Draw()
-
-        main_pad.SetTicks(True)
-        main_pad.SetBottomMargin(0.)
-        main_pad.SetLeftMargin(0.15)
-        main_pad.SetRightMargin(0.15)
-        ratio_pad.SetLeftMargin(0.15)
-        ratio_pad.SetRightMargin(0.15)
-        ratio_pad.SetTopMargin(0.)   
-        ratio_pad.SetGridy()
-        ratio_pad.SetBottomMargin(0.3)
-
+        self.create_canvas(self.do_ratio)
+        
         for ivar in variables:
             
             variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
@@ -233,9 +311,9 @@ class Plotter(object):
 
             # prepare the legend
             if len(signals_to_plot):
-                legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=main_pad, leftmargin=0.28, rightmargin=0.3, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
+                legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=self.main_pad, leftmargin=0.28, rightmargin=0.3, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
             else:
-                legend = Legend([all_obs_prompt, stack, hist_error], pad=main_pad, leftmargin=0.33, rightmargin=0.1, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.012, entryheight=0.06)
+                legend = Legend([all_obs_prompt, stack, hist_error], pad=self.main_pad, leftmargin=0.33, rightmargin=0.1, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.012, entryheight=0.06)
             legend.SetBorderSize(0)
             legend.SetFillColor(0)
 
@@ -257,7 +335,7 @@ class Plotter(object):
                 for ithing in things_to_plot:
                     ithing.SetMaximum(yaxis_max)   
                             
-                draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=main_pad, logy=islogy)
+                draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy)
 
                 # expectation uncertainty in the ratio pad
                 ratio_exp_error = Hist(bins)
@@ -289,21 +367,23 @@ class Plotter(object):
                 if not self.blinded: 
                     things_to_plot.append(ratio_data)
 
-                draw(things_to_plot, xtitle=xlabel, ytitle='obs/exp', pad=ratio_pad, logy=False, ylimits=(0.5, 1.5))
+                draw(things_to_plot, xtitle=xlabel, ytitle='obs/exp', pad=self.ratio_pad, logy=False, ylimits=(0.5, 1.5))
 
                 line = ROOT.TLine(min(bins), 1., max(bins), 1.)
                 line.SetLineColor(ROOT.kBlack)
                 line.SetLineWidth(1)
-                ratio_pad.cd()
+                self.ratio_pad.cd()
                 line.Draw('same')
 
-                canvas.cd()
+                self.canvas.cd()
 
                 # FIXME! add SS and OS channels
-                if   self.channel == 'mmm': channel = '\mu\mu\mu'
-                elif self.channel == 'mem': channel = '\mue\mu'
-                elif self.channel == 'eem': channel = 'ee\mu'
-                elif self.channel == 'eee': channel = 'eee'
+                if   self.full_channel == 'mmm': channel = '\mu\mu\mu'
+                elif self.full_channel == 'eee': channel = 'eee'
+                elif self.full_channel == 'mem_os': channel = '\mu^{\pm}\mu^{\mp}e'
+                elif self.full_channel == 'mem_ss': channel = '\mu^{\pm}\mu^{\pm}e'
+                elif self.full_channel == 'eem_os': channel = 'e^{\pm}e^{\mp}\mu'
+                elif self.full_channel == 'eem_ss': channel = 'e^{\pm}e^{\pm}\mu'
                 else: assert False, 'ERROR: Channel not valid.'
                 finalstate = ROOT.TLatex(0.7, 0.85, channel)
                 finalstate.SetTextFont(43)
@@ -312,73 +392,13 @@ class Plotter(object):
                 finalstate.Draw('same')
 
                 legend.Draw('same')
-                CMS_lumi(main_pad, 4, 0)
-                canvas.Modified()
-                canvas.Update()
-                canvas.SaveAs(plt_dir + '%s%s.pdf' %(label, islogy*'_log'))
+                CMS_lumi(self.main_pad, 4, 0)
+                self.canvas.Modified()
+                self.canvas.Update()
+                self.canvas.SaveAs(self.plt_dir + '%s%s.pdf' %(label, islogy*'_log'))
 
 
-            # save a ROOT file with histograms, aka datacard
-            datacard_dir = '/'.join([plt_dir, 'datacards'])
-            makedirs(datacard_dir, exist_ok=True)
-            outfile = ROOT.TFile.Open('/'.join([datacard_dir, 'datacard_%s.root' %label]), 'recreate')
-            outfile.cd()
-            
-            # data in tight
-            all_obs_prompt.name = 'data_obs'
-            all_obs_prompt.Write()
-            
-            # non prompt backgrounds in tight
-            all_exp_nonprompt.name = 'nonprompt'
-            all_exp_nonprompt.drawstyle = 'HIST E'
-            all_exp_nonprompt.color = 'black'
-            all_exp_nonprompt.linewidth = 2
-            all_exp_nonprompt.Write()
-
-            # prompt backgrounds in tight
-            all_exp_prompt.name = 'prompt'
-            all_exp_prompt.drawstyle = 'HIST E'
-            all_exp_prompt.color = 'black'
-            all_exp_prompt.linewidth = 2
-            all_exp_prompt.Write()
-
-            # signals
-            for isig in all_signals:
-                isig.drawstyle = 'HIST E'
-                isig.color = 'black'
-                isig.Write()
-
-                # print out the txt datacard
-                with open('/'.join([datacard_dir, 'datacard_%s_%s.txt' %(label, isig.name)]), 'w') as card:
-                    card.write(
-'''
-imax 1 number of bins
-jmax * number of processes minus 1
-kmax * number of nuisance parameters
---------------------------------------------------------------------------------------------------------------------------------------------
-shapes *    {cat} datacard_{cat}.root $PROCESS $PROCESS_$SYSTEMATIC
---------------------------------------------------------------------------------------------------------------------------------------------
-bin               {cat}
-observation       {obs:d}
---------------------------------------------------------------------------------------------------------------------------------------------
-bin                                                     {cat}                          {cat}                            {cat}
-process                                                 {signal_name}                  nonprompt                        prompt
-process                                                 0                              1                                2
-rate                                                    {signal:.4f}                   {nonprompt:.4f}                  {prompt:.4f}
---------------------------------------------------------------------------------------------------------------------------------------------
-lumi                                    lnN             1.025                          -                                -   
-norm_prompt_{cat}                       lnN             -                              -                                1.15   
-norm_nonprompt_{cat}                    lnN             -                              1.20                             -   
-norm_sig_{cat}                          lnN             1.2                            -                                -   
---------------------------------------------------------------------------------------------------------------------------------------------
-{cat} autoMCStats 0 0 1
-'''.format(cat         = label,
-           obs         = all_obs_prompt.integral() if self.blinded==False else -1,
-           signal_name = isig.name,
-           signal      = isig.integral(),
-           prompt      = all_exp_prompt.integral(),
-           nonprompt   = all_exp_nonprompt.integral(),
-           )
-        )
-
-            outfile.Close()
+            self.create_datacards(data=all_obs_prompt, 
+                                  bkgs={'prompt':all_exp_prompt, 'nonprompt':all_exp_nonprompt}, 
+                                  signals=all_signals, 
+                                  label=label)  
