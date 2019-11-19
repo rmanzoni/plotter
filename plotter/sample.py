@@ -24,7 +24,7 @@ class Sample(object):
         self.name                 = name
         self.label                = label   
         self.selection            = selection         
-        self.datacard_name        = datacard_name ; print('loading', self.name, '\t', self.datacard_name)          
+        self.datacard_name        = datacard_name ; print('loading', self.name, '\t', self.datacard_name, end = '')        
         self.colour               = colour           
         self.position_in_stack    = position_in_stack
         self.basedir              = basedir          
@@ -49,7 +49,7 @@ class Sample(object):
                         break
         tree_file = '/'.join([self.basedir, self.name, self.postfix])
         
-        self.df = read_root( tree_file, 'tree', where=self.selection )
+        self.df = read_root( tree_file, 'tree', where=self.selection ); print('\tselected events', len(self.df))
         # scale to 1/pb 
         self.lumi_scaling = 1. if self.isdata else (self.xs / self.nevents)
  

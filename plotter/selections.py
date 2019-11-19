@@ -21,7 +21,7 @@ class Selections(object):
                                                     'l2_pt > 5'          ,
                                                     'l1_pt > 5'          ,
                                                     'l0_id_m == 1'       ,
-                                                    'l1_MediumNoIso == 1',
+                                                    'l1_LooseNoIso == 1' ,
                                                     'l2_Medium == 1'     ,])
 
         if self.channel == 'eem':
@@ -29,7 +29,7 @@ class Selections(object):
                                                     'l2_pt > 5'                ,
                                                     'l1_pt > 5'                ,
                                                     'l0_eid_mva_iso_wp90 == 1' ,
-                                                    'l1_MediumNoIso == 1'      ,
+                                                    'l1_LooseNoIso == 1'       ,
                                                     'l2_Medium == 1'           ,])
 
         if self.channel == 'eee':
@@ -37,8 +37,8 @@ class Selections(object):
                                                     'l2_pt > 5'                ,
                                                     'l1_pt > 5'                ,
                                                     'l0_eid_mva_iso_wp90 == 1' ,
-                                                    'l1_MediumNoIso == 1'      ,
-                                                    'l2_MediumNoIso == 1'      ,])
+                                                    'l1_LooseNoIso == 1'       ,
+                                                    'l2_LooseNoIso == 1'       ,])
 
         assert self.selections['pt_iso'], 'Error: No channel specific selection applied!'
 
@@ -57,7 +57,7 @@ class Selections(object):
             'hnl_q_12 == 0'                            ,
 
             'nbj == 0'                                 ,
-            '(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)'  ,
+            '(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)'  , # THIS IS IMPORTANT!
             'hnl_dr_12 < 1.'                           ,
 
             'hnl_m_12 < 12'                            ,

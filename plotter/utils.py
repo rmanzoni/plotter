@@ -8,14 +8,14 @@ def set_paths(channel, year):
     assert channel in ['mmm', 'mem', 'eem', 'eee'], 'ERROR: Channel not valid.'
     assert year in [2017, 2018], 'ERROR: Year not valid.'    
     if user() == 'manzoni': 
-        env['BASE_DIR'] = '/Users/manzoni/Documents/HNL/ntuples/%d/%s' %(year, channel)
-        env['PLOT_DIR'] = '/Users/manzoni/Documents/HNL/plotter/plots_%d_%s/' %(year, channel)
-        env['NN_DIR']   = '/Users/manzoni/Documents/HNL/plotter/nn/'
+        env['NTUPLE_DIR'] = '/Users/manzoni/Documents/HNL/ntuples/%d/%s' %(year, channel)
+        env['PLOT_DIR']   = '/Users/manzoni/Documents/HNL/plotter/plots_%d_%s/' %(year, channel)
+        env['NN_DIR']     = '/Users/manzoni/Documents/HNL/nn/'
 
     if user() == 'cesareborgia': 
-        env['BASE_DIR'] = '/Users/cesareborgia/cernbox/ntuples/%d/'       %year
-        env['PLOT_DIR'] = '/Users/cesareborgia/cernbox/plots/plotter/%s/' %channel
-        env['NN_DIR']   = '/Users/cesareborgia/HNL/plotter/nn/%s/'        %channel
+        env['NTUPLE_DIR'] = '/Users/cesareborgia/cernbox/ntuples/%d/'       %year
+        env['PLOT_DIR']   = '/Users/cesareborgia/cernbox/plots/plotter/%s/' %channel
+        env['NN_DIR']     = '/Users/cesareborgia/HNL/nn/%s/'        %channel
 
 def get_time_str():
     today   = datetime.now()
@@ -30,7 +30,7 @@ def plot_dir():
     if not ensure_path(plot_dir): makedirs(plot_dir)       #mkdir(plot_dir)
     return  plot_dir
 
-def nn_dir():
-    nn_dir = env['NN_DIR'] + get_time_str()
-    if not ensure_path(nn_dir): mkdir(nn_dir)
+def nn_dir(channel):
+    nn_dir = env['NN_DIR'] + channel + '_' + get_time_str()
+    if not ensure_path(nn_dir): makedirs(nn_dir)
     return  nn_dir

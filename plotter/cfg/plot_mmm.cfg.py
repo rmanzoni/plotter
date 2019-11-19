@@ -1,9 +1,7 @@
-import sys
-sys.path.append('..')
 from os import environ as env
-from plotter import Plotter
-from selections import Selections
-from utils import set_paths
+from plotter.plotter import Plotter
+from plotter.selections import Selections
+from plotter.utils import set_paths
 
 ch = 'mmm'
 
@@ -19,7 +17,7 @@ selection = [
 ]
 
 plotter = Plotter (channel         = ch,
-                   base_dir        = env['BASE_DIR'],
+                   base_dir        = env['NTUPLE_DIR'],
                    post_fix        = 'HNLTreeProducer/tree.root', # 'HNLTreeProducer_%s/tree.root' %ch,
                    selection_data  = selection,
                    selection_mc    = selection + [cuts.selections['is_prompt_lepton']],
@@ -30,7 +28,7 @@ plotter = Plotter (channel         = ch,
                    features        = env['NN_DIR'] + '/mmm/12Nov19_v0/input_features.pck',
                    process_signals = True,
                    plot_signals    = True,
-                   blinded         = True,
+                   blinded         = False,
                    )
 
 if __name__ == '__main__':

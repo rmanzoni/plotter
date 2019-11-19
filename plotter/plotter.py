@@ -7,11 +7,11 @@ import pandas as pd
 from os import makedirs
 from time import time
 from collections import OrderedDict
-from evaluate_nn import Evaluator
-from sample import get_data_samples, get_mc_samples, get_signal_samples
-from variables import variables
-from utils import plot_dir
-from cmsstyle import CMS_lumi
+from plotter.evaluate_nn import Evaluator
+from plotter.sample import get_data_samples, get_mc_samples, get_signal_samples
+from plotter.variables import variables
+from plotter.utils import plot_dir
+from plotter.cmsstyle import CMS_lumi
 
 from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
 from rootpy.plotting.style import get_style, set_style
@@ -21,14 +21,6 @@ from pdb import set_trace
 import logging
 logging.disable(logging.DEBUG)
 
-# FIXME! move me away from here
-def total_weight_calculator(df, weight_list, scalar_weights=[]):
-    total_weight = df[weight_list[0]]
-    for iw in weight_list[1:]:
-        total_weight *= df[iw]
-    for iw in scalar_weights:
-        total_weight *= iw
-    return total_weight
 
 ROOT.gROOT.SetBatch(True)
 ROOT.gStyle.SetOptStat(False)
@@ -67,6 +59,14 @@ class Plotter(object):
         self.blinded         = blinded      
         self.selection_lnt   = 'not (%s)' %self.selection_tight
         self.do_ratio        = do_ratio
+
+    def total_weight_calculator(self, df, weight_list, scalar_weights=[]):
+        total_weight = df[weight_list[0]].to_numpy().astype(np.float)
+        for iw in weight_list[1:]:
+            total_weight *= df[iw].to_numpy().astype(np.float)
+        for iw in scalar_weights:
+            total_weight *= iw
+        return total_weight
 
     def create_canvas(self, ratio=True):
         if ratio:
@@ -110,7 +110,7 @@ class Plotter(object):
         
         # reads off a dictionary
         for bkg_name, bkg in bkgs.items():
-            bkg.name = bkg_name
+            bkg.name = bkg_name.split('#')[0]
             bkg.drawstyle = 'HIST E'
             bkg.color = 'black'
             bkg.linewidth = 2
@@ -118,6 +118,7 @@ class Plotter(object):
 
         # signals
         for isig in signals:
+            isig.name = isig.name.split('#')[0]
             isig.drawstyle = 'HIST E'
             isig.color = 'black'
             isig.Write()
@@ -147,7 +148,7 @@ norm_sig_{cat}                          lnN             1.2                     
 --------------------------------------------------------------------------------------------------------------------------------------------
 {cat} autoMCStats 0 0 1
 '''.format(cat         = label,
-           obs         = all_obs_prompt.integral() if self.blinded==False else -1,
+           obs         = int(data.integral()) if self.blinded==False else -1,
            signal_name = isig.name,
            signal      = isig.integral(),
            prompt      = bkgs['prompt'].integral(),
@@ -191,7 +192,7 @@ norm_sig_{cat}                          lnN             1.2                     
 
         # now we plot 
         self.create_canvas(self.do_ratio)
-        
+
         for ivar in variables:
             
             variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
@@ -214,8 +215,8 @@ norm_sig_{cat}                          lnN             1.2                     
                     mc_df_tight = imc.df_tight
                     mc_df_lnt = imc.df_lnt
                 
-                histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name)
-                weights = total_weight_calculator(mc_df_tight, ['weight', 'lhe_weight']+imc.extra_signal_weights, [self.lumi, imc.lumi_scaling])
+                histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label)
+                weights = self.total_weight_calculator(mc_df_tight, ['weight', 'lhe_weight']+imc.extra_signal_weights, [self.lumi, imc.lumi_scaling])
                 histo_tight.fill_array(mc_df_tight[variable], weights=weights)
 
                 histo_tight.fillstyle = 'solid'
@@ -225,7 +226,7 @@ norm_sig_{cat}                          lnN             1.2                     
                 stack_prompt.append(histo_tight)
 
                 histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
-                weights = total_weight_calculator(mc_df_lnt, ['weight', 'lhe_weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
+                weights = self.total_weight_calculator(mc_df_lnt, ['weight', 'lhe_weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
                 histo_lnt.fill_array(mc_df_lnt[variable], weights=weights)
 
                 histo_lnt.fillstyle = 'solid'
@@ -248,8 +249,11 @@ norm_sig_{cat}                          lnN             1.2                     
                 else:
                     isig_df_tight = isig.df_tight
 
-                histo_tight = Hist(bins, title=isig.label, markersize=0, legendstyle='L', name=isig.datacard_name)
-                weights = total_weight_calculator(isig_df_tight, ['weight', 'lhe_weight']+isig.extra_signal_weights, [self.lumi, isig.lumi_scaling])
+                histo_tight = Hist(bins, title=isig.label, markersize=0, legendstyle='L', name=isig.datacard_name+'#'+label) # the "#" thing is a trick to give hists unique name, else ROOT complains
+                weights = self.total_weight_calculator(isig_df_tight, ['weight', 'lhe_weight']+isig.extra_signal_weights, [self.lumi, isig.lumi_scaling])
+#                 if isig.datacard_name in ['hnl_m_2_v2_1p2Em04_majorana', 'hnl_m_5_v2_2p1Em06_majorana', 'hnl_m_10_v2_1p0Em06_majorana']:
+#                     print(isig.datacard_name, len(isig_df_tight[variable]), np.average(weights), isig.lumi_scaling)
+#                     import pdb ; pdb.set_trace()
                 histo_tight.fill_array(isig_df_tight[variable], weights=weights)
                 histo_tight.color     = isig.colour
                 histo_tight.fillstyle = 'hollow'
@@ -310,6 +314,8 @@ norm_sig_{cat}                          lnN             1.2                     
             all_obs_prompt.title = 'observed'
 
             # prepare the legend
+            print(signals_to_plot)
+            for jj in signals_to_plot: print(jj.name, jj.integral())
             if len(signals_to_plot):
                 legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=self.main_pad, leftmargin=0.28, rightmargin=0.3, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
             else:
@@ -376,7 +382,6 @@ norm_sig_{cat}                          lnN             1.2                     
                 line.Draw('same')
 
                 self.canvas.cd()
-
                 # FIXME! add SS and OS channels
                 if   self.full_channel == 'mmm': channel = '\mu\mu\mu'
                 elif self.full_channel == 'eee': channel = 'eee'
@@ -396,6 +401,8 @@ norm_sig_{cat}                          lnN             1.2                     
                 self.canvas.Modified()
                 self.canvas.Update()
                 self.canvas.SaveAs(self.plt_dir + '%s%s.pdf' %(label, islogy*'_log'))
+                
+#                 del self.main_pad ; del self.ratio_pad ; del self.canvas # stupid ROOT
 
 
             self.create_datacards(data=all_obs_prompt, 
