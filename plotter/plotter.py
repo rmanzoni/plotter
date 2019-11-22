@@ -41,6 +41,8 @@ class Plotter(object):
                  process_signals, 
                  plot_signals   ,
                  blinded        ,
+                 datacards=[]   ,
+                 mini_signals=False,
                  do_ratio=True):
 
         self.channel         = channel.split('_')[0]
@@ -53,12 +55,14 @@ class Plotter(object):
         self.lumi            = lumi
         self.model           = model          
         self.transformation  = transformation 
-        self.features        = features   
+        self.features        = features 
         self.process_signals = process_signals    
         self.plot_signals    = plot_signals if self.process_signals else []
         self.blinded         = blinded      
         self.selection_lnt   = 'not (%s)' %self.selection_tight
         self.do_ratio        = do_ratio
+        self.mini_signals    = mini_signals
+        self.datacards       = datacards
 
     def total_weight_calculator(self, df, weight_list, scalar_weights=[]):
         total_weight = df[weight_list[0]].to_numpy().astype(np.float)
@@ -142,15 +146,16 @@ process                                                 0                       
 rate                                                    {signal:.4f}                   {nonprompt:.4f}                  {prompt:.4f}
 --------------------------------------------------------------------------------------------------------------------------------------------
 lumi                                    lnN             1.025                          -                                -   
-norm_prompt_{cat}                       lnN             -                              -                                1.15   
-norm_nonprompt_{cat}                    lnN             -                              1.20                             -   
-norm_sig_{cat}                          lnN             1.2                            -                                -   
+norm_prompt_{ch}_{cat}                  lnN             -                              -                                1.15   
+norm_nonprompt_{ch}_{cat}               lnN             -                              1.20                             -   
+norm_sig_{ch}_{cat}                     lnN             1.2                            -                                -   
 --------------------------------------------------------------------------------------------------------------------------------------------
 {cat} autoMCStats 0 0 1
 '''.format(cat         = label,
            obs         = int(data.integral()) if self.blinded==False else -1,
            signal_name = isig.name,
            signal      = isig.integral(),
+           ch          = self.full_channel,
            prompt      = bkgs['prompt'].integral(),
            nonprompt   = bkgs['nonprompt'].integral(),
            )
@@ -170,24 +175,28 @@ norm_sig_{cat}                          lnN             1.2                     
         signal = []
         if self.process_signals:
         # FIXME!
-            signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
-#             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_mem/tree.root', self.selection_data)
+#             signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
+#             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_mem/tree.root', self.selection_data, mini=self.mini_signals)
+#             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_eem/tree.root', self.selection_data, mini=self.mini_signals)
+#             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_eee/tree.root', self.selection_data, mini=self.mini_signals)
+            signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_mmm/tree.root', self.selection_data, mini=self.mini_signals)
         else:
             signal = []        
         data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
         # FIXME!
 #         mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
-        mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eem/tree.root', self.selection_mc)
+        mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mmm/tree.root', self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eem/tree.root', self.selection_mc)
 #         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mem/tree.root', self.selection_mc)
 #         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eee/tree.root', self.selection_mc)
         print('============> it took %.2f seconds' %(time() - now))
 
         # evaluate FR
-        for isample in (mc+data):
+        for isample in (mc+data): #+signal):
             isample.df['fr'] = evaluator.evaluate(isample.df)
             # already corrected, ready to be applied in lnt-not-tight
             isample.df['fr_corr'] = isample.df['fr'] / (1. - isample.df['fr']) 
-
+                 
         # split the dataframe in tight and lnt-not-tight (called simply lnt for short)
         for isample in (mc+data+signal):
             isample.df_tight = isample.df.query(self.selection_tight)
@@ -343,6 +352,7 @@ norm_sig_{cat}                          lnN             1.2                     
                 yaxis_max = 1.4 * max([ithing.max() for ithing in things_to_plot])
                 for ithing in things_to_plot:
                     ithing.SetMaximum(yaxis_max)   
+                    #ithing.SetMinimum(0.)   
                             
                 draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy)
 
@@ -405,9 +415,10 @@ norm_sig_{cat}                          lnN             1.2                     
                 self.canvas.Update()
                 self.canvas.SaveAs(self.plt_dir + '%s%s.pdf' %(label, '_log' if islogy else '_lin'))
                 
-#                 del self.main_pad ; del self.ratio_pad ; del self.canvas # stupid ROOT
-
-
+            # save only the datacards you want, don't flood everything
+            if len(self.datacards) and label not in self.datacards:
+                continue
+                
             self.create_datacards(data=all_obs_prompt, 
                                   bkgs={'prompt':all_exp_prompt, 'nonprompt':all_exp_nonprompt}, 
                                   signals=all_signals, 

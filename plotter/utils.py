@@ -3,6 +3,7 @@ from os import environ as env
 from os.path import exists as ensure_path
 from os import makedirs
 from getpass import getuser as user
+import pickle
 
 def set_paths(channel, year):
     assert channel in ['mmm', 'mem', 'mem_os', 'mem_ss', 'eem', 'eem_os', 'eem_ss', 'eee'], 'ERROR: Channel not valid.'
@@ -34,3 +35,27 @@ def nn_dir(channel):
     nn_dir = env['NN_DIR'] + channel + '_' + get_time_str()
     if not ensure_path(nn_dir): makedirs(nn_dir)
     return  nn_dir
+
+def save_plotter_and_selections(plotter, sel_data, sel_mc, sel_tight):
+
+    with open('/'.join([plotter.plt_dir, 'plotter.pck']), 'wb') as plt_file:
+        pickle.dump(plotter, plt_file)
+
+    with open('/'.join([plotter.plt_dir, 'selections.py']), 'a') as selection_file:
+        
+        print('selection_data = [', file=selection_file)
+        for isel in sel_data:
+            print("\t'%s'," %isel , file=selection_file)
+        print(']', file=selection_file)
+
+        print('\n'*2+'#'*80+'\n'*2, file=selection_file)
+
+        print('selection_mc = ['  , file=selection_file)
+        for isel in sel_mc:
+            print("\t'%s'," %isel , file=selection_file)
+        print(']', file=selection_file)
+
+        print('\n'*2+'#'*80+'\n'*2, file=selection_file)
+
+        print("'selection_tight = '%s'" %sel_tight, file=selection_file)
+        
