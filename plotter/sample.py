@@ -114,11 +114,11 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
         if mini:
             signal = [ 
                 ########## M = 2
-                Sample('HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO'   , channel, 'm=2 GeV, |V|^{2}=1.2 10^{-4}, Majorana' , selection, 'hnl_m_2_v2_1p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  0.5278   , toplot=True ),
+                Sample('HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  0.5278   , toplot=True ),
                 ########## M = 5
-                Sample('HN3L_M_5_V_0p00145602197786_mu_massiveAndCKM_LO'  , channel, 'm=5 GeV, |V|^{2}=2.1 10^{-6}, Majorana' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  0.008434 , toplot=True ),
+                Sample('HN3L_M_5_V_0p00145602197786_mu_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  0.008434 , toplot=True ),
                 ########## M = 10
-                Sample('HN3L_M_10_V_0p001_mu_massiveAndCKM_LO'            , channel, 'm=10 GeV, |V|^{2}=1.0 10^{-6}, Majorana', selection, 'hnl_m_10_v2_1p0Em06_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  0.004121 , toplot=True ),
+                Sample('HN3L_M_10_V_0p001_mu_massiveAndCKM_LO'            , channel, '#splitline{m=10 GeV |V|^{2}=1.0 10^{-6}}{Majorana}', selection, 'hnl_m_10_v2_1p0Em06_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  0.004121 , toplot=True ),
             ]
         else:
             signal = [ 

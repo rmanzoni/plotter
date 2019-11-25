@@ -75,8 +75,8 @@ class Plotter(object):
     def create_canvas(self, ratio=True):
         if ratio:
             self.canvas = Canvas(width=700, height=700) ; self.canvas.Draw()
-            self.canvas.cd() ; self.main_pad  = Pad(0., 0.25, 1., 1.  ) ; self.main_pad .Draw()
-            self.canvas.cd() ; self.ratio_pad = Pad(0., 0.  , 1., 0.25) ; self.ratio_pad.Draw()
+            self.canvas.cd() ; self.main_pad   = Pad(0.  , 0.25, 1. , 1.  ) ; self.main_pad .Draw()
+            self.canvas.cd() ; self.ratio_pad  = Pad(0.  , 0.  , 1. , 0.25) ; self.ratio_pad.Draw()
 
             self.main_pad.SetTicks(True)
             self.main_pad.SetBottomMargin(0.)
@@ -90,8 +90,8 @@ class Plotter(object):
         
         else:
             self.canvas = Canvas(width=700, height=700) ; self.canvas.Draw()
-            self.canvas.cd() ; self.main_pad  = Pad(0. , 0. , 1., 1.  ) ; self.main_pad .Draw()
-            self.canvas.cd() ; self.ratio_pad = Pad(-1., -1., -.9, -.9) ; self.ratio_pad.Draw() # put it outside the canvas
+            self.canvas.cd() ; self.main_pad   = Pad(0. , 0. , 1., 1.  )    ; self.main_pad .Draw()
+            self.canvas.cd() ; self.ratio_pad  = Pad(-1., -1., -.9, -.9)    ; self.ratio_pad.Draw() # put it outside the canvas
             self.main_pad.SetTicks(True)
             self.main_pad.SetTopMargin(0.15)
             self.main_pad.SetBottomMargin(0.15)
@@ -329,10 +329,28 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             print(signals_to_plot)
             for jj in signals_to_plot: print(jj.name, jj.integral())
             if len(signals_to_plot):
-                legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=self.main_pad, leftmargin=0.28, rightmargin=0.3, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
+#                 legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=self.main_pad, leftmargin=0.28, rightmargin=0.3, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
+#                 legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=self.legend_pad, leftmargin=0., rightmargin=0., topmargin=0., textsize=0.023, textfont=42, entrysep=0.01, entryheight=0.04)
+#                 legend = Legend([all_obs_prompt, stack, hist_error] + signals_to_plot, pad=self.legend_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42)
+                legend         = Legend([all_obs_prompt, stack, hist_error], pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.025, entrysep=0.01, entryheight=0.04)
+                legend_signals = Legend(signals_to_plot                    , pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.025, entrysep=0.01, entryheight=0.04)
+                legend_signals.SetBorderSize(0)
+                legend_signals.x1 = 0.42
+                legend_signals.y1 = 0.74
+                legend_signals.x2 = 0.88
+                legend_signals.y2 = 0.90
+                legend_signals.SetFillColor(0)
             else:
-                legend = Legend([all_obs_prompt, stack, hist_error], pad=self.main_pad, leftmargin=0.33, rightmargin=0.1, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.012, entryheight=0.06)
+#                 legend = Legend([all_obs_prompt, stack, hist_error], pad=self.main_pad, leftmargin=0.33, rightmargin=0.1, topmargin=-0.01, textsize=0.023, textfont=42, entrysep=0.012, entryheight=0.06)
+#                 legend = Legend([all_obs_prompt, stack, hist_error], pad=self.legend_pad, leftmargin=0., rightmargin=0., topmargin=0., textsize=0.023, textfont=42, entrysep=0.012, entryheight=0.06)
+#                 legend = Legend([all_obs_prompt, stack, hist_error], pad=self.legend_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42)
+                legend = Legend([all_obs_prompt, stack, hist_error], pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
+            
             legend.SetBorderSize(0)
+            legend.x1 = 0.2
+            legend.y1 = 0.74
+            legend.x2 = 0.45
+            legend.y2 = 0.90
             legend.SetFillColor(0)
 
             # plot with ROOT, linear and log scale
@@ -349,7 +367,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 
                 # set the y axis range 
                 # FIXME! setting it by hand to each object as it doesn't work if passed to draw
-                yaxis_max = 1.4 * max([ithing.max() for ithing in things_to_plot])
+                if islogy : yaxis_max = 40.   * max([ithing.max() for ithing in things_to_plot])
+                else      : yaxis_max =  1.65 * max([ithing.max() for ithing in things_to_plot])
                 for ithing in things_to_plot:
                     ithing.SetMaximum(yaxis_max)   
                     #ithing.SetMinimum(0.)   
@@ -403,13 +422,15 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 elif self.full_channel == 'eem_os': channel = 'e^{\pm}e^{\mp}\mu'
                 elif self.full_channel == 'eem_ss': channel = 'e^{\pm}e^{\pm}\mu'
                 else: assert False, 'ERROR: Channel not valid.'
-                finalstate = ROOT.TLatex(0.7, 0.85, channel)
+                finalstate = ROOT.TLatex(0.68, 0.66, channel)
                 finalstate.SetTextFont(43)
                 finalstate.SetTextSize(25)
                 finalstate.SetNDC()
                 finalstate.Draw('same')
-
+                
                 legend.Draw('same')
+                if self.plot_signals: 
+                    legend_signals.Draw('same')
                 CMS_lumi(self.main_pad, 4, 0)
                 self.canvas.Modified()
                 self.canvas.Update()
