@@ -31,7 +31,7 @@ m12_bins_displaced_3_coarse = np.array([0., 2., 4., 10])
     
 # variables
 variables = [
-#     Variable('_norm_', np.linspace(0.,  1., 2 + 1), 'normalisation', 'events'),
+    Variable('_norm_', np.linspace(0.,  1., 1 + 1), 'normalisation', 'events'),
     
     Variable('l0_pt', np.linspace(25.,100.,12 + 1), 'l_{1} p_{T} (GeV)', 'events'),
     Variable('l1_pt', np.linspace( 5., 50.,12 + 1), 'l_{2} p_{T} (GeV)', 'events'),
@@ -79,15 +79,19 @@ variables = [
 #     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>2.0 & hnl_2d_disp<=5.0', extra_label='lxy_0p5_to_2p0'),
 #     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>5.0'                   , extra_label='lxy_mt_5p0'    ),
 
-    Variable('hnl_2d_disp'    , np.linspace( 0  ,  30, 25 + 1) , 'L_{xy} (cm)'       , 'events'),
-    Variable('hnl_2d_disp_sig', np.linspace( 0  , 200, 25 + 1) , 'L_{xy}/\sigma_{xy}', 'events'),
-    Variable('hnl_2d_disp_sig', np.linspace( 0  ,1000, 25 + 1) , 'L_{xy}/\sigma_{xy}', 'events', extra_label='hnl_2d_disp_sig_extended'),
-    Variable('nbj'            , np.linspace( 0  ,   5,  5 + 1) , '#b-jet'            , 'events'),
-    Variable('hnl_w_vis_m'    , np.linspace( 0  , 150, 40 + 1) , 'm_{3l}'            , 'events'),
-    Variable('sv_cos'         , np.linspace( 0.9,   1, 30 + 1) , '\cos\alpha'        , 'events'),
-    Variable('sv_prob'        , np.linspace( 0  ,   1, 30 + 1) , 'SV probability'    , 'events'),
-    Variable('sv_prob'        , np.linspace( 0  , 0.1, 50 + 1) , 'SV probability'    , 'events', extra_label='sv_prob_fine'),
-    Variable('sv_prob'        , np.linspace( 0  ,   1, 20 + 1) , 'SV probability'    , 'events', extra_label='sv_prob_coarse'),
+    Variable('hnl_2d_disp'    , np.linspace( 0   ,  30   , 25 + 1) , 'L_{xy} (cm)'       , 'events'),
+    Variable('hnl_2d_disp'    , np.linspace( 0   ,  10   , 25 + 1) , 'L_{xy} (cm)'       , 'events', extra_label='hnl_2d_disp_narrow'),
+    Variable('hnl_2d_disp'    , np.linspace( 0   ,   2   , 25 + 1) , 'L_{xy} (cm)'       , 'events', extra_label='hnl_2d_disp_very_narrow'),
+    Variable('hnl_2d_disp_sig', np.linspace( 0   , 200   , 25 + 1) , 'L_{xy}/\sigma_{xy}', 'events'),
+    Variable('hnl_2d_disp_sig', np.linspace( 0   ,1000   , 25 + 1) , 'L_{xy}/\sigma_{xy}', 'events', extra_label='hnl_2d_disp_sig_extended'),
+    Variable('nbj'            , np.linspace( 0   ,   5   ,  5 + 1) , '#b-jet'            , 'events'),
+    Variable('hnl_w_vis_m'    , np.linspace( 0   , 150   , 40 + 1) , 'm_{3l}'            , 'events'),
+    Variable('sv_cos'         , np.linspace( 0.9 ,   1   , 30 + 1) , '\cos\alpha'        , 'events'),
+    Variable('sv_cos'         , np.linspace( 0.99,   1   , 30 + 1) , '\cos\alpha'        , 'events', extra_label='sv_cos_fine'),
+    Variable('sv_prob'        , np.linspace( 0   ,   1   , 30 + 1) , 'SV probability'    , 'events'),
+    Variable('sv_prob'        , np.linspace( 0   ,   0.1 , 50 + 1) , 'SV probability'    , 'events', extra_label='sv_prob_fine'),
+    Variable('sv_prob'        , np.linspace( 0   ,   1   , 20 + 1) , 'SV probability'    , 'events', extra_label='sv_prob_coarse'),
+    Variable('sv_prob'        , np.linspace( 0   ,   0.01, 10 + 1) , 'SV probability'    , 'events', extra_label='sv_prob_very_fine'),
 
     Variable('hnl_q_01'       , np.linspace(-3  ,  3,  3 + 1) , 'q_{12}'            , 'events'),
     Variable('hnl_q_02'       , np.linspace(-3  ,  3,  3 + 1) , 'q_{13}'            , 'events'),
@@ -115,6 +119,10 @@ variables = [
     Variable('log_l1_dz_sig' , np.linspace( -4, 2, 12 + 1), 'log_{10}( l_{2} d_{z}^{sig})' , 'events'),
     Variable('log_l2_dxy_sig', np.linspace( -4, 2, 12 + 1), 'log_{10}( l_{3} d_{xy}^{sig})', 'events'),
     Variable('log_l2_dz_sig' , np.linspace( -4, 2, 12 + 1), 'log_{10}( l_{3} d_{z}^{sig})' , 'events'),
+
+    Variable('l0_reliso_rho_03', np.linspace( 0,  0.2, 25 + 1), 'l_{1} \rho-corrected I^{rel}' , 'events'),
+    Variable('l1_reliso_rho_03', np.linspace( 0, 10  , 25 + 1), 'l_{2} \rho-corrected I^{rel}' , 'events'),
+    Variable('l2_reliso_rho_03', np.linspace( 0, 10  , 25 + 1), 'l_{3} \rho-corrected I^{rel}' , 'events'),
 
 #     Variable('fr'             , np.linspace( 0  ,  1, 30 + 1) , 'fake rate'         , 'events'),
 ]
