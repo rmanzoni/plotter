@@ -155,7 +155,7 @@ class Sample(object):
                         break
         tree_file = '/'.join([self.basedir, self.name, self.postfix])
         
-        self.df = read_root( tree_file, 'tree', where=self.selection ); print('\tselected events', len(self.df))
+        self.df = read_root( tree_file, 'tree', where=self.selection, warn_missing_tree=True ); print('\tselected events', len(self.df))
         
         # self awareness...
         self.df['channel'] = channel_dict[self.channel]
@@ -177,6 +177,10 @@ class Sample(object):
         self.df['log_l0_dz_sig' ] = np.log10(self.df.l0_dz_error / np.abs(self.df.l0_dz ))
         self.df['log_l1_dz_sig' ] = np.log10(self.df.l1_dz_error / np.abs(self.df.l1_dz ))
         self.df['log_l2_dz_sig' ] = np.log10(self.df.l2_dz_error / np.abs(self.df.l2_dz ))
+        
+        # defined à la Martina
+        self.df['hnl_2d_disp_sig_alt'] = self.df.hnl_2d_disp**2 / np.sqrt(self.df.sv_covxx * self.df.sv_x**2 + self.df.sv_covyy * self.df.sv_y**2)
+        
         self.df['_norm_'        ] = 0.
                 
         # scale to 1/pb 
@@ -238,8 +242,8 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
     elif channel [0] == 'e': 
         if mini:
             signal = [
-                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  2.648    , toplot=True , is_generator=True),
-                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  9.383e-03, toplot=True , is_generator=True),
+                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  2.648    , toplot=True , is_generator=False),
+                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  9.383e-03, toplot=True , is_generator=False),
              ]
         else:
             signal = [
@@ -249,7 +253,7 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
                 Sample('HN3L_M_4_V_0p00290516780927_e_massiveAndCKM_LO'  , channel, '#splitline{m=4 GeV, |V|^{2}=8.4 10^{-6}}{Majorana}' , selection, 'hnl_m_4_v2_8p4Em06_majorana' , 'indigo'     ,10, basedir, postfix, False, True, False, 1.,  3.365e-02, toplot=False, is_generator=True),
                 Sample('HN3L_M_5_V_0p00145602197786_e_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV, |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  8.479e-03, toplot=False, is_generator=True),
                 Sample('HN3L_M_6_V_0p00202484567313_e_massiveAndCKM_LO'  , channel, '#splitline{m=6 GeV, |V|^{2}=4.1 10^{-6}}{Majorana}' , selection, 'hnl_m_6_v2_4p1Em06_majorana' , 'olive'      ,10, basedir, postfix, False, True, False, 1.,  1.655e-02, toplot=False, is_generator=True),
-                Sample('HN3L_M_7_V_0p0316227766017_e_massiveAndCKM_LO'   , channel, '#splitline{m=7 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_7_v2_1p0Em04_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  4.088    , toplot=False, is_generator=True),
+#                 Sample('HN3L_M_7_V_0p0316227766017_e_massiveAndCKM_LO'   , channel, '#splitline{m=7 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_7_v2_1p0Em04_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  4.088    , toplot=False, is_generator=True),
                 Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  9.383e-03, toplot=True , is_generator=True),
                 Sample('HN3L_M_10_V_0p000756967634711_e_massiveAndCKM_LO', channel, '#splitline{m=10 GeV, |V|^{2}=5.7 10^{-7}}{Majorana}', selection, 'hnl_m_10_v2_5p7Em07_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  2.366e-03, toplot=False, is_generator=True),
              ]

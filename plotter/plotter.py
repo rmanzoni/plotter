@@ -27,43 +27,45 @@ ROOT.gStyle.SetOptStat(False)
 
 class Plotter(object):
 
-    def __init__(self           , 
-                 channel        , 
-                 base_dir       ,
-                 post_fix       ,
-                 selection_data ,
-                 selection_mc   ,
-                 selection_tight,
-                 lumi           ,
-                 model          , 
-                 transformation ,
-                 features       ,
-                 process_signals, 
-                 plot_signals   ,
-                 blinded        ,
-                 datacards=[]   ,
+    def __init__(self            , 
+                 channel         , 
+                 base_dir        ,
+                 post_fix        ,
+                 selection_data  ,
+                 selection_mc    ,
+                 selection_tight ,
+                 pandas_selection,
+                 lumi            ,
+                 model           , 
+                 transformation  ,
+                 features        ,
+                 process_signals , 
+                 plot_signals    ,
+                 blinded         ,
+                 datacards=[]    ,
                  mini_signals=False,
                  do_ratio=True):
 
-        self.channel         = channel.split('_')[0]
-        self.full_channel    = channel
-        self.base_dir        = base_dir 
-        self.post_fix        = post_fix 
-        self.selection_data  = ' & '.join(selection_data)
-        self.selection_mc    = ' & '.join(selection_mc)
-        self.selection_tight = selection_tight
-        self.lumi            = lumi
-        self.model           = model          
-        self.transformation  = transformation 
-        self.features        = features 
-        self.process_signals = process_signals    
-        self.plot_signals    = plot_signals if self.process_signals else []
-        self.blinded         = blinded      
-        self.selection_lnt   = 'not (%s)' %self.selection_tight
-        self.do_ratio        = do_ratio
-        self.mini_signals    = mini_signals
-        self.datacards       = datacards
-
+        self.channel          = channel.split('_')[0]
+        self.full_channel     = channel
+        self.base_dir         = base_dir 
+        self.post_fix         = post_fix 
+        self.selection_data   = ' & '.join(selection_data)
+        self.selection_mc     = ' & '.join(selection_mc)
+        self.selection_tight  = selection_tight
+        self.pandas_selection = pandas_selection
+        self.lumi             = lumi
+        self.model            = model          
+        self.transformation   = transformation 
+        self.features         = features 
+        self.process_signals  = process_signals    
+        self.plot_signals     = plot_signals if self.process_signals else []
+        self.blinded          = blinded      
+        self.selection_lnt    = 'not (%s)' %self.selection_tight
+        self.do_ratio         = do_ratio
+        self.mini_signals     = mini_signals
+        self.datacards        = datacards
+    
     def total_weight_calculator(self, df, weight_list, scalar_weights=[]):
         total_weight = df[weight_list[0]].to_numpy().astype(np.float)
         for iw in weight_list[1:]:
@@ -186,8 +188,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 #             signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
 #             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_mmm/tree.root', self.selection_data, mini=self.mini_signals)
 #             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_mem/tree.root', self.selection_data, mini=self.mini_signals)
-#             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_eem/tree.root', self.selection_data, mini=self.mini_signals)
-            signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_eee/tree.root', self.selection_data, mini=self.mini_signals)
+            signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_eem/tree.root', self.selection_data, mini=self.mini_signals)
+#             signal = get_signal_samples(self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/sig', 'HNLTreeProducer_eee/tree.root', self.selection_data, mini=self.mini_signals)
         else:
             signal = []        
         data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
@@ -195,8 +197,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 #         mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
 #         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mmm/tree.root', self.selection_mc)
 #         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mem/tree.root', self.selection_mc)
-#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eem/tree.root', self.selection_mc)
-        mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eee/tree.root', self.selection_mc)
+        mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eem/tree.root', self.selection_mc)
+#         mc     = get_mc_samples    (self.channel, '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eee/tree.root', self.selection_mc)
         print('============> it took %.2f seconds' %(time() - now))
 
         # evaluate FR
@@ -205,6 +207,11 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             # already corrected, ready to be applied in lnt-not-tight
             isample.df['fr_corr'] = isample.df['fr'] / (1. - isample.df['fr']) 
                  
+        # apply an extra selection to the pandas dataframes
+        if len(self.pandas_selection):
+            for isample in (mc+data+signal):
+                isample.df = isample.df.query(self.pandas_selection)
+
         # split the dataframe in tight and lnt-not-tight (called simply lnt for short)
         for isample in (mc+data+signal):
             isample.df_tight = isample.df.query(self.selection_tight)

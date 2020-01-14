@@ -28,7 +28,8 @@ class Selections(object):
             self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'               ,
                                                     'l2_pt > 5'                ,
                                                     'l1_pt > 5'                ,
-                                                    'l0_eid_mva_iso_wp90 == 1' ,
+                                                    # 'l0_eid_mva_iso_wp90 == 1' , # martina uses no iso
+                                                    'l0_eid_mva_noniso_wp90 == 1',
                                                     'l1_LooseNoIso == 1'       ,
                                                     'l2_Medium == 1'           ,])
 
@@ -36,50 +37,61 @@ class Selections(object):
             self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'               ,
                                                     'l2_pt > 5'                ,
                                                     'l1_pt > 5'                ,
-                                                    'l0_eid_mva_iso_wp90 == 1' ,
+                                                    # 'l0_eid_mva_iso_wp90 == 1' , # martina uses no iso
+                                                    'l0_eid_mva_noniso_wp90 == 1',
                                                     'l1_LooseNoIso == 1'       ,
                                                     'l2_LooseNoIso == 1'       ,])
 
         assert self.selections['pt_iso'], 'Error: No channel specific selection applied!'
 
         self.selections['baseline'] = ' & '.join([
-            'abs(l0_eta) < 2.4'                        ,
-            'abs(l0_dxy) < 0.05'                       ,
-            'abs(l0_dz) < 0.2'                         ,
-            'l0_reliso_rho_03 < 0.2'                   ,
+            'abs(l0_eta) < 2.4'     ,
+            'abs(l0_dxy) < 0.05'    ,
+            'abs(l0_dz) < 0.1'      ,
+            'l0_reliso_rho_03 < 0.1',
 
-            'abs(l1_eta) < 2.4'                        ,
-            'l1_reliso_rho_03 < 10'                    ,
+            'abs(l1_eta) < 2.4'     ,
+            'l1_reliso_rho_03 < 10' ,
 
-            'abs(l2_eta) < 2.4'                        ,
-            'l2_reliso_rho_03 < 10'                    ,
+            'abs(l2_eta) < 2.4'     ,
+            'l2_reliso_rho_03 < 10' ,
 
-            'hnl_q_12 == 0'                            ,
+            'hnl_q_12 == 0'         ,
 
-            'nbj == 0'                                 ,
-            'hnl_dr_12 < 1.'                           ,
+            'nbj == 0'              ,
+            'hnl_dr_12 < 1.'        ,
 
-            'hnl_m_12 < 12'                            ,
-            'sv_cos > 0.9'                              ,
+            'hnl_m_12 < 12'         ,
+            'sv_cos > 0.9'          ,
             
-            'abs(hnl_dphi_01)>1'                       ,
-            'abs(hnl_dphi_02)>1.'                      , # dphi a la facon belgique
+            'abs(hnl_dphi_01)>1.'   ,
+            'abs(hnl_dphi_02)>1.'   , # dphi a la facon belgique
 
-            'abs(l1_dxy) > 0.01'                       ,
-            'abs(l2_dxy) > 0.01'                       ,
+            'abs(l1_dxy) > 0.01'    ,
+            'abs(l2_dxy) > 0.01'    ,
             ])
 
         self.selections['sideband'] = '!(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' # THIS IS IMPORTANT!
 
         self.selections['signal_region'] = '(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' # THIS IS IMPORTANT!
 
+#         self.selections['vetoes_12_OS'] = ' & '.join([
+#             # vetoes 12 (always OS anyways)
+#             'abs(hnl_m_12-3.0969) > 0.08'              , # jpsi veto
+#             'abs(hnl_m_12-3.6861) > 0.08'              , # psi (2S) veto
+#             'abs(hnl_m_12-0.7827) > 0.08'              , # omega veto
+#             'abs(hnl_m_12-1.0190) > 0.08'              , # phi veto
+#             ])
+
+        # after discussing with Martina 9/1/2020
         self.selections['vetoes_12_OS'] = ' & '.join([
             # vetoes 12 (always OS anyways)
-            'abs(hnl_m_12-3.0969) > 0.08'              , # jpsi veto
-            'abs(hnl_m_12-3.6861) > 0.08'              , # psi (2S) veto
-            'abs(hnl_m_12-0.7827) > 0.08'              , # omega veto
-            'abs(hnl_m_12-1.0190) > 0.08'              , # phi veto
+            '!(hnl_2d_disp<1.5 & abs(hnl_m_12-3.0969) < 0.08)', # jpsi veto
+            '!(hnl_2d_disp<1.5 & abs(hnl_m_12-3.6861) < 0.08)', # psi (2S) veto
+            '!(hnl_2d_disp<1.5 & abs(hnl_m_12-0.7827) < 0.08)', # omega veto
+            '!(hnl_2d_disp<1.5 & abs(hnl_m_12-1.0190) < 0.08)', # phi veto
             ])
+
            
         self.selections['vetoes_01_OS'] = ' & '.join([
             # vetoes 01 (only is OS)
