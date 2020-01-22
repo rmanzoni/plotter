@@ -14,8 +14,11 @@ import matplotlib.pyplot as plt
 from intersection import intersection
 import pickle
 
-all_datacards = glob('datacards_mmm/datacard*hnl*.txt')
+all_datacards = glob('datacards/datacard*hnl*m_12*.txt')
+all_datacards = [dd for dd in all_datacards if 'coarse' not in dd]
 all_datacards.sort()
+print all_datacards
+
 
 signal_type = 'majorana'
 method = 'asymptotic' # 'toys'
@@ -179,6 +182,14 @@ for mass, couplings in digested_datacards.iteritems():
 ##########################################################################################
 ##########################################################################################
 
+# import pickle
+# with open('results.pck', 'r') as ff:
+#     limits2D = pickle.load(ff)
+
+import pickle
+with open('results.pck', 'w') as ff:
+    pickle.dump(limits2D, ff)
+    
 masses_central   = []
 masses_one_sigma = []
 masses_two_sigma = []
@@ -186,21 +197,30 @@ masses_two_sigma = []
 minus_two = []
 minus_one = []
 central   = []
-plus_two  = []
+plus_one  = []
 plus_two  = []
 
 # go through the different mass points first left to right to catch the lower exclusion bound
 # then right to left to catch the upper exclusion bound
 for mass in sorted(limits2D.keys()):
-    minus_two.append( min(limits2D[mass]['exp_minus_two']) ) ; masses_minus_two.append(mass)
-    minus_one.append( min(limits2D[mass]['exp_minus_one']) ) ; masses_minus_one.append(mass)
-    central  .append( min(limits2D[mass]['exp_central'  ]) ) ; masses_central  .append(mass)
-    plus_two .append( min(limits2D[mass]['exp_plus_one' ]) ) ; masses_plus_two .append(mass)
-    plus_two .append( min(limits2D[mass]['exp_plus_two' ]) ) ; masses_plus_two .append(mass)
+
+    if len(limits2D[mass]['exp_central'])>0: 
+        central.append( min(limits2D[mass]['exp_central']) )
+        masses_central.append(mass)
+
+    if len(limits2D[mass]['exp_minus_one'])>0 and len(limits2D[mass]['exp_plus_one' ])>0: 
+        minus_one.append( min(limits2D[mass]['exp_minus_one']) )
+        plus_one .append( min(limits2D[mass]['exp_plus_one' ]) )
+        masses_one_sigma.append(mass)
+
+    if len(limits2D[mass]['exp_minus_two'])>0 and len(limits2D[mass]['exp_plus_two' ])>0: 
+        minus_two.append( min(limits2D[mass]['exp_minus_two']) )
+        plus_two .append( min(limits2D[mass]['exp_plus_two' ]) )
+        masses_two_sigma.append(mass)
     
 for mass in sorted(limits2D.keys(), reverse=True):
 
-    if len(limits2D[mass]['exp_central'  ])>1: 
+    if len(limits2D[mass]['exp_central'])>1: 
         central.append( max(limits2D[mass]['exp_central'  ]) )
         masses_central.append(mass)
 
@@ -214,7 +234,6 @@ for mass in sorted(limits2D.keys(), reverse=True):
         plus_two        .append( max(limits2D[mass]['exp_plus_two' ]) )
         masses_two_sigma.append(mass)
 
-    
 # plot the 2D limits
 plt.clf()
 
@@ -228,7 +247,8 @@ plt.legend()
 plt.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
 #plt.tight_layout()
 plt.yscale('log')
-plt.xscale('lin')
+plt.xscale('linear')
+plt.grid(True)
 plt.savefig('2d_hnl_limit.pdf')
 
 
