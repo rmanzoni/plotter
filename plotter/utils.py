@@ -32,7 +32,7 @@ def plot_dir():
     return  plot_dir
 
 def nn_dir(channel):
-    nn_dir = env['NN_DIR'] + channel + '_' + get_time_str()
+    nn_dir = '/'.join([env['NN_DIR'], 'trainings', channel + '_' + get_time_str()])
     if not ensure_path(nn_dir): makedirs(nn_dir)
     return  nn_dir
 

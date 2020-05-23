@@ -9,42 +9,40 @@ class Selections(object):
         self.selections = OrderedDict()
 
         if self.channel == 'mmm':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 25'    ,
-                                                    'l2_pt > 5'     ,
-                                                    'l1_pt > 5'     ,
-                                                    'l0_id_m == 1'  ,
-                                                    'l1_Medium == 1',
-                                                    'l2_Medium == 1',])
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 25'      ,
+                                                    'l2_pt > 5'       ,
+                                                    'l1_pt > 5'       ,
+                                                    'l0_id_m == 1'    ,
+                                                    'l1_id_hnl_m == 1',
+                                                    'l2_id_hnl_m == 1',])
 
         if self.channel == 'mem':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 25'         ,
-                                                    'l2_pt > 5'          ,
-                                                    'l1_pt > 5'          ,
-                                                    'l0_id_m == 1'       ,
-                                                    'l1_LooseNoIso == 1' ,
-                                                    'l2_Medium == 1'     ,])
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 25'            ,
+                                                    'l2_pt > 5'             ,
+                                                    'l1_pt > 5'             ,
+                                                    'l0_id_m == 1'          ,
+                                                    'l1_id_hnl_l_niso == 1' ,
+                                                    'l2_id_hnl_m == 1'      ,])
 
         if self.channel == 'eem':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'               ,
-                                                    'l2_pt > 5'                ,
-                                                    'l1_pt > 5'                ,
-                                                    # 'l0_eid_mva_iso_wp90 == 1' , # martina uses no iso
-                                                    'l0_eid_mva_noniso_wp90 == 1',
-                                                    'l1_LooseNoIso == 1'       ,
-                                                    'l2_Medium == 1'           ,])
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'            ,
+                                                    'l2_pt > 5'             ,
+                                                    'l1_pt > 5'             ,
+                                                    'l0_id_mva_niso_90 == 1',
+                                                    'l1_id_hnl_l_niso == 1' ,
+                                                    'l2_id_hnl_m == 1'      ,])
 
         if self.channel == 'eee':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'               ,
-                                                    'l2_pt > 5'                ,
-                                                    'l1_pt > 5'                ,
-                                                    # 'l0_eid_mva_iso_wp90 == 1' , # martina uses no iso
-                                                    'l0_eid_mva_noniso_wp90 == 1',
-                                                    'l1_LooseNoIso == 1'       ,
-                                                    'l2_LooseNoIso == 1'       ,])
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'            ,
+                                                    'l2_pt > 5'             ,
+                                                    'l1_pt > 5'             ,
+                                                    'l0_id_mva_niso_90 == 1',
+                                                    'l1_id_hnl_l_niso == 1' ,
+                                                    'l1_id_hnl_l_niso == 1' ,])
 
         assert self.selections['pt_iso'], 'Error: No channel specific selection applied!'
 
-        self.selections['baseline'] = ' & '.join([
+        self.selections['pre_baseline'] = ' & '.join([
             'abs(l0_eta) < 2.4'     ,
             'abs(l0_dxy) < 0.05'    ,
             'abs(l0_dz) < 0.1'      ,
@@ -58,18 +56,26 @@ class Selections(object):
 
             'hnl_q_12 == 0'         ,
 
-            'nbj == 0'              ,
             'hnl_dr_12 < 1.'        ,
 
-            'hnl_m_12 < 12'         ,
-            'sv_cos > 0.9'          ,
+            'hnl_m_12 < 20'         ,
             
             'abs(hnl_dphi_01)>1.'   ,
             'abs(hnl_dphi_02)>1.'   , # dphi a la facon belgique
-
-            'abs(l1_dxy) > 0.01'    ,
-            'abs(l2_dxy) > 0.01'    ,
             ])
+
+        self.selections['baseline'] = ' & '.join([
+            self.selections['pre_baseline'],
+            'nbj == 0'                     ,
+            'hnl_2d_disp_sig>20'           ,
+            'hnl_pt_12>15'                 ,
+            'sv_cos>0.99'                  ,
+            'sv_prob>0.001'                ,
+            'abs(l1_dz)<10'                ,
+            'abs(l2_dz)<10'                ,
+            'abs(l1_dxy) > 0.01'           ,
+            'abs(l2_dxy) > 0.01'           ,
+        ])
 
         self.selections['sideband'] = '!(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' # THIS IS IMPORTANT!
 
@@ -122,10 +128,12 @@ class Selections(object):
              'l2_reliso_rho_03 < 0.2',
             ])
 
-        self.selections['is_prompt_lepton'] = ' & '.join([
-            '(l1_gen_match_isPrompt==1 | l1_gen_match_pdgid==22)',
-            '(l2_gen_match_isPrompt==1 | l2_gen_match_pdgid==22)',
-            ])
+        self.selections['is_prompt_lepton'] = '(%s)' %(' | '.join([
+            'l1_gen_match_isPrompt==1',
+            'l1_gen_match_pdgid==22',
+            'l2_gen_match_isPrompt==1',
+            'l2_gen_match_pdgid==22',
+            ]))
 
         self.selections['zmm'] = ' & '.join([
             'l0_pt > 40'                               ,

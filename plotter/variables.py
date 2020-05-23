@@ -21,15 +21,15 @@ m12_bins_displaced_3 = np.array([0., 1., 2., 3., 10])
 # m12_bins_displaced_2_alt = np.array([0., 1., 2., 3., 4., 10]) 
 # m12_bins_displaced_3_alt = np.array([0., 1., 2., 3., 10])     
 
-m12_bins_displaced_1_alt = np.array([0., 1., 2., 3., 4., 10.])    
-m12_bins_displaced_2_alt = np.array([0., 1., 2., 3., 4., 10.]) 
-m12_bins_displaced_3_alt = np.array([0., 1., 2., 3., 10.])     
+m12_bins_displaced_1_alt = np.array([0., 1., 2., 3., 4., 10., 20.])    
+m12_bins_displaced_2_alt = np.array([0., 1., 2., 3., 4., 10., 20.]) 
+m12_bins_displaced_3_alt = np.array([0., 1., 2., 3., 10., 20.])     
 
 m12_bins_displaced_1_coarse = np.linspace(0., 10., 5 + 1)    
-m12_bins_displaced_2_coarse = np.array([0., 2., 4., 10]) 
-m12_bins_displaced_3_coarse = np.array([0., 2., 4., 10])     
+m12_bins_displaced_2_coarse = np.array([0., 2., 4., 10, 20.]) 
+m12_bins_displaced_3_coarse = np.array([0., 2., 4., 10, 20.])     
     
-m12_bins_martina = np.array([0., 4., 12]) 
+m12_bins_martina = np.array([0., 4., 10., 20.]) 
 
 # variables
 variables = [
@@ -47,6 +47,10 @@ variables = [
     Variable('l1_phi', np.linspace(-3.15, 3.15, 10 + 1), 'l_{2} \phi', 'events'),
     Variable('l2_phi', np.linspace(-3.15, 3.15, 10 + 1), 'l_{3} \phi', 'events'),
 
+    Variable('l0_ptcone', np.linspace(25.,100.,12 + 1), 'l_{1} p_{T}^{cone} (GeV)', 'events'),
+    Variable('l1_ptcone', np.linspace( 5., 50.,12 + 1), 'l_{2} p_{T}^{cone} (GeV)', 'events'),
+    Variable('l2_ptcone', np.linspace( 5., 50.,12 + 1), 'l_{3} p_{T}^{cone} (GeV)', 'events'),
+
     Variable('l0_pt', np.linspace(25.,100.,12 + 1), 'l_{1} p_{T} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
     Variable('l0_pt', np.linspace(25.,100.,12 + 1), 'l_{1} p_{T} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=2.0', extra_label='lxy_0p5_to_2p0'),
     Variable('l0_pt', np.linspace(25.,100.,10 + 1), 'l_{1} p_{T} (GeV)', 'events', extra_selection='hnl_2d_disp>2.0'                   , extra_label='lxy_mt_2p0'    ),
@@ -59,7 +63,7 @@ variables = [
     Variable('l2_pt', np.linspace( 5., 30.,12 + 1), 'l_{3} p_{T} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=2.0', extra_label='lxy_0p5_to_2p0'),
     Variable('l2_pt', np.linspace( 5., 30.,10 + 1), 'l_{3} p_{T} (GeV)', 'events', extra_selection='hnl_2d_disp>2.0'                   , extra_label='lxy_mt_2p0'    ),
 
-    Variable('hnl_m_12', m12_bins_displaced_1, 'm_{23} (GeV)', 'events'),
+    Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events'),
 
 #     Variable('hnl_m_12', m12_bins_displaced_1, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
 #     Variable('hnl_m_12', m12_bins_displaced_2, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=2.0', extra_label='lxy_0p5_to_2p0'),
@@ -82,10 +86,19 @@ variables = [
 #     Variable('hnl_m_12', np.linspace(0., 12., 12 + 1), 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>5.0'                   , extra_label='lxy_mt_5p0'    ),
 
     # final bins à la Martina
-    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
-    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=1.5', extra_label='lxy_0p5_to_1p5'),
-    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>1.5 & hnl_2d_disp<=4.0', extra_label='lxy_1p5_to_4p0'),
-    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>4.0'                   , extra_label='lxy_mt_4p0'    ),
+#     Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
+#     Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=1.5', extra_label='lxy_0p5_to_1p5'),
+#     Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>1.5 & hnl_2d_disp<=4.0', extra_label='lxy_1p5_to_4p0'),
+#     Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>4.0'                   , extra_label='lxy_mt_4p0'    ),
+    Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
+    Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=1.5', extra_label='lxy_0p5_to_1p5'),
+    Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>1.5 & hnl_2d_disp<=4.0', extra_label='lxy_1p5_to_4p0'),
+    Variable('hnl_m_12', m12_bins_martina        , 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>4.0'                   , extra_label='lxy_mt_4p0'    ),
+
+    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='widebins_lxy_lt_0p5'    ),
+    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=1.5', extra_label='widebins_lxy_0p5_to_1p5'),
+    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>1.5 & hnl_2d_disp<=4.0', extra_label='widebins_lxy_1p5_to_4p0'),
+    Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>4.0'                   , extra_label='widebins_lxy_mt_4p0'    ),
 
     Variable('hnl_2d_disp'    , np.linspace( 0   ,  30   , 25 + 1) , 'L_{xy} (cm)'       , 'events'),
     Variable('hnl_2d_disp'    , np.linspace( 0   ,  10   , 25 + 1) , 'L_{xy} (cm)'       , 'events', extra_label='hnl_2d_disp_narrow'),
@@ -140,10 +153,10 @@ variables = [
     Variable('l1_reliso_rho_03', np.linspace( 0,  0.2, 25 + 1), 'l_{2} #rho-corrected I^{rel}' , 'events', extra_label='l1_reliso_rho_03_zoom'),
     Variable('l2_reliso_rho_03', np.linspace( 0,  0.2, 25 + 1), 'l_{3} #rho-corrected I^{rel}' , 'events', extra_label='l2_reliso_rho_03_zoom'),
 
-    Variable('fr'             , np.linspace( 0  ,  1, 30 + 1) , 'fake rate'         , 'events'),
-    Variable('fr'             , np.linspace( 0  ,  1, 20 + 1) , 'fake rate'         , 'events', extra_label='fr_coarse'),
-    Variable('fr'             , np.linspace( 0  ,  1, 15 + 1) , 'fake rate'         , 'events', extra_label='fr_very_coarse'),
-    Variable('fr'             , np.linspace( 0  ,  1, 10 + 1) , 'fake rate'         , 'events', extra_label='fr_very_very_coarse'),
+#     Variable('fr'             , np.linspace( 0  ,  1, 30 + 1) , 'fake rate'         , 'events'),
+#     Variable('fr'             , np.linspace( 0  ,  1, 20 + 1) , 'fake rate'         , 'events', extra_label='fr_coarse'),
+#     Variable('fr'             , np.linspace( 0  ,  1, 15 + 1) , 'fake rate'         , 'events', extra_label='fr_very_coarse'),
+#     Variable('fr'             , np.linspace( 0  ,  1, 10 + 1) , 'fake rate'         , 'events', extra_label='fr_very_very_coarse'),
 ]
 
 

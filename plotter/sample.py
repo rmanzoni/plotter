@@ -105,6 +105,12 @@ signal_weights = [
     '9.0em10',
 ]
 
+@np.vectorize
+def ptcone(pt, iso, iso_cut):
+    if iso < iso_cut:
+        return pt
+    else:
+        return (1.+iso-iso_cut)*pt
 
 class Sample(object):
     def __init__(self, 
@@ -154,7 +160,10 @@ class Sample(object):
                         self.nevents = float(findall(r'\d+', lines[2])[0])
                         break
         tree_file = '/'.join([self.basedir, self.name, self.postfix])
-        
+
+#         print('\n\n=========> tree file\n', tree_file)
+#         print('\n\n=========> selection\n', self.selection, '\n\n')
+                
         self.df = read_root( tree_file, 'tree', where=self.selection, warn_missing_tree=True ); print('\tselected events', len(self.df))
         
         # self awareness...
@@ -163,6 +172,9 @@ class Sample(object):
         self.df['abs_l0_eta'    ] = np.abs(self.df.l0_eta)
         self.df['abs_l1_eta'    ] = np.abs(self.df.l1_eta)
         self.df['abs_l2_eta'    ] = np.abs(self.df.l2_eta)
+        self.df['abs_l0_pdgid'  ] = np.abs(self.df.l0_pdgid)
+        self.df['abs_l1_pdgid'  ] = np.abs(self.df.l1_pdgid)
+        self.df['abs_l2_pdgid'  ] = np.abs(self.df.l2_pdgid)
         self.df['log_abs_l0_dxy'] = np.log10(np.abs(self.df.l0_dxy))
         self.df['log_abs_l0_dz' ] = np.log10(np.abs(self.df.l0_dz ))
         self.df['log_abs_l1_dxy'] = np.log10(np.abs(self.df.l1_dxy))
@@ -177,6 +189,9 @@ class Sample(object):
         self.df['log_l0_dz_sig' ] = np.log10(self.df.l0_dz_error / np.abs(self.df.l0_dz ))
         self.df['log_l1_dz_sig' ] = np.log10(self.df.l1_dz_error / np.abs(self.df.l1_dz ))
         self.df['log_l2_dz_sig' ] = np.log10(self.df.l2_dz_error / np.abs(self.df.l2_dz ))
+        self.df['l0_ptcone'     ] = ptcone(self.df.l0_pt, self.df.l0_reliso_rho_03, 0.1)
+        self.df['l1_ptcone'     ] = ptcone(self.df.l1_pt, self.df.l1_reliso_rho_03, 0.2)
+        self.df['l2_ptcone'     ] = ptcone(self.df.l1_pt, self.df.l1_reliso_rho_03, 0.2)
         
         # defined à la Martina
         self.df['hnl_2d_disp_sig_alt'] = self.df.hnl_2d_disp**2 / np.sqrt(self.df.sv_covxx * self.df.sv_x**2 + self.df.sv_covyy * self.df.sv_y**2)
@@ -193,20 +208,20 @@ def get_data_samples(channel, basedir, postfix, selection):
     elif channel [0] == 'e': lep = 'ele'
     assert lep == 'ele' or lep == 'mu', 'Lepton flavor error'
     data = [
-        Sample('Single_{lep}_2018A'.format(lep=lep), channel, '2018A', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-        Sample('Single_{lep}_2018B'.format(lep=lep), channel, '2018B', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-        Sample('Single_{lep}_2018C'.format(lep=lep), channel, '2018C', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
-        Sample('Single_{lep}_2018D'.format(lep=lep), channel, '2018D', selection, 'data_obs', 'black', 9999, basedir, postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018A'.format(lep=lep), channel, '2018A', selection, 'data_obs', 'black', 9999, '/'.join([basedir, 'data']), postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018B'.format(lep=lep), channel, '2018B', selection, 'data_obs', 'black', 9999, '/'.join([basedir, 'data']), postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018C'.format(lep=lep), channel, '2018C', selection, 'data_obs', 'black', 9999, '/'.join([basedir, 'data']), postfix, True, False, False, 1., 1.),
+        Sample('Single_{lep}_2018D'.format(lep=lep), channel, '2018D', selection, 'data_obs', 'black', 9999, '/'.join([basedir, 'data']), postfix, True, False, False, 1., 1.),
     ]
     return data
 
 def get_mc_samples(channel, basedir, postfix, selection):
     mc = [
-        Sample('DYJetsToLL_M50_ext', channel,  r'DY$\to\ell\ell$', selection, 'DY', 'gold'     ,10, basedir, postfix, False, True, False, 1.,  6077.22),
-        Sample('TTJets_ext'        , channel,  r'$t\bar{t}$'     , selection, 'TT', 'slateblue', 0, basedir, postfix, False, True, False, 1.,   831.76),
-        Sample('WW'                , channel,  'WW'              , selection, 'WW', 'blue'     , 5, basedir, postfix, False, True, False, 1.,    75.88),
-        Sample('WZ'                , channel,  'WZ'              , selection, 'WZ', 'blue'     , 5, basedir, postfix, False, True, False, 1.,    27.6 ),
-        Sample('ZZ'                , channel,  'ZZ'              , selection, 'ZZ', 'blue'     , 5, basedir, postfix, False, True, False, 1.,    12.14),
+        Sample('DYJetsToLL_M50_ext', channel,  r'DY$\to\ell\ell$', selection, 'DY', 'gold'     ,10, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,  6077.22),
+        Sample('TTJets_ext'        , channel,  r'$t\bar{t}$'     , selection, 'TT', 'slateblue', 0, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,   831.76),
+        Sample('WW'                , channel,  'WW'              , selection, 'WW', 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    75.88),
+        Sample('WZ'                , channel,  'WZ'              , selection, 'WZ', 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    27.6 ),
+        Sample('ZZ'                , channel,  'ZZ'              , selection, 'ZZ', 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    12.14),
     ]   
     return mc         
 
@@ -216,46 +231,46 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
         if mini:
             signal = [ 
                 ########## M = 2
-                Sample('HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  0.5278   , toplot=True ),
+                Sample('HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' , 'forestgreen',10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.5278   , toplot=True ),
                 ########## M = 5
-                Sample('HN3L_M_5_V_0p00145602197786_mu_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  0.008434 , toplot=True ),
+                Sample('HN3L_M_5_V_0p00145602197786_mu_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.008434 , toplot=True ),
                 ########## M = 10
-                Sample('HN3L_M_10_V_0p001_mu_massiveAndCKM_LO'            , channel, '#splitline{m=10 GeV |V|^{2}=1.0 10^{-6}}{Majorana}', selection, 'hnl_m_10_v2_1p0Em06_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  0.004121 , toplot=True ),
+                Sample('HN3L_M_10_V_0p001_mu_massiveAndCKM_LO'            , channel, '#splitline{m=10 GeV |V|^{2}=1.0 10^{-6}}{Majorana}', selection, 'hnl_m_10_v2_1p0Em06_majorana', 'teal'       ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.004121 , toplot=True ),
             ]
         else:
             signal = [ 
-                Sample('HN3L_M_1_V_0p0949736805647_mu_massiveAndCKM_LO'   , channel, '#splitline{m=1 GeV, |V|^{2}=9.0 10^{-3}}{Majorana}' , selection, 'hnl_m_1_v2_9p0Em03_majorana' , 'darkorange' ,10, basedir, postfix, False, True, False, 1.,  38.67    , toplot=False, is_generator=True),
-                Sample('HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  0.5278   , toplot=True , is_generator=True),
-                Sample('HN3L_M_2_V_0p0248394846967_mu_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  2.647    , toplot=False),
-                Sample('HN3L_M_3_V_0p00707813534767_mu_massiveAndCKM_LO'  , channel, '#splitline{m=3 GeV, |V|^{2}=5.0 10^{-5}}{Majorana}' , selection, 'hnl_m_3_v2_5p0Em05_majorana' , 'firebrick'  ,10, basedir, postfix, False, True, False, 1.,  0.2014   , toplot=False, is_generator=True),
-                Sample('HN3L_M_4_V_0p00290516780927_mu_massiveAndCKM_LO'  , channel, '#splitline{m=4 GeV, |V|^{2}=8.4 10^{-6}}{Majorana}' , selection, 'hnl_m_4_v2_8p4Em06_majorana' , 'indigo'     ,10, basedir, postfix, False, True, False, 1.,  0.0335   , toplot=False, is_generator=True),
-                Sample('HN3L_M_5_V_0p000316227766017_mu_massiveAndCKM_LO' , channel, '#splitline{m=5 GeV, |V|^{2}=1.0 10^{-7}}{Majorana}' , selection, 'hnl_m_5_v2_1p0Em07_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  0.0003981, toplot=False),
-                Sample('HN3L_M_5_V_0p000547722557505_mu_massiveAndCKM_LO' , channel, '#splitline{m=5 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}' , selection, 'hnl_m_5_v2_3p0Em07_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  0.001194 , toplot=False),
-                Sample('HN3L_M_5_V_0p00145602197786_mu_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV, |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  0.008434 , toplot=True , is_generator=True),
-                Sample('HN3L_M_6_V_0p00202484567313_mu_massiveAndCKM_LO'  , channel, '#splitline{m=6 GeV, |V|^{2}=4.1 10^{-6}}{Majorana}' , selection, 'hnl_m_6_v2_4p1Em06_majorana' , 'olive'      ,10, basedir, postfix, False, True, False, 1.,  0.01655  , toplot=False, is_generator=True),
-                Sample('HN3L_M_8_V_0p000547722557505_mu_massiveAndCKM_LO' , channel, '#splitline{m=8 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}' , selection, 'hnl_m_8_v2_3p0Em07_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  0.00123  , toplot=False, is_generator=True),
-                Sample('HN3L_M_10_V_0p000547722557505_mu_massiveAndCKM_LO', channel, '#splitline{m=10 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}', selection, 'hnl_m_10_v2_3p0Em07_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  0.001237 , toplot=False),
-                Sample('HN3L_M_10_V_0p000756967634711_mu_massiveAndCKM_LO', channel, '#splitline{m=10 GeV, |V|^{2}=5.7 10^{-7}}{Majorana}', selection, 'hnl_m_10_v2_5p7Em07_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  0.002362 , toplot=False),
-                Sample('HN3L_M_10_V_0p001_mu_massiveAndCKM_LO'            , channel, '#splitline{m=10 GeV, |V|^{2}=1.0 10^{-6}}{Majorana}', selection, 'hnl_m_10_v2_1p0Em06_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  0.004121 , toplot=True , is_generator=True),
+                Sample('HN3L_M_1_V_0p0949736805647_mu_massiveAndCKM_LO'   , channel, '#splitline{m=1 GeV, |V|^{2}=9.0 10^{-3}}{Majorana}' , selection, 'hnl_m_1_v2_9p0Em03_majorana' , 'darkorange' ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  38.67    , toplot=False, is_generator=True),
+                Sample('HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' , 'forestgreen',10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.5278   , toplot=True , is_generator=True),
+                Sample('HN3L_M_2_V_0p0248394846967_mu_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  2.647    , toplot=False),
+                Sample('HN3L_M_3_V_0p00707813534767_mu_massiveAndCKM_LO'  , channel, '#splitline{m=3 GeV, |V|^{2}=5.0 10^{-5}}{Majorana}' , selection, 'hnl_m_3_v2_5p0Em05_majorana' , 'firebrick'  ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.2014   , toplot=False, is_generator=True),
+                Sample('HN3L_M_4_V_0p00290516780927_mu_massiveAndCKM_LO'  , channel, '#splitline{m=4 GeV, |V|^{2}=8.4 10^{-6}}{Majorana}' , selection, 'hnl_m_4_v2_8p4Em06_majorana' , 'indigo'     ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.0335   , toplot=False, is_generator=True),
+                Sample('HN3L_M_5_V_0p000316227766017_mu_massiveAndCKM_LO' , channel, '#splitline{m=5 GeV, |V|^{2}=1.0 10^{-7}}{Majorana}' , selection, 'hnl_m_5_v2_1p0Em07_majorana' , 'chocolate'  ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.0003981, toplot=False),
+                Sample('HN3L_M_5_V_0p000547722557505_mu_massiveAndCKM_LO' , channel, '#splitline{m=5 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}' , selection, 'hnl_m_5_v2_3p0Em07_majorana' , 'chocolate'  ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.001194 , toplot=False),
+                Sample('HN3L_M_5_V_0p00145602197786_mu_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV, |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.008434 , toplot=True , is_generator=True),
+                Sample('HN3L_M_6_V_0p00202484567313_mu_massiveAndCKM_LO'  , channel, '#splitline{m=6 GeV, |V|^{2}=4.1 10^{-6}}{Majorana}' , selection, 'hnl_m_6_v2_4p1Em06_majorana' , 'olive'      ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.01655  , toplot=False, is_generator=True),
+                Sample('HN3L_M_8_V_0p000547722557505_mu_massiveAndCKM_LO' , channel, '#splitline{m=8 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}' , selection, 'hnl_m_8_v2_3p0Em07_majorana' , 'darkgray'   ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.00123  , toplot=False, is_generator=True),
+                Sample('HN3L_M_10_V_0p000547722557505_mu_massiveAndCKM_LO', channel, '#splitline{m=10 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}', selection, 'hnl_m_10_v2_3p0Em07_majorana', 'teal'       ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.001237 , toplot=False),
+                Sample('HN3L_M_10_V_0p000756967634711_mu_massiveAndCKM_LO', channel, '#splitline{m=10 GeV, |V|^{2}=5.7 10^{-7}}{Majorana}', selection, 'hnl_m_10_v2_5p7Em07_majorana', 'teal'       ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.002362 , toplot=False),
+                Sample('HN3L_M_10_V_0p001_mu_massiveAndCKM_LO'            , channel, '#splitline{m=10 GeV, |V|^{2}=1.0 10^{-6}}{Majorana}', selection, 'hnl_m_10_v2_1p0Em06_majorana', 'teal'       ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.004121 , toplot=True , is_generator=True),
             ]
                 
     elif channel [0] == 'e': 
         if mini:
             signal = [
-                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  2.648    , toplot=True , is_generator=False),
-                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  9.383e-03, toplot=True , is_generator=False),
+                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  2.648    , toplot=True , is_generator=False),
+                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  9.383e-03, toplot=True , is_generator=False),
              ]
         else:
             signal = [
-                Sample('HN3L_M_1_V_0p212367605816_e_massiveAndCKM_LO'    , channel, '#splitline{m=1 GeV, |V|^{2}=4.5 10^{-2}}{Majorana}' , selection, 'hnl_m_1_v2_4p5Em02_majorana' , 'darkorange' ,10, basedir, postfix, False, True, False, 1.,  191.1    , toplot=False, is_generator=True),
-                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, basedir, postfix, False, True, False, 1.,  2.648    , toplot=True , is_generator=True),
-                Sample('HN3L_M_3_V_0p00707813534767_e_massiveAndCKM_LO'  , channel, '#splitline{m=3 GeV, |V|^{2}=5.1 10^{-5}}{Majorana}' , selection, 'hnl_m_3_v2_5p1Em05_majorana' , 'firebrick'  ,10, basedir, postfix, False, True, False, 1.,  0.2022   , toplot=False, is_generator=True),
-                Sample('HN3L_M_4_V_0p00290516780927_e_massiveAndCKM_LO'  , channel, '#splitline{m=4 GeV, |V|^{2}=8.4 10^{-6}}{Majorana}' , selection, 'hnl_m_4_v2_8p4Em06_majorana' , 'indigo'     ,10, basedir, postfix, False, True, False, 1.,  3.365e-02, toplot=False, is_generator=True),
-                Sample('HN3L_M_5_V_0p00145602197786_e_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV, |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, basedir, postfix, False, True, False, 1.,  8.479e-03, toplot=False, is_generator=True),
-                Sample('HN3L_M_6_V_0p00202484567313_e_massiveAndCKM_LO'  , channel, '#splitline{m=6 GeV, |V|^{2}=4.1 10^{-6}}{Majorana}' , selection, 'hnl_m_6_v2_4p1Em06_majorana' , 'olive'      ,10, basedir, postfix, False, True, False, 1.,  1.655e-02, toplot=False, is_generator=True),
-#                 Sample('HN3L_M_7_V_0p0316227766017_e_massiveAndCKM_LO'   , channel, '#splitline{m=7 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_7_v2_1p0Em04_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  4.088    , toplot=False, is_generator=True),
-                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   ,10, basedir, postfix, False, True, False, 1.,  9.383e-03, toplot=True , is_generator=True),
-                Sample('HN3L_M_10_V_0p000756967634711_e_massiveAndCKM_LO', channel, '#splitline{m=10 GeV, |V|^{2}=5.7 10^{-7}}{Majorana}', selection, 'hnl_m_10_v2_5p7Em07_majorana', 'teal'       ,10, basedir, postfix, False, True, False, 1.,  2.366e-03, toplot=False, is_generator=True),
+                Sample('HN3L_M_1_V_0p212367605816_e_massiveAndCKM_LO'    , channel, '#splitline{m=1 GeV, |V|^{2}=4.5 10^{-2}}{Majorana}' , selection, 'hnl_m_1_v2_4p5Em02_majorana' , 'darkorange' ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  191.1    , toplot=False, is_generator=True),
+                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'   , channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen',10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  2.648    , toplot=True , is_generator=True),
+                Sample('HN3L_M_3_V_0p00707813534767_e_massiveAndCKM_LO'  , channel, '#splitline{m=3 GeV, |V|^{2}=5.1 10^{-5}}{Majorana}' , selection, 'hnl_m_3_v2_5p1Em05_majorana' , 'firebrick'  ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  0.2022   , toplot=False, is_generator=True),
+                Sample('HN3L_M_4_V_0p00290516780927_e_massiveAndCKM_LO'  , channel, '#splitline{m=4 GeV, |V|^{2}=8.4 10^{-6}}{Majorana}' , selection, 'hnl_m_4_v2_8p4Em06_majorana' , 'indigo'     ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  3.365e-02, toplot=False, is_generator=True),
+                Sample('HN3L_M_5_V_0p00145602197786_e_massiveAndCKM_LO'  , channel, '#splitline{m=5 GeV, |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' , 'chocolate'  ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  8.479e-03, toplot=False, is_generator=True),
+                Sample('HN3L_M_6_V_0p00202484567313_e_massiveAndCKM_LO'  , channel, '#splitline{m=6 GeV, |V|^{2}=4.1 10^{-6}}{Majorana}' , selection, 'hnl_m_6_v2_4p1Em06_majorana' , 'olive'      ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  1.655e-02, toplot=False, is_generator=True),
+#                 Sample('HN3L_M_7_V_0p0316227766017_e_massiveAndCKM_LO'   , channel, '#splitline{m=7 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_7_v2_1p0Em04_majorana' , 'darkgray'   ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  4.088    , toplot=False, is_generator=True),
+                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  9.383e-03, toplot=True , is_generator=True),
+                Sample('HN3L_M_10_V_0p000756967634711_e_massiveAndCKM_LO', channel, '#splitline{m=10 GeV, |V|^{2}=5.7 10^{-7}}{Majorana}', selection, 'hnl_m_10_v2_5p7Em07_majorana', 'teal'       ,10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  2.366e-03, toplot=False, is_generator=True),
              ]
         
     # generate reweighted samples

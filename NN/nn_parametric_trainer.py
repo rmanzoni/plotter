@@ -164,11 +164,11 @@ class Trainer(object):
 
         # define the net
         input  = Input((len(self.features),))
-        layer  = Dense(2048, activation=activation   , name='dense1', kernel_constraint=unit_norm())(input)
+        layer  = Dense(4096, activation=activation   , name='dense1', kernel_constraint=unit_norm())(input)
         layer  = Dropout(0.5, name='dropout1')(layer)
         layer  = BatchNormalization()(layer)
-        # layer  = Dense(256, activation=activation   , name='dense2', kernel_constraint=unit_norm())(layer)
-        # layer  = Dropout(0.4, name='dropout2')(layer)
+        layer  = Dense(256, activation=activation   , name='dense2', kernel_constraint=unit_norm())(layer)
+        layer  = Dropout(0.4, name='dropout2')(layer)
         # layer  = BatchNormalization()(layer)
         # layer  = Dense(16, activation=activation   , name='dense3', kernel_constraint=unit_norm())(layer)
         # layer  = Dropout(0.4, name='dropout3')(layer)
