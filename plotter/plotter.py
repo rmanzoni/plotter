@@ -44,7 +44,8 @@ class Plotter(object):
                  blinded         ,
                  datacards=[]    ,
                  mini_signals=False,
-                 do_ratio=True):
+                 do_ratio=True,
+                 mc_subtraction=True):
 
         self.channel          = channel.split('_')[0]
         self.full_channel     = channel
@@ -65,6 +66,7 @@ class Plotter(object):
         self.do_ratio         = do_ratio
         self.mini_signals     = mini_signals
         self.datacards        = datacards
+        self.mc_subtraction   = mc_subtraction
     
     def total_weight_calculator(self, df, weight_list, scalar_weights=[]):
         total_weight = df[weight_list[0]].to_numpy().astype(np.float)
@@ -253,7 +255,10 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 histo_lnt.fillcolor = 'skyblue'
                 histo_lnt.linewidth = 0
 
-                stack_nonprompt.append(histo_lnt)
+                # optionally remove the MC subtraction in loose-not-tight
+                # may help if MC stats is terrible (and it often is)
+                if self.mc_subtraction:
+                    stack_nonprompt.append(histo_lnt)
 
             ######################################################################################
             # plot the signals
@@ -304,6 +309,10 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 
                 histo_lnt = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
                 histo_lnt.fill_array(idata_df_lnt[variable], weights=idata_df_lnt.fr_corr)
+                
+                histo_lnt.fillstyle = 'solid'
+                histo_lnt.fillcolor = 'skyblue'
+                histo_lnt.linewidth = 0
                 
                 data_nonprompt.append(histo_lnt)
 

@@ -15,7 +15,7 @@ selection = [
     cuts.selections['sideband'], 
 #     cuts.selections['signal_region'], 
 
-    'l1_pt>7',
+    'l1_pt>5',
     'l0_pt>25',
 ]
 
@@ -27,7 +27,9 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'all_channels_200523_15h_53m'
+training = 'all_channels_200523_22h_57m'
+# training = 'all_channels_200523_22h_39m' #<==== GOOD
+# training = 'all_channels_200523_15h_53m'
 # training = 'all_channels_200523_15h_3m'
 # training = 'all_channels_200523_15h_16m'
 

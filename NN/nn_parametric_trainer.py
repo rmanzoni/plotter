@@ -40,13 +40,9 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 from plotter.sample import get_data_samples, get_mc_samples, get_signal_samples
 from plotter.utils import nn_dir
-from plotter.selections import Selections
 
 # fix random seed for reproducibility (FIXME! not really used by Keras)
 np.random.seed(1986)
-
-# luminosity
-lumi = 59700.
 
 class Trainer(object):
     def __init__(
@@ -67,7 +63,8 @@ class Trainer(object):
         selection_tight    ,
         lumi               ,
         epochs=1000        ,
-        early_stopping=True):
+        early_stopping=True,
+        skip_mc=False,):
 
         self.channel            = channel.split('_')[0]
         self.channel_extra      = channel.split('_')[1] if len(channel.split('_'))>1 else ''
@@ -88,6 +85,7 @@ class Trainer(object):
         self.lumi              = lumi
         self.epochs            = epochs
         self.early_stopping    = early_stopping
+        self.skip_mc           = skip_mc
 
     def train(self):
 
@@ -97,43 +95,50 @@ class Trainer(object):
         print ('Net will be stored in: ', net_dir)
         now = time()
         # FIXME! temporary hack
-        data  = get_data_samples('mmm', '/Users/manzoni/Documents/HNL/ntuples/2018/mmm', self.post_fix, self.selection_data_mmm)
-        data += get_data_samples('mem', '/Users/manzoni/Documents/HNL/ntuples/2018/mem', self.post_fix, self.selection_data_mem)
-        data += get_data_samples('eee', '/Users/manzoni/Documents/HNL/ntuples/2018/eee', self.post_fix, self.selection_data_eee)
-        data += get_data_samples('eem', '/Users/manzoni/Documents/HNL/ntuples/2018/eem', self.post_fix, self.selection_data_eem)
+        data  = get_data_samples('mmm', self.base_dir, self.post_fix.replace('CHANNEL', 'mmm'), self.selection_data_mmm)
+        data += get_data_samples('mem', self.base_dir, self.post_fix.replace('CHANNEL', 'mem'), self.selection_data_mem)
+        data += get_data_samples('eee', self.base_dir, self.post_fix.replace('CHANNEL', 'eee'), self.selection_data_eee)
+        data += get_data_samples('eem', self.base_dir, self.post_fix.replace('CHANNEL', 'eem'), self.selection_data_eem)
         # FIXME! temporary hack
-        mc  = get_mc_samples('mmm', '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mmm/tree.root', self.selection_mc_mmm)
-        mc += get_mc_samples('mem', '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_mem/tree.root', self.selection_mc_mem)
-        mc += get_mc_samples('eee', '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eee/tree.root', self.selection_mc_eee)
-        mc += get_mc_samples('eem', '/Users/manzoni/Documents/HNL/ntuples/2018/bkg', 'HNLTreeProducer_eem/tree.root', self.selection_mc_eem)
+        if self.skip_mc:
+            mc = []
+        else:
+            mc  = get_mc_samples('mmm', self.base_dir, self.post_fix.replace('CHANNEL', 'mmm'), self.selection_mc_mmm)
+            mc += get_mc_samples('mem', self.base_dir, self.post_fix.replace('CHANNEL', 'mem'), self.selection_mc_mem)
+            mc += get_mc_samples('eee', self.base_dir, self.post_fix.replace('CHANNEL', 'eee'), self.selection_mc_eee)
+            mc += get_mc_samples('eem', self.base_dir, self.post_fix.replace('CHANNEL', 'eem'), self.selection_mc_eem)
 
         print('============> it took %.2f seconds' %(time() - now))
 
         data_df = pd.concat([idt.df for idt in data], sort=False)
-        mc_df   = pd.concat([imc.df for imc in mc], sort=False)
+        # mc_df   = pd.concat([imc.df for imc in mc], sort=False)
 
         # initial weights
         data_df['weight'] = 1.
-        data_df['isdata'] = 0
+        data_df['isdata'] = 1
         data_df['ismc'] = 0
 
         passing_data = data_df.query(self.selection_tight)
         failing_data = data_df.query(self.selection_lnt)
 
-        for i, imc in enumerate(mc):
+        if self.skip_mc:
+            passing = passing_data
+            failing = failing_data
+        else:
+            for i, imc in enumerate(mc):
             
-            imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * imc.df.lhe_weight
-            imc.df['isdata'] = 0
-            imc.df['ismc']   = i+1
+                imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * imc.df.lhe_weight
+                imc.df['isdata'] = 0
+                imc.df['ismc']   = i+1
 
-            imc.df_tight = imc.df.query(self.selection_tight)
-            imc.df_lnt   = imc.df.query(self.selection_lnt)
+                imc.df_tight = imc.df.query(self.selection_tight)
+                imc.df_lnt   = imc.df.query(self.selection_lnt)
 
-        passing_mc = pd.concat([imc.df_tight for imc in mc], sort=False)
-        failing_mc = pd.concat([imc.df_lnt   for imc in mc], sort=False)
+            passing_mc = pd.concat([imc.df_tight for imc in mc], sort=False)
+            failing_mc = pd.concat([imc.df_lnt   for imc in mc], sort=False)
 
-        passing = pd.concat ([passing_data, passing_mc], sort=False)
-        failing = pd.concat ([failing_data, failing_mc], sort=False)
+            passing = pd.concat ([passing_data, passing_mc], sort=False)
+            failing = pd.concat ([failing_data, failing_mc], sort=False)
 
         # targets
         passing['target'] = np.ones (passing.shape[0]).astype(np.int)
@@ -164,10 +169,10 @@ class Trainer(object):
 
         # define the net
         input  = Input((len(self.features),))
-        layer  = Dense(4096, activation=activation   , name='dense1', kernel_constraint=unit_norm())(input)
+        layer  = Dense(128, activation=activation   , name='dense1', kernel_constraint=unit_norm())(input)
         layer  = Dropout(0.5, name='dropout1')(layer)
         layer  = BatchNormalization()(layer)
-        layer  = Dense(256, activation=activation   , name='dense2', kernel_constraint=unit_norm())(layer)
+        layer  = Dense(64, activation=activation   , name='dense2', kernel_constraint=unit_norm())(layer)
         layer  = Dropout(0.4, name='dropout2')(layer)
         # layer  = BatchNormalization()(layer)
         # layer  = Dense(16, activation=activation   , name='dense3', kernel_constraint=unit_norm())(layer)
@@ -176,7 +181,7 @@ class Trainer(object):
         # layer  = Dense(16, activation=activation   , name='dense4', kernel_constraint=unit_norm())(layer)
         # layer  = Dropout(0.4, name='dropout4')(layer)
         # layer  = BatchNormalization()(layer)
-        layer  = Dense(32, activation=activation   , name='dense5', kernel_constraint=unit_norm())(layer)
+        layer  = Dense(16, activation=activation   , name='dense5', kernel_constraint=unit_norm())(layer)
         layer  = Dropout(0.4, name='dropout5')(layer)
         layer  = BatchNormalization()(layer)
         output = Dense(  1, activation='sigmoid', name='output', )(layer)
@@ -242,13 +247,14 @@ class Trainer(object):
         save_model = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
         # weight the events according to their displacement (favour high displacement)
-        weight = np.array(main_df.weight * np.power(X['hnl_2d_disp'], 0.25))
+#         weight = np.array(main_df.weight * np.power(X['hnl_2d_disp'], 0.25))
+        weight = np.array(main_df.weight)
 
         # train only the classifier. beta is set at 0 and the discriminator is not trained
         callbacks = [reduce_lr, save_model]
         if self.early_stopping:
             callbacks.append(es)
-        history = model.fit(xx, Y, epochs=self.epochs, validation_split=0.5, callbacks=callbacks, batch_size=32, verbose=True, sample_weight=weight)  
+        history = model.fit(xx, Y, epochs=self.epochs, validation_split=0.3, callbacks=callbacks, batch_size=32, verbose=True, sample_weight=weight)  
 
         # plot loss function trends for train and validation sample
         plt.clf()

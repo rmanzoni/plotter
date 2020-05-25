@@ -3,21 +3,20 @@ from plotter.plotter import Plotter
 from plotter.selections import Selections
 from plotter.utils import set_paths, save_plotter_and_selections
 
-ch = 'eee'
+ch = 'mem'
 
 set_paths(ch, 2018)
 cuts = Selections(ch)
 
 selection = [ 
     cuts.selections['pt_iso'], 
-    cuts.selections['baseline'], 
-    cuts.selections['vetoes_12_OS'], 
-    cuts.selections['vetoes_01_OS'], 
-    cuts.selections['vetoes_02_OS'],
+    cuts.selections['pre_baseline'], 
+#     cuts.selections['vetoes_02_OS'],
+    'l0_q!=l2_q', 
+#     cuts.selections['sideband'], 
 #     cuts.selections['signal_region'], 
-    cuts.selections['sideband'], 
-
-    'l0_pt>32',
+    'l1_pt>5',
+    'l0_pt>25',
 ]
 
 # extra selection to be applied on variables that don't exist
@@ -28,12 +27,12 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'all_channels_200523_22h_39m' #<==== GOOD
-# training = 'all_channels_200523_15h_53m'
+training = 'all_channels_200523_22h_57m'
+# training = 'all_channels_200523_22h_39m' #<==== GOOD
 # training = 'all_channels_200523_15h_3m'
 # training = 'all_channels_200523_15h_16m'
 
-plotter = Plotter (channel          = ch,
+plotter = Plotter (channel          = ch+'_os',
                    base_dir         = '/Users/manzoni/Documents/HNL/ntuples/20may20', #env['NTUPLE_DIR'],
                    post_fix         = 'HNLTreeProducer_%s/tree.root' %ch,
                    selection_data   = selection,
@@ -52,8 +51,6 @@ plotter = Plotter (channel          = ch,
                    blinded          = False,
 
                    datacards        = ['hnl_m_12_lxy_lt_0p5', 'hnl_m_12_lxy_0p5_to_1p5', 'hnl_m_12_lxy_1p5_to_4p0', 'hnl_m_12_lxy_mt_4p0'], # FIXME! improve this to accept wildcards / regex
-
-                   mc_subtraction   = False,
                    )
 
 if __name__ == '__main__':
@@ -61,4 +58,3 @@ if __name__ == '__main__':
     # save the plotter and all
     save_plotter_and_selections(plotter, selection, selection_mc, selection_tight)
     pass
-    

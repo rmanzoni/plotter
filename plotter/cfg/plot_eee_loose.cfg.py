@@ -10,12 +10,12 @@ cuts = Selections(ch)
 
 selection = [ 
     cuts.selections['pt_iso'], 
-    cuts.selections['baseline'], 
-    cuts.selections['vetoes_12_OS'], 
-    cuts.selections['vetoes_01_OS'], 
-    cuts.selections['vetoes_02_OS'],
+    cuts.selections['pre_baseline'], 
+#     cuts.selections['vetoes_12_OS'], 
+#     cuts.selections['vetoes_01_OS'], 
+#     cuts.selections['vetoes_02_OS'],
 #     cuts.selections['signal_region'], 
-    cuts.selections['sideband'], 
+#     cuts.selections['sideband'], 
 
     'l0_pt>32',
 ]

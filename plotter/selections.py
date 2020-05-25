@@ -62,6 +62,8 @@ class Selections(object):
             
             'abs(hnl_dphi_01)>1.'   ,
             'abs(hnl_dphi_02)>1.'   , # dphi a la facon belgique
+            
+            'pass_met_filters==1'   ,
             ])
 
         self.selections['baseline'] = ' & '.join([
@@ -136,21 +138,25 @@ class Selections(object):
             ]))
 
         self.selections['zmm'] = ' & '.join([
-            'l0_pt > 40'                               ,
-            'abs(l0_eta) < 2.4'                        ,
-            'abs(l0_dxy) < 0.05'                       ,
-            'abs(l0_dz) < 0.2'                         ,
-            'l0_reliso_rho_03 < 0.2'                   ,
-            'l0_id_t == 1'                             ,
+            'l0_pt > 40'            ,
+            'abs(l0_eta) < 2.4'     ,
+            'abs(l0_dxy) < 0.05'    ,
+            'abs(l0_dz) < 0.2'      ,
+            'l0_reliso_rho_03 < 0.2',
+            'l0_id_t == 1'          ,
 
-            'l1_pt > 35'                               ,
-            'abs(l1_eta) < 2.4'                        ,
-            'abs(l1_dxy) < 0.05'                       ,
-            'abs(l1_dz) < 0.2'                         ,
-            'l1_reliso_rho_03 < 0.2'                   ,
-            'l1_id_t == 1'                             ,
+            'l1_pt > 35'            ,
+            'abs(l1_eta) < 2.4'     ,
+            'abs(l1_dxy) < 0.05'    ,
+            'abs(l1_dz) < 0.2'      ,
+            'l1_reliso_rho_03 < 0.2',
+            'l1_id_t == 1'          ,
 
-            'hnl_q_01==0'                              ,
+            'hnl_q_01==0'           ,
+            
+            'abs(hnl_dphi_01)>1.'   ,
+
+            'pass_met_filters==1'   ,
             ])
 
         # convert to pandas readable queries
