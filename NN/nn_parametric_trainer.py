@@ -64,7 +64,9 @@ class Trainer(object):
         lumi               ,
         epochs=1000        ,
         early_stopping=True,
-        skip_mc=False,):
+        skip_mc=False,
+        val_fraction=0.3,
+        scale_mc=1.):
 
         self.channel            = channel.split('_')[0]
         self.channel_extra      = channel.split('_')[1] if len(channel.split('_'))>1 else ''
@@ -86,6 +88,8 @@ class Trainer(object):
         self.epochs            = epochs
         self.early_stopping    = early_stopping
         self.skip_mc           = skip_mc
+        self.val_fraction      = val_fraction
+        self.scale_mc          = scale_mc
 
     def train(self):
 
@@ -127,7 +131,7 @@ class Trainer(object):
         else:
             for i, imc in enumerate(mc):
             
-                imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * imc.df.lhe_weight
+                imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * imc.df.lhe_weight * self.scale_mc
                 imc.df['isdata'] = 0
                 imc.df['ismc']   = i+1
 
@@ -254,7 +258,7 @@ class Trainer(object):
         callbacks = [reduce_lr, save_model]
         if self.early_stopping:
             callbacks.append(es)
-        history = model.fit(xx, Y, epochs=self.epochs, validation_split=0.3, callbacks=callbacks, batch_size=32, verbose=True, sample_weight=weight)  
+        history = model.fit(xx, Y, epochs=self.epochs, validation_split=self.val_fraction, callbacks=callbacks, batch_size=32, verbose=True, sample_weight=weight)  
 
         # plot loss function trends for train and validation sample
         plt.clf()

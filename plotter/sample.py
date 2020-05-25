@@ -221,11 +221,16 @@ def get_data_samples(channel, basedir, postfix, selection):
 
 def get_mc_samples(channel, basedir, postfix, selection):
     mc = [
-        Sample('DYJetsToLL_M50_ext', channel,  r'DY$\to\ell\ell$', selection, 'DY', 'gold'     ,10, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,  6077.22),
-        Sample('TTJets_ext'        , channel,  r'$t\bar{t}$'     , selection, 'TT', 'slateblue', 0, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,   831.76),
-        Sample('WW'                , channel,  'WW'              , selection, 'WW', 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    75.88),
-        Sample('WZ'                , channel,  'WZ'              , selection, 'WZ', 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    27.6 ),
-        Sample('ZZ'                , channel,  'ZZ'              , selection, 'ZZ', 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    12.14),
+        Sample('DYJetsToLL_M50_ext', channel,  r'DY$\to\ell\ell$', selection, 'DY'   , 'gold'     ,10, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,  6077.22),
+        Sample('TTJets_ext'        , channel,  r'$t\bar{t}$'     , selection, 'TT'   , 'slateblue', 0, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,   831.76),
+        Sample('WW'                , channel,  'WW'              , selection, 'WW'   , 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    75.88),
+        Sample('WZ'                , channel,  'WZ'              , selection, 'WZ'   , 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    27.6 ),
+        Sample('ZZ'                , channel,  'ZZ'              , selection, 'ZZ'   , 'blue'     , 5, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    12.14),
+        Sample('DYJetsToLL_M5to50' , channel,  r'DY$\to\ell\ell$', selection, 'DYLM' , 'gold'     ,10, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1., 81880.0 ),
+        Sample('ST_tW_inc'         , channel,  r'single$-t$'     , selection, 'TtW'  , 'slateblue', 1, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    35.85),
+        Sample('ST_tch_inc'        , channel,  r'single$-t$'     , selection, 'Ttch' , 'slateblue', 1, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,   136.02),
+        Sample('STbar_tW_inc'      , channel,  r'single$-t$'     , selection, 'TbtW' , 'slateblue', 1, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    35.85),
+        Sample('STbar_tch_inc'     , channel,  r'single$-t$'     , selection, 'Tbtch', 'slateblue', 1, '/'.join([basedir, 'bkg']), postfix, False, True, False, 1.,    80.95),
     ]   
     return mc         
 
@@ -310,5 +315,4 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
 
 
     return signal
-
 

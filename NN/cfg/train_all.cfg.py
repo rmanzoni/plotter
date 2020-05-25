@@ -12,10 +12,10 @@ set_paths(ch, 2018)
 baseline = 'pre_baseline'
 
 extra_selections = [
-    'hnl_2d_disp_sig>10' ,
-    'sv_prob>0.0005'     ,
-    'abs(l1_dxy) > 0.003',
-    'abs(l2_dxy) > 0.003',
+    'hnl_2d_disp_sig>5' ,
+    'sv_prob>0.0002'     ,
+    'abs(l1_dxy) > 0.001',
+    'abs(l2_dxy) > 0.001',
     'sv_cos>0.9'         ,
     'abs(l1_dz)<10'      ,
     'abs(l2_dz)<10'      ,
@@ -116,9 +116,13 @@ trainer = Trainer (channel  = 'all_channels',
                    selection_tight = cuts_mmm.selections_pd['tight'],
                    lumi = 59700.,
                    
-                   epochs = 30,
+                   epochs = 50,
                    
-                   skip_mc = False, # if you know you don't have conversions a nd you want to steer clear of
+                   val_fraction = 0.05,
+                   
+                   skip_mc = False, # if you know you don't have conversions and you want to steer clear of
+
+                   scale_mc = 0.75, # overall scale MC (if off)
                    )
 
 if __name__ == '__main__':

@@ -25,7 +25,7 @@ class Selections(object):
                                                     'l2_id_hnl_m == 1'      ,])
 
         if self.channel == 'eem':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'            ,
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 32'            ,
                                                     'l2_pt > 5'             ,
                                                     'l1_pt > 5'             ,
                                                     'l0_id_mva_niso_90 == 1',
@@ -33,7 +33,7 @@ class Selections(object):
                                                     'l2_id_hnl_m == 1'      ,])
 
         if self.channel == 'eee':
-            self.selections['pt_iso'] = ' & '.join(['l0_pt > 30'            ,
+            self.selections['pt_iso'] = ' & '.join(['l0_pt > 32'            ,
                                                     'l2_pt > 5'             ,
                                                     'l1_pt > 5'             ,
                                                     'l0_id_mva_niso_90 == 1',
@@ -57,6 +57,7 @@ class Selections(object):
             'hnl_q_12 == 0'         ,
 
             'hnl_dr_12 < 1.'        ,
+            'hnl_dr_12 > 0.02'      ,
 
             'hnl_m_12 < 20'         ,
             

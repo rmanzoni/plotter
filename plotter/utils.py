@@ -26,15 +26,21 @@ def get_time_str():
     time_str = date + '_' + hour + 'h_' + minit + 'm/'
     return time_str
 
-def plot_dir():
+def plot_dir(suffix=''):
     plot_dir = env['PLOT_DIR'] + get_time_str()
-    if not ensure_path(plot_dir): makedirs(plot_dir)       #mkdir(plot_dir)
-    return  plot_dir
+    pieces = plot_dir.split('/')
+    if len(suffix):
+        plot_dir = '/'.join(pieces[:-1] + ['_'.join([pieces[-1], suffix])] + [''])
+    if not ensure_path(plot_dir): makedirs(plot_dir)
+    return plot_dir
 
-def nn_dir(channel):
+def nn_dir(channel, suffix=''):
     nn_dir = '/'.join([env['NN_DIR'], 'trainings', channel + '_' + get_time_str()])
+    pieces = nn_dir.split('/')
+    if len(suffix):
+        nn_dir = '/'.join(pieces[:-1] + ['_'.join([pieces[-1], suffix])] + [''])
     if not ensure_path(nn_dir): makedirs(nn_dir)
-    return  nn_dir
+    return nn_dir
 
 def save_plotter_and_selections(plotter, sel_data, sel_mc, sel_tight):
 

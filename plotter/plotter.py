@@ -27,25 +27,26 @@ ROOT.gStyle.SetOptStat(False)
 
 class Plotter(object):
 
-    def __init__(self            , 
-                 channel         , 
-                 base_dir        ,
-                 post_fix        ,
-                 selection_data  ,
-                 selection_mc    ,
-                 selection_tight ,
-                 pandas_selection,
-                 lumi            ,
-                 model           , 
-                 transformation  ,
-                 features        ,
-                 process_signals , 
-                 plot_signals    ,
-                 blinded         ,
-                 datacards=[]    ,
-                 mini_signals=False,
-                 do_ratio=True,
-                 mc_subtraction=True):
+    def __init__(self               , 
+                 channel            , 
+                 base_dir           ,
+                 post_fix           ,
+                 selection_data     ,
+                 selection_mc       ,
+                 selection_tight    ,
+                 pandas_selection   ,
+                 lumi               ,
+                 model              , 
+                 transformation     ,
+                 features           ,
+                 process_signals    , 
+                 plot_signals       ,
+                 blinded            ,
+                 datacards=[]       ,
+                 mini_signals=False ,
+                 do_ratio=True      ,
+                 mc_subtraction=True,
+                 dir_suffix=''      ):
 
         self.channel          = channel.split('_')[0]
         self.full_channel     = channel
@@ -67,6 +68,7 @@ class Plotter(object):
         self.mini_signals     = mini_signals
         self.datacards        = datacards
         self.mc_subtraction   = mc_subtraction
+        self.dir_suffix       = dir_suffix
     
     def total_weight_calculator(self, df, weight_list, scalar_weights=[]):
         total_weight = df[weight_list[0]].to_numpy().astype(np.float)
@@ -178,7 +180,11 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
     def plot(self):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
-        self.plt_dir = plot_dir()
+        self.plt_dir = plot_dir(self.dir_suffix)
+        makedirs(self.plt_dir, exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lin']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'log']), exist_ok=True)
+
         # NN evaluator
 
         print('============> starting reading the trees')
@@ -186,7 +192,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
         now = time()
         signal = []
         if self.process_signals:
-            signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
+            signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data, mini=self.mini_signals)
         else:
             signal = []  
         data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
@@ -464,7 +470,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 CMS_lumi(self.main_pad, 4, 0)
                 self.canvas.Modified()
                 self.canvas.Update()
-                self.canvas.SaveAs(self.plt_dir + '%s%s.pdf' %(label, '_log' if islogy else '_lin'))
+                for iformat in ['pdf', 'png', 'root']:
+                    self.canvas.SaveAs('/'.join([self.plt_dir, 'log' if islogy else 'lin', '%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
 
             # save only the datacards you want, don't flood everything
             if len(self.datacards) and label not in self.datacards:

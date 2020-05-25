@@ -11,12 +11,19 @@ cuts = Selections(ch)
 selection = [ 
     cuts.selections['pt_iso'], 
     cuts.selections['pre_baseline'], 
-#     cuts.selections['vetoes_02_OS'],
+    cuts.selections['vetoes_02_OS'],
     'l0_q!=l2_q', 
-#     cuts.selections['sideband'], 
+    cuts.selections['sideband'], 
 #     cuts.selections['signal_region'], 
-    'l1_pt>5',
-    'l0_pt>25',
+
+    'hnl_2d_disp_sig>5' ,
+    'sv_prob>0.0002'     ,
+    'abs(l1_dxy) > 0.001',
+    'abs(l2_dxy) > 0.001',
+    'sv_cos>0.9'         ,
+    'abs(l1_dz)<10'      ,
+    'abs(l2_dz)<10'      ,
+    'hnl_pt_12>10'       ,
 ]
 
 # extra selection to be applied on variables that don't exist
@@ -27,7 +34,8 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'all_channels_200523_22h_57m'
+training = 'all_channels_200525_19h_38m'
+# training = 'all_channels_200525_18h_55m'
 # training = 'all_channels_200523_22h_39m' #<==== GOOD
 # training = 'all_channels_200523_15h_3m'
 # training = 'all_channels_200523_15h_16m'
@@ -51,6 +59,10 @@ plotter = Plotter (channel          = ch+'_os',
                    blinded          = False,
 
                    datacards        = ['hnl_m_12_lxy_lt_0p5', 'hnl_m_12_lxy_0p5_to_1p5', 'hnl_m_12_lxy_1p5_to_4p0', 'hnl_m_12_lxy_mt_4p0'], # FIXME! improve this to accept wildcards / regex
+
+                   mc_subtraction   = True,
+                   
+                   dir_suffix       = 'closure_test_loose',
                    )
 
 if __name__ == '__main__':
