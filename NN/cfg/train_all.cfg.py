@@ -116,13 +116,13 @@ trainer = Trainer (channel  = 'all_channels',
                    selection_tight = cuts_mmm.selections_pd['tight'],
                    lumi = 59700.,
                    
-                   epochs = 50,
+                   epochs = 30,
                    
                    val_fraction = 0.05,
                    
                    skip_mc = False, # if you know you don't have conversions and you want to steer clear of
 
-                   scale_mc = 0.75, # overall scale MC (if off)
+                   scale_mc = 1., #0.7, # overall scale MC (if off)
                    )
 
 if __name__ == '__main__':

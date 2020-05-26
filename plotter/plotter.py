@@ -27,48 +27,50 @@ ROOT.gStyle.SetOptStat(False)
 
 class Plotter(object):
 
-    def __init__(self               , 
-                 channel            , 
-                 base_dir           ,
-                 post_fix           ,
-                 selection_data     ,
-                 selection_mc       ,
-                 selection_tight    ,
-                 pandas_selection   ,
-                 lumi               ,
-                 model              , 
-                 transformation     ,
-                 features           ,
-                 process_signals    , 
-                 plot_signals       ,
-                 blinded            ,
-                 datacards=[]       ,
-                 mini_signals=False ,
-                 do_ratio=True      ,
-                 mc_subtraction=True,
-                 dir_suffix=''      ):
+    def __init__(self                 , 
+                 channel              , 
+                 base_dir             ,
+                 post_fix             ,
+                 selection_data       ,
+                 selection_mc         ,
+                 selection_tight      ,
+                 pandas_selection     ,
+                 lumi                 ,
+                 model                , 
+                 transformation       ,
+                 features             ,
+                 process_signals      , 
+                 plot_signals         ,
+                 blinded              ,
+                 datacards=[]         ,
+                 mini_signals=False   ,
+                 do_ratio=True        ,
+                 mc_subtraction=True  ,
+                 dir_suffix=''        ,
+                 relaxed_mc_scaling=1.):
 
-        self.channel          = channel.split('_')[0]
-        self.full_channel     = channel
-        self.base_dir         = base_dir 
-        self.post_fix         = post_fix 
-        self.selection_data   = ' & '.join(selection_data)
-        self.selection_mc     = ' & '.join(selection_mc)
-        self.selection_tight  = selection_tight
-        self.pandas_selection = pandas_selection
-        self.lumi             = lumi
-        self.model            = model          
-        self.transformation   = transformation 
-        self.features         = features 
-        self.process_signals  = process_signals    
-        self.plot_signals     = plot_signals if self.process_signals else []
-        self.blinded          = blinded      
-        self.selection_lnt    = 'not (%s)' %self.selection_tight
-        self.do_ratio         = do_ratio
-        self.mini_signals     = mini_signals
-        self.datacards        = datacards
-        self.mc_subtraction   = mc_subtraction
-        self.dir_suffix       = dir_suffix
+        self.channel              = channel.split('_')[0]
+        self.full_channel         = channel
+        self.base_dir             = base_dir 
+        self.post_fix             = post_fix 
+        self.selection_data       = ' & '.join(selection_data)
+        self.selection_mc         = ' & '.join(selection_mc)
+        self.selection_tight      = selection_tight
+        self.pandas_selection     = pandas_selection
+        self.lumi                 = lumi
+        self.model                = model          
+        self.transformation       = transformation 
+        self.features             = features 
+        self.process_signals      = process_signals    
+        self.plot_signals         = plot_signals if self.process_signals else []
+        self.blinded              = blinded      
+        self.selection_lnt        = 'not (%s)' %self.selection_tight
+        self.do_ratio             = do_ratio
+        self.mini_signals         = mini_signals
+        self.datacards            = datacards
+        self.mc_subtraction       = mc_subtraction
+        self.dir_suffix           = dir_suffix
+        self.relaxed_mc_scaling   = relaxed_mc_scaling
     
     def total_weight_calculator(self, df, weight_list, scalar_weights=[]):
         total_weight = df[weight_list[0]].to_numpy().astype(np.float)
@@ -195,8 +197,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data, mini=self.mini_signals)
         else:
             signal = []  
-        data   = get_data_samples  (self.channel, self.base_dir, self.post_fix, self.selection_data)
-        mc     = get_mc_samples    (self.channel, self.base_dir, self.post_fix, self.selection_mc)
+        data = get_data_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
+        mc = get_mc_samples(self.channel, self.base_dir, self.post_fix, self.selection_mc)
         print('============> it took %.2f seconds' %(time() - now))
 
         # evaluate FR
@@ -245,7 +247,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 
                 histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label)
                 weights = self.total_weight_calculator(mc_df_tight, ['weight', 'lhe_weight']+imc.extra_signal_weights, [self.lumi, imc.lumi_scaling])
-                histo_tight.fill_array(mc_df_tight[variable], weights=weights)
+                histo_tight.fill_array(mc_df_tight[variable], weights=weights*self.relaxed_mc_scaling)
 
                 histo_tight.fillstyle = 'solid'
                 histo_tight.fillcolor = 'steelblue'
@@ -255,7 +257,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 
                 histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
                 weights = self.total_weight_calculator(mc_df_lnt, ['weight', 'lhe_weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
-                histo_lnt.fill_array(mc_df_lnt[variable], weights=weights)
+                histo_lnt.fill_array(mc_df_lnt[variable], weights=weights*self.relaxed_mc_scaling)
 
                 histo_lnt.fillstyle = 'solid'
                 histo_lnt.fillcolor = 'skyblue'
@@ -274,6 +276,9 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             signals_to_plot = []
             
             for isig in signal:
+                
+                if variable=='fr' or variable=='fr_corr':
+                    continue
 
                 if extra_sel:
                     isig_df_tight = isig.df_tight.query(extra_sel) 

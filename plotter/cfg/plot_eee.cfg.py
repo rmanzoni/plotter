@@ -28,7 +28,8 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'all_channels_200525_19h_38m'
+training = 'all_channels_200526_12h_46m'
+# training = 'all_channels_200525_19h_38m'
 # training = 'all_channels_200525_18h_55m'
 # training = 'all_channels_200523_22h_39m' #<==== GOOD
 # training = 'all_channels_200523_15h_53m'
@@ -48,16 +49,17 @@ plotter = Plotter (channel          = ch,
                    transformation   = '/'.join([env['NN_DIR'], 'trainings', training, 'input_tranformation_weighted.pck']),
                    features         = '/'.join([env['NN_DIR'], 'trainings', training, 'input_features.pck'              ]),
 
-                   process_signals  = False, # switch off for control regions
-                   mini_signals     = False, # process only the signals that you'll plot
-                   plot_signals     = False, 
+                   process_signals  = True, # switch off for control regions
+                   mini_signals     = True, # process only the signals that you'll plot
+                   plot_signals     = True, 
                    blinded          = False,
 
                    datacards        = ['hnl_m_12_lxy_lt_0p5', 'hnl_m_12_lxy_0p5_to_1p5', 'hnl_m_12_lxy_1p5_to_4p0', 'hnl_m_12_lxy_mt_4p0'], # FIXME! improve this to accept wildcards / regex
 
                    mc_subtraction   = True,
                    
-                   dir_suffix       = 'ric',
+                   dir_suffix       = 'signal',
+                   dir_suffix       = 'signal',
                    )
 
 if __name__ == '__main__':

@@ -38,7 +38,7 @@ class Selections(object):
                                                     'l1_pt > 5'             ,
                                                     'l0_id_mva_niso_90 == 1',
                                                     'l1_id_hnl_l_niso == 1' ,
-                                                    'l1_id_hnl_l_niso == 1' ,])
+                                                    'l2_id_hnl_l_niso == 1' ,])
 
         assert self.selections['pt_iso'], 'Error: No channel specific selection applied!'
 
@@ -131,12 +131,19 @@ class Selections(object):
              'l2_reliso_rho_03 < 0.2',
             ])
 
-        self.selections['is_prompt_lepton'] = '(%s)' %(' | '.join([
-            'l1_gen_match_isPrompt==1',
-            'l1_gen_match_pdgid==22',
-            'l2_gen_match_isPrompt==1',
-            'l2_gen_match_pdgid==22',
-            ]))
+        # RM  is this wrong? this allows for one of the two displaced leptons to be 
+        # neither prompt nor conversion
+#         self.selections['is_prompt_lepton'] = '(%s)' %(' | '.join([
+#             'l1_gen_match_isPrompt==1',
+#             'l1_gen_match_pdgid==22',
+#             'l2_gen_match_isPrompt==1',
+#             'l2_gen_match_pdgid==22',
+#             ]))
+
+        self.selections['is_prompt_lepton'] = ' & '.join([
+            '(l1_gen_match_isPrompt==1 | l1_gen_match_pdgid==22)',
+            '(l2_gen_match_isPrompt==1 | l2_gen_match_pdgid==22)',
+            ])
 
         self.selections['zmm'] = ' & '.join([
             'l0_pt > 40'            ,
@@ -152,6 +159,28 @@ class Selections(object):
             'abs(l1_dz) < 0.2'      ,
             'l1_reliso_rho_03 < 0.2',
             'l1_id_t == 1'          ,
+
+            'hnl_q_01==0'           ,
+            
+            'abs(hnl_dphi_01)>1.'   ,
+
+            'pass_met_filters==1'   ,
+            ])
+
+        self.selections['zee'] = ' & '.join([
+            'l0_pt > 40'            ,
+            'abs(l0_eta) < 2.4'     ,
+            'abs(l0_dxy) < 0.05'    ,
+            'abs(l0_dz) < 0.2'      ,
+            'l0_reliso_rho_03 < 0.2',
+            'l0_id_mva_niso_90 == 1'          ,
+
+            'l1_pt > 35'            ,
+            'abs(l1_eta) < 2.4'     ,
+            'abs(l1_dxy) < 0.05'    ,
+            'abs(l1_dz) < 0.2'      ,
+            'l1_reliso_rho_03 < 0.2',
+            'l1_id_mva_niso_90 == 1',
 
             'hnl_q_01==0'           ,
             
