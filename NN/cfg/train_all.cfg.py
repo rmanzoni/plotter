@@ -1,12 +1,8 @@
 import numpy as np
-from NN.nn_parametric_trainer import Trainer
-from plotter.selections import Selections
-from plotter.utils import set_paths
+from nn.nn_parametric_trainer import Trainer
+from plotter.objects.selections import Selections
 from collections import OrderedDict
 from os import environ as env
-
-ch = 'mmm'
-set_paths(ch, 2018)
 
 # baseline = 'baseline'
 baseline = 'pre_baseline'
@@ -72,58 +68,61 @@ composed_features = OrderedDict()
 # 6 = eem_ss
 # composed_features['channel' ] = lambda df : 1 * (np.abs(df.l0_pdgid)==13 and np.abs(df.l1_pdgid)==13 and np.abs(df.l2_pdgid)==13) + 2 * (np.abs(df.l0_pdgid)==13 and np.abs(df.l1_pdgid)==11 and np.abs(df.l2_pdgid)==13 and df.hnl_q_02!=0) + 3 * (np.abs(df.l0_pdgid)==13 and np.abs(df.l1_pdgid)==11 and np.abs(df.l2_pdgid)==13 and df.hnl_q_02==0) + 4 * (np.abs(df.l0_pdgid)==11 and np.abs(df.l1_pdgid)==11 and np.abs(df.l2_pdgid)==11) + 5 * (np.abs(df.l0_pdgid)==11 and np.abs(df.l1_pdgid)==11 and np.abs(df.l2_pdgid)==13 and df.hnl_q_02!=0) + 6 * (np.abs(df.l0_pdgid)==11 and np.abs(df.l1_pdgid)==11 and np.abs(df.l2_pdgid)==13 and df.hnl_q_02==0)
 
-trainer = Trainer (channel  = 'all_channels',
-                   base_dir = '/Users/manzoni/Documents/HNL/ntuples/20may20', #env['NTUPLE_DIR'],
-                   post_fix = 'HNLTreeProducer_CHANNEL/tree.root',
+trainer = Trainer (
+    channel  = 'all_channels',
+    nn_dir   = '/'.join([env['BASE_DIR'], 'nn', 'trainings', '2018']), 
+    base_dir = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2018']),
+    post_fix = 'HNLTreeProducer_CHANNEL/tree.root',
+    dir_suffix = '', 
 
-                   features = [
-                        'l1_pt'          ,
-                        'l2_pt'          ,
-                        'hnl_dr_12'      ,
-                        'hnl_m_12'       ,
-#                         'sv_prob'        ,
-#                         'hnl_2d_disp'    ,
-#                         'hnl_2d_disp_sig',
-                        'n_vtx'          ,
-                        'abs_l1_eta'     ,
-                        'abs_l2_eta'     ,
-                        'abs_l1_pdgid'   ,
-                        'abs_l2_pdgid'   ,
-#                         'log_abs_l1_dxy' ,
-                        'log_abs_l1_dz'  ,
-#                         'log_abs_l2_dxy' ,
-                        'log_abs_l2_dz'  ,
-#                         'channel'        ,
-#                         'l1_ptcone'      ,
-#                         'l2_ptcone'      ,
-                        'log_hnl_2d_disp',
-                   ],
-                   
-                   composed_features = composed_features,
-                   
-                   selection_data_mmm  = selection_mmm,
-                   selection_mc_mmm    = selection_mmm + [cuts_mmm.selections['is_prompt_lepton']],
+    features = [
+         'l1_pt'          ,
+         'l2_pt'          ,
+         'hnl_dr_12'      ,
+         'hnl_m_12'       ,
+#          'sv_prob'        ,
+#          'hnl_2d_disp'    ,
+#          'hnl_2d_disp_sig',
+         'n_vtx'          ,
+         'abs_l1_eta'     ,
+         'abs_l2_eta'     ,
+         'abs_l1_pdgid'   ,
+         'abs_l2_pdgid'   ,
+#          'log_abs_l1_dxy' ,
+         'log_abs_l1_dz'  ,
+#          'log_abs_l2_dxy' ,
+         'log_abs_l2_dz'  ,
+#          'channel'        ,
+#          'l1_ptcone'      ,
+#          'l2_ptcone'      ,
+         'log_hnl_2d_disp',
+    ],
+    
+    composed_features = composed_features,
+    
+    selection_data_mmm  = selection_mmm,
+    selection_mc_mmm    = selection_mmm + [cuts_mmm.selections['is_prompt_lepton']],
 
-                   selection_data_mem  = selection_mem,
-                   selection_mc_mem    = selection_mem + [cuts_mem.selections['is_prompt_lepton']],
+    selection_data_mem  = selection_mem,
+    selection_mc_mem    = selection_mem + [cuts_mem.selections['is_prompt_lepton']],
 
-                   selection_data_eee  = selection_eee,
-                   selection_mc_eee    = selection_eee + [cuts_eee.selections['is_prompt_lepton']],
+    selection_data_eee  = selection_eee,
+    selection_mc_eee    = selection_eee + [cuts_eee.selections['is_prompt_lepton']],
 
-                   selection_data_eem  = selection_eem,
-                   selection_mc_eem    = selection_eem + [cuts_eem.selections['is_prompt_lepton']],
+    selection_data_eem  = selection_eem,
+    selection_mc_eem    = selection_eem + [cuts_eem.selections['is_prompt_lepton']],
 
-                   selection_tight = cuts_mmm.selections_pd['tight'],
-                   lumi = 59700.,
-                   
-                   epochs = 30,
-                   
-                   val_fraction = 0.05,
-                   
-                   skip_mc = False, # if you know you don't have conversions and you want to steer clear of
+    selection_tight = cuts_mmm.selections_pd['tight'],
+    lumi = 59700.,
+    
+    epochs = 30,
+    
+    val_fraction = 0.05,
+    
+    skip_mc = False, # if you know you don't have conversions and you want to steer clear of
 
-                   scale_mc = 1., #0.7, # overall scale MC (if off)
-                   )
+    scale_mc = 1., #0.7, # overall scale MC (if off)
+)
 
 if __name__ == '__main__':
     trainer.train()

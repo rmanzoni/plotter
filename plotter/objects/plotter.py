@@ -7,11 +7,14 @@ import pandas as pd
 from os import makedirs
 from time import time
 from collections import OrderedDict
-from plotter.evaluate_nn import Evaluator
-from plotter.sample import get_data_samples, get_mc_samples, get_signal_samples
-from plotter.variables import variables
-from plotter.utils import plot_dir
-from plotter.cmsstyle import CMS_lumi
+from itertools import groupby
+from functools import partial, reduce
+
+from plotter.objects.evaluate_nn import Evaluator
+from plotter.objects.variables import variables
+from plotter.objects.utils import get_time_str
+from plotter.objects.cmsstyle import CMS_lumi
+from plotter.objects.sample import groups, togroup
 
 from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
 from rootpy.plotting.style import get_style, set_style
@@ -21,14 +24,15 @@ from pdb import set_trace
 import logging
 logging.disable(logging.DEBUG)
 
-
 ROOT.gROOT.SetBatch(True)
 ROOT.gStyle.SetOptStat(False)
 
 class Plotter(object):
 
     def __init__(self                 , 
-                 channel              , 
+                 channel              ,
+                 year                 ,
+                 plot_dir             , 
                  base_dir             ,
                  post_fix             ,
                  selection_data       ,
@@ -47,10 +51,13 @@ class Plotter(object):
                  do_ratio=True        ,
                  mc_subtraction=True  ,
                  dir_suffix=''        ,
-                 relaxed_mc_scaling=1.):
+                 relaxed_mc_scaling=1.,
+                 data_driven=True):
 
         self.channel              = channel.split('_')[0]
+        self.year                 = year
         self.full_channel         = channel
+        self.plt_dir              = '/'.join([plot_dir, channel, '_'.join([dir_suffix, get_time_str()]) ])
         self.base_dir             = base_dir 
         self.post_fix             = post_fix 
         self.selection_data       = ' & '.join(selection_data)
@@ -69,9 +76,20 @@ class Plotter(object):
         self.mini_signals         = mini_signals
         self.datacards            = datacards
         self.mc_subtraction       = mc_subtraction
-        self.dir_suffix           = dir_suffix
         self.relaxed_mc_scaling   = relaxed_mc_scaling
-    
+        self.data_driven          = data_driven
+        
+        if self.year==2018:
+            from plotter.samples.samples_2018 import get_data_samples, get_mc_samples, get_signal_samples
+        if self.year==2017:
+            from plotter.samples.samples_2017 import get_data_samples, get_mc_samples, get_signal_samples
+        if self.year==2016:
+            from plotter.samples.samples_2016 import get_data_samples, get_mc_samples, get_signal_samples
+        
+        self.get_data_samples   = get_data_samples
+        self.get_mc_samples     = get_mc_samples
+        self.get_signal_samples = get_signal_samples
+            
     def total_weight_calculator(self, df, weight_list, scalar_weights=[]):
         total_weight = df[weight_list[0]].to_numpy().astype(np.float)
         for iw in weight_list[1:]:
@@ -182,23 +200,25 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
     def plot(self):
 
         evaluator = Evaluator(self.model, self.transformation, self.features)
-        self.plt_dir = plot_dir(self.dir_suffix)
         makedirs(self.plt_dir, exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'lin']), exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'log']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lin', 'png']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lin', 'root']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'log', 'png']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'log', 'root']), exist_ok=True)
 
         # NN evaluator
-
         print('============> starting reading the trees')
         print ('Plots will be stored in: ', self.plt_dir)
         now = time()
         signal = []
         if self.process_signals:
-            signal = get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data, mini=self.mini_signals)
+            signal = self.get_signal_samples(self.channel, self.base_dir, self.post_fix, self.selection_data, mini=self.mini_signals)
         else:
             signal = []  
-        data = get_data_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
-        mc = get_mc_samples(self.channel, self.base_dir, self.post_fix, self.selection_mc)
+        data = self.get_data_samples(self.channel, self.base_dir, self.post_fix, self.selection_data)
+        mc = self.get_mc_samples(self.channel, self.base_dir, self.post_fix, self.selection_mc)
         print('============> it took %.2f seconds' %(time() - now))
 
         # evaluate FR
@@ -228,7 +248,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
             
             print('plotting', label)
-            
+                        
             ######################################################################################
             # plot MC stacks, in tight and lnt
             ######################################################################################
@@ -245,29 +265,54 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     mc_df_tight = imc.df_tight
                     mc_df_lnt = imc.df_lnt
                 
-                histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label)
-                weights = self.total_weight_calculator(mc_df_tight, ['weight', 'lhe_weight']+imc.extra_signal_weights, [self.lumi, imc.lumi_scaling])
+                histo_tight = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label+'#t')
+                weights = self.total_weight_calculator(mc_df_tight, ['weight']+imc.extra_signal_weights, [self.lumi, imc.lumi_scaling])
                 histo_tight.fill_array(mc_df_tight[variable], weights=weights*self.relaxed_mc_scaling)
 
                 histo_tight.fillstyle = 'solid'
-                histo_tight.fillcolor = 'steelblue'
+                histo_tight.fillcolor = 'steelblue' if self.data_driven else imc.colour 
                 histo_tight.linewidth = 0
-
+                
                 stack_prompt.append(histo_tight)
+                    
+                if self.data_driven:
+                    histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label+'#lnt')
+                    weights = self.total_weight_calculator(mc_df_lnt, ['weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
+                    histo_lnt.fill_array(mc_df_lnt[variable], weights=weights*self.relaxed_mc_scaling)
 
-                histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F')
-                weights = self.total_weight_calculator(mc_df_lnt, ['weight', 'lhe_weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
-                histo_lnt.fill_array(mc_df_lnt[variable], weights=weights*self.relaxed_mc_scaling)
+                    histo_lnt.fillstyle = 'solid'
+                    histo_lnt.fillcolor = 'skyblue' if self.data_driven else imc.colour
+                    histo_lnt.linewidth = 0
+                
+                    # optionally remove the MC subtraction in loose-not-tight
+                    # may help if MC stats is terrible (and it often is)
+                    if self.mc_subtraction:
+                        stack_nonprompt.append(histo_lnt)
 
-                histo_lnt.fillstyle = 'solid'
-                histo_lnt.fillcolor = 'skyblue'
-                histo_lnt.linewidth = 0
+            # merge different samples together (add the histograms)                
+            # prepare two temporary containers for the post-grouping histograms
+            stack_prompt_tmp = []
+            stack_nonprompt_tmp = []
+            for ini, fin in [(stack_prompt, stack_prompt_tmp), (stack_nonprompt, stack_nonprompt_tmp)]:
+                for k, v in groups.items():
+                    grouped = []
+                    for ihist in ini:
+                        if ihist.name.split('#')[0] in v:
+                            grouped.append(ihist)
+                        elif ihist.name.split('#')[0] not in togroup:
+                            fin.append(ihist)
+                    if len(grouped):
+                        group = sum(grouped)
+                        group.title = k
+                        group.name = '#'.join([k] + ihist.name.split('#')[1:])
+                        group.fillstyle = grouped[0].fillstyle
+                        group.fillcolor = grouped[0].fillcolor
+                        group.linewidth = grouped[0].linewidth
+                    fin.append(group)
 
-                # optionally remove the MC subtraction in loose-not-tight
-                # may help if MC stats is terrible (and it often is)
-                if self.mc_subtraction:
-                    stack_nonprompt.append(histo_lnt)
-
+            stack_prompt    = stack_prompt_tmp 
+            stack_nonprompt = stack_nonprompt_tmp
+            
             ######################################################################################
             # plot the signals
             ######################################################################################
@@ -286,7 +331,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     isig_df_tight = isig.df_tight
 
                 histo_tight = Hist(bins, title=isig.label, markersize=0, legendstyle='L', name=isig.datacard_name+'#'+label) # the "#" thing is a trick to give hists unique name, else ROOT complains
-                weights = self.total_weight_calculator(isig_df_tight, ['weight', 'lhe_weight']+isig.extra_signal_weights, [self.lumi, isig.lumi_scaling])
+                weights = self.total_weight_calculator(isig_df_tight, ['weight']+isig.extra_signal_weights, [self.lumi, isig.lumi_scaling])
                 histo_tight.fill_array(isig_df_tight[variable], weights=weights)
                 histo_tight.color     = isig.colour
                 histo_tight.fillstyle = 'hollow'
@@ -317,26 +362,31 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 histo_tight.fill_array(idata_df_tight[variable])
                 
                 data_prompt.append(histo_tight)
-
-                histo_lnt = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
-                histo_lnt.fill_array(idata_df_lnt[variable], weights=idata_df_lnt.fr_corr)
                 
-                histo_lnt.fillstyle = 'solid'
-                histo_lnt.fillcolor = 'skyblue'
-                histo_lnt.linewidth = 0
+                if self.data_driven:
+                    histo_lnt = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
+                    histo_lnt.fill_array(idata_df_lnt[variable], weights=idata_df_lnt.fr_corr)
                 
-                data_nonprompt.append(histo_lnt)
+                    histo_lnt.fillstyle = 'solid'
+                    histo_lnt.fillcolor = 'skyblue'
+                    histo_lnt.linewidth = 0
+                
+                    data_nonprompt.append(histo_lnt)
 
-            # put the prompt backgrounds together
-            all_exp_prompt = sum(stack_prompt)
-            all_exp_prompt.title = 'prompt'
+            if self.data_driven:
+                # put the prompt backgrounds together
+                all_exp_prompt = sum(stack_prompt)
+                all_exp_prompt.title = 'prompt'
 
-            # put the nonprompt backgrounds together
-            all_exp_nonprompt = sum(stack_nonprompt+data_nonprompt)
-            all_exp_nonprompt.title = 'nonprompt'
+                # put the nonprompt backgrounds together
+                all_exp_nonprompt = sum(stack_nonprompt+data_nonprompt)
+                all_exp_nonprompt.title = 'nonprompt'
 
-            # create the stacks
-            stack = HistStack([all_exp_prompt, all_exp_nonprompt], drawstyle='HIST', title='')
+                # create the stacks
+                stack = HistStack([all_exp_prompt, all_exp_nonprompt], drawstyle='HIST', title='')
+            
+            else:
+                stack = HistStack(stack_prompt, drawstyle='HIST', title='')
 
             # stat uncertainty
             hist_error = stack.sum #sum([all_exp_prompt, all_exp_nonprompt])    
@@ -396,26 +446,11 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 if islogy : yaxis_min = 0.01
                 else      : yaxis_min = 0.
 
-#                 print('---------------------------> 1', things_to_plot)
-#                 for ii in things_to_plot: print(islogy, ii.GetMinimum(), ii.GetMaximum())
                 for ithing in things_to_plot:
                     ithing.SetMaximum(yaxis_max)   
-                    # ithing.SetMinimum(yaxis_min) # FIXME! this doesn't work                              
-                    # stack.yaxis.set_range_user(yaxis_min, yaxis_max)
-
-#                 print('---------------------------> 2', things_to_plot)
-#                 for ii in things_to_plot: print(islogy, ii.GetMinimum(), ii.GetMaximum())
 
                 draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy)
-                
-                # update the stack yaxis range *after* is drawn. 
-                # It will be picked up by canvas.Update()
-#                 stack.yaxis.set_range_user(yaxis_min, yaxis_max)
-                
-#                 print('---------------------------> 3', things_to_plot)
-#                 for ii in things_to_plot: print(islogy, ii.GetMinimum(), ii.GetMaximum())
-#                 import pdb ; pdb.set_trace()
-                
+                                
                 # expectation uncertainty in the ratio pad
                 ratio_exp_error = Hist(bins)
                 ratio_data = Hist(bins)
@@ -454,6 +489,14 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 self.ratio_pad.cd()
                 line.Draw('same')
 
+#                 chi2_score_text = '\chi^{2}/NDF = %.1f' %(all_obs_prompt.Chi2Test(hist_error, 'UW CHI2/NDF'))
+                chi2_score_text = 'p-value = %.2f' %(all_obs_prompt.Chi2Test(hist_error, 'UW'))
+                chi2_score = ROOT.TLatex(0.7, 0.81, chi2_score_text)
+                chi2_score.SetTextFont(43)
+                chi2_score.SetTextSize(15)
+                chi2_score.SetNDC()
+                chi2_score.Draw('same')
+
                 self.canvas.cd()
                 # FIXME! add SS and OS channels
                 if   self.full_channel == 'mmm': channel = '\mu\mu\mu'
@@ -476,13 +519,15 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 self.canvas.Modified()
                 self.canvas.Update()
                 for iformat in ['pdf', 'png', 'root']:
-                    self.canvas.SaveAs('/'.join([self.plt_dir, 'log' if islogy else 'lin', '%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
+                    self.canvas.SaveAs('/'.join([self.plt_dir, 'log' if islogy else 'lin', iformat if iformat!='pdf' else '','%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
 
             # save only the datacards you want, don't flood everything
             if len(self.datacards) and label not in self.datacards:
                 continue
-                
-            self.create_datacards(data=all_obs_prompt, 
-                                  bkgs={'prompt':all_exp_prompt, 'nonprompt':all_exp_nonprompt}, 
-                                  signals=all_signals, 
-                                  label=label)  
+            
+            # FIXME! allow it to save datacards even for non data driven bkgs            
+            if self.data_driven:    
+                self.create_datacards(data=all_obs_prompt, 
+                                      bkgs={'prompt':all_exp_prompt, 'nonprompt':all_exp_nonprompt}, 
+                                      signals=all_signals, 
+                                      label=label)  

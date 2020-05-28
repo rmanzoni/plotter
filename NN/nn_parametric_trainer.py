@@ -16,6 +16,7 @@ import root_pandas
 
 from time import time 
 import pickle
+from os import makedirs
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -38,8 +39,8 @@ from keras.optimizers import SGD, Adam
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, roc_auc_score
 
-from plotter.sample import get_data_samples, get_mc_samples, get_signal_samples
-from plotter.utils import nn_dir
+from plotter.samples.samples_2018 import get_data_samples, get_mc_samples, get_signal_samples
+from plotter.objects.utils import get_time_str
 
 # fix random seed for reproducibility (FIXME! not really used by Keras)
 np.random.seed(1986)
@@ -48,10 +49,12 @@ class Trainer(object):
     def __init__(
         self               ,
         channel            ,
+        nn_dir             ,
         features           , 
         composed_features  , 
         base_dir           ,
         post_fix           ,
+        dir_suffix         ,
         selection_data_mmm ,
         selection_mc_mmm   ,
         selection_data_mem ,
@@ -90,13 +93,13 @@ class Trainer(object):
         self.skip_mc           = skip_mc
         self.val_fraction      = val_fraction
         self.scale_mc          = scale_mc
+        self.nn_dir            = '/'.join([nn_dir, '_'.join([channel, dir_suffix, get_time_str()]) ]) 
 
     def train(self):
 
-        net_dir_name = self.channel+'_'+self.channel_extra if len(self.channel_extra) else self.channel
-        net_dir = nn_dir(net_dir_name)
+        makedirs(self.nn_dir, exist_ok=True)
         print('============> starting reading the trees')
-        print ('Net will be stored in: ', net_dir)
+        print ('Net will be stored in: ', self.nn_dir)
         now = time()
         # FIXME! temporary hack
         data  = get_data_samples('mmm', self.base_dir, self.post_fix.replace('CHANNEL', 'mmm'), self.selection_data_mmm)
@@ -131,7 +134,8 @@ class Trainer(object):
         else:
             for i, imc in enumerate(mc):
             
-                imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * imc.df.lhe_weight * self.scale_mc
+#                 imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * imc.df.lhe_weight * self.scale_mc
+                imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * self.scale_mc
                 imc.df['isdata'] = 0
                 imc.df['ismc']   = i+1
 
@@ -173,7 +177,7 @@ class Trainer(object):
 
         # define the net
         input  = Input((len(self.features),))
-        layer  = Dense(128, activation=activation   , name='dense1', kernel_constraint=unit_norm())(input)
+        layer  = Dense(256, activation=activation   , name='dense1', kernel_constraint=unit_norm())(input)
         layer  = Dropout(0.5, name='dropout1')(layer)
         layer  = BatchNormalization()(layer)
         layer  = Dense(64, activation=activation   , name='dense2', kernel_constraint=unit_norm())(layer)
@@ -186,7 +190,7 @@ class Trainer(object):
         # layer  = Dropout(0.4, name='dropout4')(layer)
         # layer  = BatchNormalization()(layer)
         layer  = Dense(16, activation=activation   , name='dense5', kernel_constraint=unit_norm())(layer)
-        layer  = Dropout(0.4, name='dropout5')(layer)
+        layer  = Dropout(0.2, name='dropout5')(layer)
         layer  = BatchNormalization()(layer)
         output = Dense(  1, activation='sigmoid', name='output', )(layer)
 
@@ -207,7 +211,7 @@ class Trainer(object):
 
         # plot the models
         # https://keras.io/visualization/
-        plot_model(model, show_shapes=True, show_layer_names=True, to_file=net_dir+'model.png')
+        plot_model(model, show_shapes=True, show_layer_names=True, to_file='/'.join([self.nn_dir, 'model.png']) )
 
         # normalize inputs FIXME! do it, but do it wisely
         # https://scikit-learn.org/stable/auto_examples/preprocessing/plot_all_scaling.html#sphx-glr-auto-examples-preprocessing-plot-all-scaling-py
@@ -232,10 +236,10 @@ class Trainer(object):
         xx = qt.transform(X[self.features])
 
         # save the frozen transformer
-        pickle.dump( qt, open( net_dir + 'input_tranformation_weighted.pck', 'wb' ) )
+        pickle.dump( qt, open( '/'.join([self.nn_dir, 'input_tranformation_weighted.pck']), 'wb' ) )
 
         # save the exact list of features
-        pickle.dump( self.features, open( net_dir + 'input_features.pck', 'wb' ) )
+        pickle.dump( self.features, open( '/'.join([self.nn_dir, 'input_features.pck']), 'wb' ) )
 
         # early stopping
         # monitor = 'val_acc'
@@ -247,7 +251,7 @@ class Trainer(object):
         reduce_lr = ReduceLROnPlateau(monitor=monitor, mode='auto', factor=0.2, patience=5, min_lr=0.00001, cooldown=10, verbose=True)
 
         # save the model every now and then
-        filepath = net_dir + 'saved-model-{epoch:04d}_val_loss_{val_loss:.4f}_val_acc_{val_acc:.4f}.h5'
+        filepath = '/'.join([self.nn_dir, 'saved-model-{epoch:04d}_val_loss_{val_loss:.4f}_val_acc_{val_acc:.4f}.h5'])
         save_model = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
         # weight the events according to their displacement (favour high displacement)
@@ -270,7 +274,7 @@ class Trainer(object):
         center = min(history.history['val_loss'] + history.history['loss'])
         plt.ylim((center*0.98, center*1.5))
         plt.grid(True)
-        plt.savefig(net_dir + 'loss_function_history_weighted.pdf')
+        plt.savefig('/'.join([self.nn_dir, 'loss_function_history_weighted.pdf']))
         plt.clf()
 
         # plot accuracy trends for train and validation sample
@@ -282,7 +286,7 @@ class Trainer(object):
         plt.ylim((center*0.85, center*1.02))
         # plt.yscale('log')
         plt.grid(True)
-        plt.savefig(net_dir + 'accuracy_history_weighted.pdf')
+        plt.savefig('/'.join([self.nn_dir, 'accuracy_history_weighted.pdf']) )
         plt.clf()
 
         # plot accuracy trends for train and validation sample
@@ -294,7 +298,7 @@ class Trainer(object):
         plt.ylim((center*0.98, center*1.5))
         # plt.yscale('log')
         plt.grid(True)
-        plt.savefig(net_dir + 'mean_absolute_error_history_weighted.pdf')
+        plt.savefig('/'.join([self.nn_dir, 'mean_absolute_error_history_weighted.pdf']) )
         plt.clf()
 
         # calculate predictions on the main_df sample
@@ -302,7 +306,7 @@ class Trainer(object):
         x = pd.DataFrame(main_df, columns=self.features)
         # y = model.predict(x)
         # load the transformation with the correct parameters!
-        qt = pickle.load(open( net_dir + 'input_tranformation_weighted.pck', 'rb' ))
+        qt = pickle.load(open('/'.join([self.nn_dir, 'input_tranformation_weighted.pck']), 'rb' ))
         xx = qt.transform(x[self.features])
         y = model.predict(xx)
 
@@ -320,10 +324,10 @@ class Trainer(object):
         xy = [i*j for i,j in product([10.**i for i in range(-8, 0)], [1,2,4,8])]+[1]
         plt.plot(xy, xy, color='grey', linestyle='--')
         plt.yscale('linear')
-        plt.savefig(net_dir + 'roc_weighted.pdf')
+        plt.savefig('/'.join([self.nn_dir, 'roc_weighted.pdf']) )
 
         # save model and weights
-        model.save(net_dir + 'net_model_weighted.h5')
+        model.save('/'.join([self.nn_dir, 'net_model_weighted.h5']) )
         # model.save_weights('net_model_weights.h5')
 
         # rename branches, if you want
@@ -333,5 +337,5 @@ class Trainer(object):
         #     inplace=True)
 
         # save ntuple
-        main_df.to_root(net_dir + 'output_ntuple_weighted.root', key='tree', store_index=False)
+        main_df.to_root('/'.join([self.nn_dir, 'output_ntuple_weighted.root']), key='tree', store_index=False)
 
