@@ -58,8 +58,13 @@ plotter = Plotter (
     plot_signals     = True, 
     blinded          = False,
 
-    datacards        = ['hnl_m_12_lxy_lt_0p5', 'hnl_m_12_lxy_0p5_to_1p5', 'hnl_m_12_lxy_1p5_to_4p0', 'hnl_m_12_lxy_mt_4p0'], # FIXME! improve this to accept wildcards / regex
-
+    datacards        = ['log_hnl_2d_disp'        , 
+                        'hnl_m_12'               ,  
+                        'hnl_m_12_lxy_lt_0p5'    , 
+                        'hnl_m_12_lxy_0p5_to_1p5', 
+                        'hnl_m_12_lxy_1p5_to_4p0', 
+                        'hnl_m_12_lxy_mt_4p0'], # FIXME! improve this to accept wildcards / regex
+    
     mc_subtraction   = True,
     
     data_driven      = True,
