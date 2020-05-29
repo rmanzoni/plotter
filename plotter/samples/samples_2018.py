@@ -1,10 +1,13 @@
 from re import findall
 import numpy as np
 import pandas as pd
+import gc # free mem up
+from os import environ as env
 from root_pandas import read_root
 from collections import OrderedDict
 from plotter.objects.sample import Sample, signal_weights
-from copy import deepcopy as dc
+from copy import deepcopy, copy
+from itertools import groupby
 
 def get_data_samples(channel, basedir, postfix, selection):
     if   channel [0] == 'm': lep = 'mu'
@@ -99,9 +102,9 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
     elif channel [0] == 'e': 
         if mini:
             signal = [
-                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'   , ['HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'  ], channel, '#splitline{m=2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' , 'forestgreen', 10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  2.648    , toplot=True ),
-                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'  , ['HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO' ], channel, '#splitline{m=8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' , 'darkgray'   , 10, '/'.join([basedir, 'sig']), postfix, False, True, False, 1.,  9.383e-03, toplot=True ),
-                Sample('HN3L_M_12_V_0p00316227766017_e_massiveAndCKM_LO' , ['HN3L_M_12_V_0p00316227766017_e_massiveAndCKM_LO'], channel, '#splitline{m=12 GeV, |V|^{2}=1.0 10^{-5}}{Majorana}', selection, 'hnl_m_12_v2_1p0Em05_majorana', 'coral'      , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.04113, toplot=True ), 
+                Sample('HN3L_M_2_V_0p0110905365064_e_massiveAndCKM_LO'   , ['HN3L_M_2_V_0p0110905365064_e_massiveAndCKM_LO' ], channel, '#splitline{m=2 GeV, |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' , 'forestgreen', 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.5273, toplot=True), 
+                Sample('HN3L_M_8_V_0p0022360679775_e_massiveAndCKM_LO'   , ['HN3L_M_8_V_0p0022360679775_e_massiveAndCKM_LO' ], channel, '#splitline{m=8 GeV, |V|^{2}=5.0 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_5p0Em06_majorana' , 'darkgray'   , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.02046, toplot=True), 
+                Sample('HN3L_M_12_V_0p01_e_massiveAndCKM_LO'             , ['HN3L_M_12_V_0p01_e_massiveAndCKM_LO'           ], channel, '#splitline{m=12 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}', selection, 'hnl_m_12_v2_1p0Em04_majorana', 'coral'      , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.4113, toplot=True), 
              ]
         else:
             signal = [
@@ -109,8 +112,8 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
                 Sample('HN3L_M_1_V_0p0949736805647_e_massiveAndCKM_LO'               , ['HN3L_M_1_V_0p0949736805647_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 1 GeV, |V|^{2}=9.0 10^{-3}}{Majorana}' , selection, 'hnl_m_1_v2_9p0Em03_majorana' ,  'darkorange'   , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       38.23, toplot=False), 
                 Sample('HN3L_M_1_V_0p212367605816_e_massiveAndCKM_LO'                , ['HN3L_M_1_V_0p212367605816_e_massiveAndCKM_LO'                ], channel, '#splitline{m= 1 GeV, |V|^{2}=4.5 10^{-2}}{Majorana}' , selection, 'hnl_m_1_v2_4p5Em02_majorana' ,  'darkorange'   , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       191.1, toplot=False), 
                 Sample('HN3L_M_1_V_0p707106781187_e_massiveAndCKM_LO'                , ['HN3L_M_1_V_0p707106781187_e_massiveAndCKM_LO'                ], channel, '#splitline{m= 1 GeV, |V|^{2}=5.0 10^{-1}}{Majorana}' , selection, 'hnl_m_1_v2_5p0Em01_majorana' ,  'darkorange'   , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      2120.0, toplot=False), 
-                Sample('HN3L_M_2_V_0p0110905365064_e_massiveAndCKM_LO'               , ['HN3L_M_2_V_0p0110905365064_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 2 GeV, |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' ,  'forestgreen'  , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.5273, toplot=False, is_generator=True), 
-                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'               , ['HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' ,  'forestgreen'  , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       2.648, toplot=True), 
+                Sample('HN3L_M_2_V_0p0110905365064_e_massiveAndCKM_LO'               , ['HN3L_M_2_V_0p0110905365064_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 2 GeV, |V|^{2}=1.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_1p2Em04_majorana' ,  'forestgreen'  , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.5273, toplot=True, is_generator=True), 
+                Sample('HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'               , ['HN3L_M_2_V_0p0248394846967_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 2 GeV, |V|^{2}=6.2 10^{-4}}{Majorana}' , selection, 'hnl_m_2_v2_6p2Em04_majorana' ,  'forestgreen'  , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       2.648, toplot=False), 
                 Sample('HN3L_M_2_V_0p22360679775_e_massiveAndCKM_LO'                 , ['HN3L_M_2_V_0p22360679775_e_massiveAndCKM_LO'                 ], channel, '#splitline{m= 2 GeV, |V|^{2}=5.0 10^{-2}}{Majorana}' , selection, 'hnl_m_2_v2_5p0Em02_majorana' ,  'forestgreen'  , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       214.3, toplot=False), 
                 Sample('HN3L_M_2_V_0p707106781187_e_massiveAndCKM_LO'                , ['HN3L_M_2_V_0p707106781187_e_massiveAndCKM_LO'                ], channel, '#splitline{m= 2 GeV, |V|^{2}=5.0 10^{-1}}{Majorana}' , selection, 'hnl_m_2_v2_5p0Em01_majorana' ,  'forestgreen'  , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      2141.0, toplot=False), 
                 Sample('HN3L_M_3_V_0p00707813534767_e_massiveAndCKM_LO'              , ['HN3L_M_3_V_0p00707813534767_e_massiveAndCKM_LO'              ], channel, '#splitline{m= 3 GeV, |V|^{2}=5.0 10^{-5}}{Majorana}' , selection, 'hnl_m_3_v2_5p0Em05_majorana' ,  'firebrick'    , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.2022, toplot=False, is_generator=True), 
@@ -120,7 +123,7 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
                 Sample('HN3L_M_4_V_0p0707106781187_e_massiveAndCKM_LO'               , ['HN3L_M_4_V_0p0707106781187_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 4 GeV, |V|^{2}=5.0 10^{-3}}{Majorana}' , selection, 'hnl_m_4_v2_5p0Em03_majorana' ,  'indigo'       , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       19.91, toplot=False), 
                 Sample('HN3L_M_4_V_0p22360679775_e_massiveAndCKM_LO'                 , ['HN3L_M_4_V_0p22360679775_e_massiveAndCKM_LO'                 ], channel, '#splitline{m= 4 GeV, |V|^{2}=5.0 10^{-2}}{Majorana}' , selection, 'hnl_m_4_v2_5p0Em02_majorana' ,  'indigo'       , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       198.9, toplot=False), 
                 Sample('HN3L_M_5_V_0p000316227766017_e_massiveAndCKM_LO'             , ['HN3L_M_5_V_0p000316227766017_e_massiveAndCKM_LO'             ], channel, '#splitline{m= 5 GeV, |V|^{2}=1.0 10^{-7}}{Majorana}' , selection, 'hnl_m_5_v2_1p0Em07_majorana' ,  'chocolate'    , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,   0.0003987, toplot=False), 
-                Sample('HN3L_M_5_V_0p000547722557505_e_massiveAndCKM_LO'             , ['HN3L_M_5_V_0p000547722557505_e_massiveAndCKM_LO'             ], channel, '#splitline{m= 5 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}' , selection, 'hnl_m_5_v2_3p0Em07_majorana' ,  'chocolate'    , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.001195, toplot=False), 
+#                 Sample('HN3L_M_5_V_0p000547722557505_e_massiveAndCKM_LO'             , ['HN3L_M_5_V_0p000547722557505_e_massiveAndCKM_LO'             ], channel, '#splitline{m= 5 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}' , selection, 'hnl_m_5_v2_3p0Em07_majorana' ,  'chocolate'    , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.001195, toplot=False), 
                 Sample('HN3L_M_5_V_0p001_e_massiveAndCKM_LO'                         , ['HN3L_M_5_V_0p001_e_massiveAndCKM_LO'                         ], channel, '#splitline{m= 5 GeV, |V|^{2}=1.0 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_1p0Em06_majorana' ,  'chocolate'    , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.00399, toplot=False), 
                 Sample('HN3L_M_5_V_0p00145602197786_e_massiveAndCKM_LO'              , ['HN3L_M_5_V_0p00145602197786_e_massiveAndCKM_LO'              ], channel, '#splitline{m= 5 GeV, |V|^{2}=2.1 10^{-6}}{Majorana}' , selection, 'hnl_m_5_v2_2p1Em06_majorana' ,  'chocolate'    , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.008479, toplot=False, is_generator=True), 
                 Sample('HN3L_M_5_V_0p0707106781187_e_massiveAndCKM_LO'               , ['HN3L_M_5_V_0p0707106781187_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 5 GeV, |V|^{2}=5.0 10^{-3}}{Majorana}' , selection, 'hnl_m_5_v2_5p0Em03_majorana' ,  'chocolate'    , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,        20.0, toplot=False), 
@@ -134,8 +137,8 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
                 Sample('HN3L_M_8_V_0p000316227766017_e_massiveAndCKM_LO'             , ['HN3L_M_8_V_0p000316227766017_e_massiveAndCKM_LO'             ], channel, '#splitline{m= 8 GeV, |V|^{2}=1.0 10^{-7}}{Majorana}' , selection, 'hnl_m_8_v2_1p0Em07_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,   0.0004096, toplot=False), 
                 Sample('HN3L_M_8_V_0p000547722557505_e_massiveAndCKM_LO'             , ['HN3L_M_8_V_0p000547722557505_e_massiveAndCKM_LO'             ], channel, '#splitline{m= 8 GeV, |V|^{2}=3.0 10^{-7}}{Majorana}' , selection, 'hnl_m_8_v2_3p0Em07_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.001228, toplot=False), 
                 Sample('HN3L_M_8_V_0p001_e_massiveAndCKM_LO'                         , ['HN3L_M_8_V_0p001_e_massiveAndCKM_LO'                         ], channel, '#splitline{m= 8 GeV, |V|^{2}=1.0 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_1p0Em06_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.004096, toplot=False), 
-                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'              , ['HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'              ], channel, '#splitline{m= 8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.009383, toplot=True, is_generator=True), 
-                Sample('HN3L_M_8_V_0p0022360679775_e_massiveAndCKM_LO'               , ['HN3L_M_8_V_0p0022360679775_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 8 GeV, |V|^{2}=5.0 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_5p0Em06_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.02046, toplot=False), 
+                Sample('HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'              , ['HN3L_M_8_V_0p00151327459504_e_massiveAndCKM_LO'              ], channel, '#splitline{m= 8 GeV, |V|^{2}=2.3 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_2p3Em06_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.009383, toplot=False, is_generator=True), 
+                Sample('HN3L_M_8_V_0p0022360679775_e_massiveAndCKM_LO'               , ['HN3L_M_8_V_0p0022360679775_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 8 GeV, |V|^{2}=5.0 10^{-6}}{Majorana}' , selection, 'hnl_m_8_v2_5p0Em06_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.02046, toplot=True), 
                 Sample('HN3L_M_8_V_0p0316227766017_e_massiveAndCKM_LO'               , ['HN3L_M_8_V_0p0316227766017_e_massiveAndCKM_LO'               ], channel, '#splitline{m= 8 GeV, |V|^{2}=1.0 10^{-3}}{Majorana}' , selection, 'hnl_m_8_v2_1p0Em03_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       4.095, toplot=False), 
                 Sample('HN3L_M_8_V_0p1_e_massiveAndCKM_LO'                           , ['HN3L_M_8_V_0p1_e_massiveAndCKM_LO'                           ], channel, '#splitline{m= 8 GeV, |V|^{2}=1.0 10^{-2}}{Majorana}' , selection, 'hnl_m_8_v2_1p0Em02_majorana' ,  'darkgray'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,       40.94, toplot=False), 
                 Sample('HN3L_M_9_V_0p00316227766017_e_massiveAndCKM_LO'              , ['HN3L_M_9_V_0p00316227766017_e_massiveAndCKM_LO'              ], channel, '#splitline{m= 9 GeV, |V|^{2}=1.0 10^{-5}}{Majorana}' , selection, 'hnl_m_9_v2_1p0Em05_majorana' ,  'plum'         , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.04102, toplot=False, is_generator=True), 
@@ -148,35 +151,160 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
                 Sample('HN3L_M_10_V_0p01_e_massiveAndCKM_LO'                         , ['HN3L_M_10_V_0p01_e_massiveAndCKM_LO'                         ], channel, '#splitline{m=10 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_10_v2_1p0Em04_majorana',  'teal'         , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.4122, toplot=False), 
                 Sample('HN3L_M_11_V_0p00316227766017_e_massiveAndCKM_LO'             , ['HN3L_M_11_V_0p00316227766017_e_massiveAndCKM_LO'             ], channel, '#splitline{m=11 GeV, |V|^{2}=1.0 10^{-5}}{Majorana}' , selection, 'hnl_m_11_v2_1p0Em05_majorana',  'seagreen'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.0412, toplot=False, is_generator=True), 
                 Sample('HN3L_M_11_V_0p01_e_massiveAndCKM_LO'                         , ['HN3L_M_11_V_0p01_e_massiveAndCKM_LO'                         ], channel, '#splitline{m=11 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_11_v2_1p0Em04_majorana',  'seagreen'     , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.4117, toplot=False), 
-                Sample('HN3L_M_12_V_0p00316227766017_e_massiveAndCKM_LO'             , ['HN3L_M_12_V_0p00316227766017_e_massiveAndCKM_LO'             ], channel, '#splitline{m=12 GeV, |V|^{2}=1.0 10^{-5}}{Majorana}' , selection, 'hnl_m_12_v2_1p0Em05_majorana',  'coral'        , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.04113, toplot=True, is_generator=True), 
-                Sample('HN3L_M_12_V_0p01_e_massiveAndCKM_LO'                         , ['HN3L_M_12_V_0p01_e_massiveAndCKM_LO'                         ], channel, '#splitline{m=12 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_12_v2_1p0Em04_majorana',  'coral'        , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.4113, toplot=False), 
+                Sample('HN3L_M_12_V_0p00316227766017_e_massiveAndCKM_LO'             , ['HN3L_M_12_V_0p00316227766017_e_massiveAndCKM_LO'             ], channel, '#splitline{m=12 GeV, |V|^{2}=1.0 10^{-5}}{Majorana}' , selection, 'hnl_m_12_v2_1p0Em05_majorana',  'coral'        , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.04113, toplot=False, is_generator=True), 
+                Sample('HN3L_M_12_V_0p01_e_massiveAndCKM_LO'                         , ['HN3L_M_12_V_0p01_e_massiveAndCKM_LO'                         ], channel, '#splitline{m=12 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_12_v2_1p0Em04_majorana',  'coral'        , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.4113, toplot=True), 
                 Sample('HN3L_M_20_V_0p001_e_massiveAndCKM_LO'                        , ['HN3L_M_20_V_0p001_e_massiveAndCKM_LO'                        ], channel, '#splitline{m=20 GeV, |V|^{2}=1.0 10^{-6}}{Majorana}' , selection, 'hnl_m_20_v2_1p0Em06_majorana',  'crimson'      , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,    0.003853, toplot=False), 
                 Sample('HN3L_M_20_V_0p00316227766017_e_massiveAndCKM_LO'             , ['HN3L_M_20_V_0p00316227766017_e_massiveAndCKM_LO'             ], channel, '#splitline{m=20 GeV, |V|^{2}=1.0 10^{-5}}{Majorana}' , selection, 'hnl_m_20_v2_1p0Em05_majorana',  'crimson'      , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,     0.03856, toplot=False, is_generator=True), 
                 Sample('HN3L_M_20_V_0p01_e_massiveAndCKM_LO'                         , ['HN3L_M_20_V_0p01_e_massiveAndCKM_LO'                         ], channel, '#splitline{m=20 GeV, |V|^{2}=1.0 10^{-4}}{Majorana}' , selection, 'hnl_m_20_v2_1p0Em04_majorana',  'crimson'      , 10, '/'.join([basedir, 'sig']), postfix, False, True, True, 1.,      0.3854, toplot=False), 
              ]
         
-    # generate reweighted samples
-    generators = [isample for isample in signal if isample.is_generator]
-    existing_datacard_names= [isample.datacard_name for isample in signal]
-    for igenerator in generators:
-        for iw in signal_weights:
-            v2_val = iw.split('em')[0]
-            v2_exp = iw.split('em')[1]
-            mass = igenerator.name.split('_')[2]
-            label = '#splitline{m=%s GeV, |V|^{2}=%s 10^{ -%d}}{Majorana}' %(mass, v2_val, int(v2_exp))
-            datacard_name = 'hnl_m_%s_v2_%s_majorana'%(mass, iw.replace('.','p').replace('em', 'Em'))
-            # don't reweigh existing signals
-            if datacard_name in existing_datacard_names:
-                continue
+
+    if not mini:
+        # generate reweighted samples
+        # use all non-empty samples for reweighing
+        generators = [isample for isample in signal if isample.df.size>0]
+        existing_datacard_names= [isample.datacard_name for isample in signal]
+        for igenerator in generators:
+            for iw in signal_weights:
+                v2_val = iw.split('em')[0]
+                v2_exp = iw.split('em')[1]
+                mass = igenerator.name.split('_')[2]
+                label = '#splitline{m=%s GeV, |V|^{2}=%s 10^{-%d}}{Majorana}' %(mass, v2_val, int(v2_exp))
+                datacard_name = 'hnl_m_%s_v2_%s_majorana'%(mass, iw.replace('.','p').replace('em', 'Em'))
+                # don't reweigh existing signals
+                if datacard_name in existing_datacard_names:
+                    continue
                 
-            new_sample = dc(igenerator)
-            new_sample.label = label
-            new_sample.datacard_name        = datacard_name
-            new_sample.toplot               = False
-            new_sample.extra_signal_weights = ['ctau_w_v2_%s'%iw, 'xs_w_v2_%s'%iw]
+                new_sample = copy(igenerator)
+            
+                new_sample.label                = label
+                new_sample.datacard_name        = datacard_name
+                new_sample.toplot               = False
+                new_sample.extra_signal_weights = ['ctau_w_v2_%s'%iw]
+                new_sample.xs                   = igenerator.xs * igenerator.df['xs_w_v2_%s'%iw][0]
  
-            print('generated reweighed signal', label, 'from', igenerator.name)           
-            signal.append(new_sample)
+                print('generated reweighed signal', label, 'from', igenerator.name)           
+                signal.append(new_sample)
+
+        # now let's group the samples by their datacard name
+        datacard_names = set([isample.datacard_name for isample in signal])
+    
+        merged_signals = []
+        for ii, iname in enumerate(datacard_names):
+    
+            print ('\t', iname, '\t%d/%d'%(ii+1, len(datacard_names)))
+            weighed_samples = [isample for isample in signal if isample.datacard_name==iname]
+        
+            merged_sample               = copy(weighed_samples[0])
+            merged_sample.datacard_name = iname
+            merged_sample.df            = pd.concat([isample.df for isample in weighed_samples])
+            merged_sample.xs            = np.mean([isample.xs for isample in weighed_samples])
+            merged_sample.nevents       = np.sum([isample.nevents for isample in weighed_samples])
+            merged_sample.lumi_scaling  = merged_sample.xs / merged_sample.nevents
+        
+            merged_signals.append(merged_sample)
+
+            # free up some memory
+            for already_merged in weighed_samples:
+                signal.remove(already_merged)
+                del already_merged
+                gc.collect()
+        
+        signal = merged_signals
             
     return signal
 
+if __name__ == '__main__':
+
+    # Study using all signal for signal reweighing
+    plot_dir = '/'.join([env['BASE_DIR'], 'plotter', 'plots', '2018']) 
+    base_dir = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2018'])
+    signals = get_signal_samples('mmm', base_dir, 'HNLTreeProducer_mmm/tree.root', '1', mini=False)
+
+    for i, isig in enumerate(signals): print(i, isig.datacard_name, isig.name)
+
+    signals =  [isample for isample in signals if isample.name.startswith('HN3L_M_2_V_')]
+#     0   hnl_m_2_v2_1p2Em04_majorana HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO
+#     1   hnl_m_2_v2_6p2Em04_majorana HN3L_M_2_V_0p0248394846967_mu_massiveAndCKM_LO
+#     2   hnl_m_2_v2_5p0Em02_majorana HN3L_M_2_V_0p22360679775_mu_massiveAndCKM_LO
+#     3   hnl_m_2_v2_5p0Em01_majorana HN3L_M_2_V_0p707106781187_mu_massiveAndCKM_LO
+#     14  hnl_m_2_v2_1p0Em04_majorana HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO
+#     60  hnl_m_2_v2_1p0Em04_majorana HN3L_M_2_V_0p0248394846967_mu_massiveAndCKM_LO
+#     106 hnl_m_2_v2_1p0Em04_majorana HN3L_M_2_V_0p22360679775_mu_massiveAndCKM_LO
+#     152 hnl_m_2_v2_1p0Em04_majorana HN3L_M_2_V_0p707106781187_mu_massiveAndCKM_LO
+    
+#     ss = OrderedDict()
+#     ss['1p2em4_orig'      ] = signals[  0]
+#     ss['6p2em4_orig'      ] = signals[  1]
+#     ss['5p0em2_orig'      ] = signals[  2]
+#     ss['5p0em1_orig'      ] = signals[  3]
+#     ss['1p0em4_from1p2em4'] = signals[ 14]
+#     ss['1p0em4_from6p2em4'] = signals[ 60]
+#     ss['1p0em4_from5p0em2'] = signals[106]
+#     ss['1p0em4_from5p0em1'] = signals[152]
+    
+#     print(ss['1p0em4_from1p2em4'].xs * ss['1p2em4_orig'].df['xs_w_v2_1.0em04'][0])
+#     print(ss['1p0em4_from6p2em4'].xs * ss['6p2em4_orig'].df['xs_w_v2_1.0em04'][0])
+#     print(ss['1p0em4_from5p0em2'].xs * ss['5p0em2_orig'].df['xs_w_v2_1.0em04'][0])
+#     print(ss['1p0em4_from5p0em1'].xs * ss['5p0em1_orig'].df['xs_w_v2_1.0em04'][0])
+
+    # the cross sections must be all the same
+#     print(ss['1p0em4_from1p2em4'].xs)
+#     print(ss['1p0em4_from6p2em4'].xs)
+#     print(ss['1p0em4_from5p0em2'].xs)
+#     print(ss['1p0em4_from5p0em1'].xs)
+    
+    # now let's group the samples by their datacard name
+    datacard_names = set([isample.datacard_name for isample in signals])
+    
+    merged_signals = []
+    for ii, iname in enumerate(datacard_names):
+    
+        print ('\t', iname, '\t%d/%d'%(ii+1, len(datacard_names)))
+        weighed_samples = [isample for isample in signals if isample.datacard_name==iname]
+        
+        merged_sample               = copy(weighed_samples[0])
+        merged_sample.datacard_name = iname
+        merged_sample.df            = pd.concat([isample.df for isample in weighed_samples])
+        merged_sample.xs            = np.mean([isample.xs for isample in weighed_samples])
+        merged_sample.nevents       = np.sum([isample.nevents for isample in weighed_samples])
+        merged_sample.lumi_scaling  = merged_sample.xs / merged_sample.nevents
+        
+        merged_signals.append(merged_sample)
+
+        # free up some memory
+        for already_merged in weighed_samples:
+            signals.remove(already_merged)
+            del already_merged
+            gc.collect()
+    
+    
+    from rootpy.plotting import Hist, HistStack, Legend, Canvas, Graph, Pad
+
+#     Variable('hnl_2d_disp'        , np.linspace( 0   ,  30   , 25 + 1) , 'L_{xy} (cm)'                 , 'events'),
+#     Variable('hnl_2d_disp'        , np.linspace( 0   ,  10   , 25 + 1) , 'L_{xy} (cm)'                 , 'events', extra_label='narrow'),
+#     Variable('hnl_2d_disp'        , np.linspace( 0   ,   2   , 25 + 1) , 'L_{xy} (cm)'                 , 'events', extra_label='very_narrow'),
+#     Variable('log_hnl_2d_disp'    , np.linspace( -1  ,   2   , 25 + 1) , 'log_{10}(L_{xy}) (cm)'       , 'events'),
+
+    hnl_m_2_v2_1p2Em04_majorana = merged_signals[42]
+    hnl_m_2_v2_1p0Em04_majorana = merged_signals[44]
+
+    histo_tight = Hist(np.linspace(-1, 2, 25 + 1), title='log 10 2D disp', markersize=0, legendstyle='F')
+    weights = hnl_m_2_v2_1p0Em04_majorana.lumi_scaling * 59700. * hnl_m_2_v2_1p0Em04_majorana.df['ctau_w_v2_1.0em04']
+    histo_tight.fill_array(hnl_m_2_v2_1p0Em04_majorana.df['log_hnl_2d_disp'], weights=weights)
+
+    # ====> 16437 entries
+    # integral 97.74961962550879
+    # mean 1.081
+    # std 0.5336
+    # average weight 0.005988899396367671
+
+    histo_tight = Hist(np.linspace(-1, 2, 25 + 1), title='log 10 2D disp', markersize=0, legendstyle='F')
+    weights = np.ones(hnl_m_2_v2_1p2Em04_majorana.df.shape[0]) * hnl_m_2_v2_1p2Em04_majorana.lumi_scaling * 59700.
+    histo_tight.fill_array(hnl_m_2_v2_1p2Em04_majorana.df['log_hnl_2d_disp'], weights=weights)
+
+    # ====> 1426 entries
+    # integral 178.49046748876572
+    # mean 1.148
+    # std 0.5057
+    # average weight 0.1261415715223623

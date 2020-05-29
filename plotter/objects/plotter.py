@@ -244,9 +244,9 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
         self.create_canvas(self.do_ratio)
 
         for ivar in variables:
-            
+                        
             variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
-            
+
             print('plotting', label)
                         
             ######################################################################################
@@ -321,6 +321,10 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             signals_to_plot = []
             
             for isig in signal:
+
+                if variable not in self.datacards:
+                    if not isig.toplot:
+                        continue
                 
                 if variable=='fr' or variable=='fr_corr':
                     continue
@@ -515,7 +519,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 legend.Draw('same')
                 if self.plot_signals: 
                     legend_signals.Draw('same')
-                CMS_lumi(self.main_pad, 4, 0)
+                CMS_lumi(self.main_pad, 4, 0, lumi_13TeV="%d, L = %.1f fb^{-1}" %(self.year, self.lumi/1000.))
                 self.canvas.Modified()
                 self.canvas.Update()
                 for iformat in ['pdf', 'png', 'root']:
