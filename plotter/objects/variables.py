@@ -122,6 +122,8 @@ variables = [
     Variable('nbj'            , np.linspace( 0   ,   5   ,  5 + 1) , '#b-jet'        , 'events'),
     Variable('hnl_m_01'       , np.linspace( 0   , 150   , 40 + 1) , 'm_{12} (GeV)'  , 'events'),
     Variable('hnl_m_02'       , np.linspace( 0   , 150   , 40 + 1) , 'm_{13} (GeV)'  , 'events'),
+    Variable('hnl_m_01'       , np.linspace( 65  , 115   , 30 + 1) , 'm_{12} (GeV)'  , 'events', extra_label='fine'),
+    Variable('hnl_m_02'       , np.linspace( 65  , 115   , 30 + 1) , 'm_{13} (GeV)'  , 'events', extra_label='fine'),
     Variable('hnl_w_vis_m'    , np.linspace( 0   , 150   , 40 + 1) , 'm_{3l} (GeV)'  , 'events'),
     Variable('sv_cos'         , np.linspace( 0.9 ,   1   , 30 + 1) , 'cos\alpha'     , 'events'),
     Variable('sv_cos'         , np.linspace( 0.99,   1   , 30 + 1) , 'cos\alpha'     , 'events', extra_label='fine'),

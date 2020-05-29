@@ -1,5 +1,6 @@
 import os
 import re
+import gc # free mem up
 import ROOT
 import root_pandas
 import numpy as np
@@ -233,9 +234,15 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 isample.df = isample.df.query(self.pandas_selection)
 
         # split the dataframe in tight and lnt-not-tight (called simply lnt for short)
+        print('============> splitting dataframe in tight and loose not tight')
         for isample in (mc+data+signal):
             isample.df_tight = isample.df.query(self.selection_tight)
-            isample.df_lnt = isample.df.query(self.selection_lnt)
+            if isample not in signal:
+                isample.df_lnt = isample.df.query(self.selection_lnt)
+            # free some mem
+            del isample.df
+            gc.collect()
+        print('============> ... done')
 
         # sort depending on their position in the stack
         mc.sort(key = lambda x : x.position_in_stack)
