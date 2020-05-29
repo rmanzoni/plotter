@@ -5,7 +5,7 @@ import gc # free mem up
 from os import environ as env
 from root_pandas import read_root
 from collections import OrderedDict
-from plotter.objects.sample import Sample, signal_weights
+from plotter.objects.sample import Sample, signal_weights_dict, signal_weights, ranges
 from copy import deepcopy, copy
 from itertools import groupby
 
@@ -169,6 +169,9 @@ def get_signal_samples(channel, basedir, postfix, selection, mini=False):
                 v2_val = iw.split('em')[0]
                 v2_exp = iw.split('em')[1]
                 mass = igenerator.name.split('_')[2]
+                # don't produce *everything*
+                if signal_weights_dict[iw] < ranges[int(mass)][0]: continue
+                if signal_weights_dict[iw] > ranges[int(mass)][1]: continue  
                 label = '#splitline{m=%s GeV, |V|^{2}=%s 10^{-%d}}{Majorana}' %(mass, v2_val, int(v2_exp))
                 datacard_name = 'hnl_m_%s_v2_%s_majorana'%(mass, iw.replace('.','p').replace('em', 'Em'))
                 # don't reweigh existing signals
@@ -223,7 +226,7 @@ if __name__ == '__main__':
 
     for i, isig in enumerate(signals): print(i, isig.datacard_name, isig.name)
 
-    signals =  [isample for isample in signals if isample.name.startswith('HN3L_M_2_V_')]
+#     signals =  [isample for isample in signals if isample.name.startswith('HN3L_M_2_V_')]
 #     0   hnl_m_2_v2_1p2Em04_majorana HN3L_M_2_V_0p0110905365064_mu_massiveAndCKM_LO
 #     1   hnl_m_2_v2_6p2Em04_majorana HN3L_M_2_V_0p0248394846967_mu_massiveAndCKM_LO
 #     2   hnl_m_2_v2_5p0Em02_majorana HN3L_M_2_V_0p22360679775_mu_massiveAndCKM_LO

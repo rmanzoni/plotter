@@ -12,99 +12,119 @@ channel_dict['mem'] = 2
 channel_dict['eee'] = 3
 channel_dict['eem'] = 4
 
+global signal_weights_dict
+signal_weights_dict = OrderedDict()
+signal_weights_dict['1.0em01'] = 1.0e-01
+signal_weights_dict['2.0em01'] = 2.0e-01
+signal_weights_dict['3.0em01'] = 3.0e-01
+signal_weights_dict['4.0em01'] = 4.0e-01
+signal_weights_dict['5.0em01'] = 5.0e-01
+signal_weights_dict['6.0em01'] = 6.0e-01
+signal_weights_dict['7.0em01'] = 7.0e-01
+signal_weights_dict['8.0em01'] = 8.0e-01
+signal_weights_dict['9.0em01'] = 9.0e-01
+signal_weights_dict['1.0em02'] = 1.0e-02
+signal_weights_dict['2.0em02'] = 2.0e-02
+signal_weights_dict['3.0em02'] = 3.0e-02
+signal_weights_dict['4.0em02'] = 4.0e-02
+signal_weights_dict['5.0em02'] = 5.0e-02
+signal_weights_dict['6.0em02'] = 6.0e-02
+signal_weights_dict['7.0em02'] = 7.0e-02
+signal_weights_dict['8.0em02'] = 8.0e-02
+signal_weights_dict['9.0em02'] = 9.0e-02
+signal_weights_dict['1.0em03'] = 1.0e-03
+signal_weights_dict['2.0em03'] = 2.0e-03
+signal_weights_dict['3.0em03'] = 3.0e-03
+signal_weights_dict['4.0em03'] = 4.0e-03
+signal_weights_dict['5.0em03'] = 5.0e-03
+signal_weights_dict['6.0em03'] = 6.0e-03
+signal_weights_dict['7.0em03'] = 7.0e-03
+signal_weights_dict['8.0em03'] = 8.0e-03
+signal_weights_dict['9.0em03'] = 9.0e-03
+signal_weights_dict['1.0em04'] = 1.0e-04
+signal_weights_dict['2.0em04'] = 2.0e-04
+signal_weights_dict['3.0em04'] = 3.0e-04
+signal_weights_dict['4.0em04'] = 4.0e-04
+signal_weights_dict['5.0em04'] = 5.0e-04
+signal_weights_dict['6.0em04'] = 6.0e-04
+signal_weights_dict['7.0em04'] = 7.0e-04
+signal_weights_dict['8.0em04'] = 8.0e-04
+signal_weights_dict['9.0em04'] = 9.0e-04
+signal_weights_dict['1.0em05'] = 1.0e-05
+signal_weights_dict['2.0em05'] = 2.0e-05
+signal_weights_dict['3.0em05'] = 3.0e-05
+signal_weights_dict['4.0em05'] = 4.0e-05
+signal_weights_dict['5.0em05'] = 5.0e-05
+signal_weights_dict['6.0em05'] = 6.0e-05
+signal_weights_dict['7.0em05'] = 7.0e-05
+signal_weights_dict['8.0em05'] = 8.0e-05
+signal_weights_dict['9.0em05'] = 9.0e-05
+signal_weights_dict['1.0em06'] = 1.0e-06
+signal_weights_dict['2.0em06'] = 2.0e-06
+signal_weights_dict['3.0em06'] = 3.0e-06
+signal_weights_dict['4.0em06'] = 4.0e-06
+signal_weights_dict['5.0em06'] = 5.0e-06
+signal_weights_dict['6.0em06'] = 6.0e-06
+signal_weights_dict['7.0em06'] = 7.0e-06
+signal_weights_dict['8.0em06'] = 8.0e-06
+signal_weights_dict['9.0em06'] = 9.0e-06
+signal_weights_dict['1.0em07'] = 1.0e-07
+signal_weights_dict['2.0em07'] = 2.0e-07
+signal_weights_dict['3.0em07'] = 3.0e-07
+signal_weights_dict['4.0em07'] = 4.0e-07
+signal_weights_dict['5.0em07'] = 5.0e-07
+signal_weights_dict['6.0em07'] = 6.0e-07
+signal_weights_dict['7.0em07'] = 7.0e-07
+signal_weights_dict['8.0em07'] = 8.0e-07
+signal_weights_dict['9.0em07'] = 9.0e-07
+signal_weights_dict['1.0em08'] = 1.0e-08
+signal_weights_dict['2.0em08'] = 2.0e-08
+signal_weights_dict['3.0em08'] = 3.0e-08
+signal_weights_dict['4.0em08'] = 4.0e-08
+signal_weights_dict['5.0em08'] = 5.0e-08
+signal_weights_dict['6.0em08'] = 6.0e-08
+signal_weights_dict['7.0em08'] = 7.0e-08
+signal_weights_dict['8.0em08'] = 8.0e-08
+signal_weights_dict['9.0em08'] = 9.0e-08
+signal_weights_dict['1.0em09'] = 1.0e-09
+signal_weights_dict['2.0em09'] = 2.0e-09
+signal_weights_dict['3.0em09'] = 3.0e-09
+signal_weights_dict['4.0em09'] = 4.0e-09
+signal_weights_dict['5.0em09'] = 5.0e-09
+signal_weights_dict['6.0em09'] = 6.0e-09
+signal_weights_dict['7.0em09'] = 7.0e-09
+signal_weights_dict['8.0em09'] = 8.0e-09
+signal_weights_dict['9.0em09'] = 9.0e-09
+signal_weights_dict['1.0em10'] = 1.0e-10
+signal_weights_dict['2.0em10'] = 2.0e-10
+signal_weights_dict['3.0em10'] = 3.0e-10
+signal_weights_dict['4.0em10'] = 4.0e-10
+signal_weights_dict['5.0em10'] = 5.0e-10
+signal_weights_dict['6.0em10'] = 6.0e-10
+signal_weights_dict['7.0em10'] = 7.0e-10
+signal_weights_dict['8.0em10'] = 8.0e-10
+signal_weights_dict['9.0em10'] = 9.0e-10
+
 global signal_weights
-signal_weights = [
-#     '1.0em01',
-#     '2.0em01',
-#     '3.0em01',
-#     '4.0em01',
-#     '5.0em01',
-#     '6.0em01',
-#     '7.0em01',
-#     '8.0em01',
-#     '9.0em01',
-    '1.0em02',
-#     '2.0em02',
-#     '3.0em02',
-#     '4.0em02',
-#     '5.0em02',
-#     '6.0em02',
-#     '7.0em02',
-#     '8.0em02',
-#     '9.0em02',
-    '1.0em03',
-    '2.0em03',
-    '3.0em03',
-    '4.0em03',
-    '5.0em03',
-    '6.0em03',
-    '7.0em03',
-    '8.0em03',
-    '9.0em03',
-    '1.0em04',
-    '2.0em04',
-    '3.0em04',
-    '4.0em04',
-    '5.0em04',
-    '6.0em04',
-    '7.0em04',
-    '8.0em04',
-    '9.0em04',
-    '1.0em05',
-    '2.0em05',
-    '3.0em05',
-    '4.0em05',
-    '5.0em05',
-    '6.0em05',
-    '7.0em05',
-    '8.0em05',
-    '9.0em05',
-    '1.0em06',
-    '2.0em06',
-    '3.0em06',
-    '4.0em06',
-    '5.0em06',
-    '6.0em06',
-    '7.0em06',
-    '8.0em06',
-    '9.0em06',
-    '1.0em07',
-    '2.0em07',
-    '3.0em07',
-    '4.0em07',
-    '5.0em07',
-    '6.0em07',
-    '7.0em07',
-    '8.0em07',
-    '9.0em07',
-#     '1.0em08',
-#     '2.0em08',
-#     '3.0em08',
-#     '4.0em08',
-#     '5.0em08',
-#     '6.0em08',
-#     '7.0em08',
-#     '8.0em08',
-#     '9.0em08',
-#     '1.0em09',
-#     '2.0em09',
-#     '3.0em09',
-#     '4.0em09',
-#     '5.0em09',
-#     '6.0em09',
-#     '7.0em09',
-#     '8.0em09',
-#     '9.0em09',
-#     '1.0em10',
-#     '2.0em10',
-#     '3.0em10',
-#     '4.0em10',
-#     '5.0em10',
-#     '6.0em10',
-#     '7.0em10',
-#     '8.0em10',
-#     '9.0em10',
-]
+signal_weights = list(signal_weights_dict.keys())
+
+global ranges
+ranges = OrderedDict()
+ranges[1 ] = (5e-5, 1e-2)
+ranges[2 ] = (1e-5, 1e-2)
+ranges[3 ] = (1e-6, 1e-2)
+ranges[4 ] = (1e-6, 1e-2)
+ranges[5 ] = (5e-7, 1e-2)
+ranges[6 ] = (1e-7, 1e-2)
+ranges[7 ] = (1e-7, 2e-3)
+ranges[8 ] = (1e-7, 1e-3)
+ranges[9 ] = (1e-7, 1e-3)
+ranges[10] = (1e-7, 1e-3)
+ranges[11] = (5e-7, 1e-3)
+ranges[12] = (5e-7, 1e-3)
+ranges[15] = (1e-6, 1e-4)
+ranges[20] = (1e-6, 1e-4)
+
 
 groups = OrderedDict()
 groups['DY'      ] = ['DY_nlo_ext', 'DY_nlo', 'DY_lo', 'DY_lo_ext', 'DY_lo_low', 'DY_lo_low_ext']
