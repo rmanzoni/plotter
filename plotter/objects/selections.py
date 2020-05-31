@@ -189,6 +189,30 @@ class Selections(object):
             'pass_met_filters==1'   ,
             ])
 
+        self.selections['ttbar_me*'] = ' & '.join([
+            'l0_pt > 28'            ,
+            'abs(l0_eta) < 2.4'     ,
+            'abs(l0_dxy) < 0.05'    ,
+            'abs(l0_dz) < 0.2'      ,
+            'l0_reliso_rho_03 < 0.2',
+            'l0_id_m == 1'          ,
+
+            'l1_pt > 10'            ,
+            'abs(l1_eta) < 2.4'     ,
+            'abs(l1_dxy) < 0.05'    ,
+            'abs(l1_dz) < 0.2'      ,
+            'l1_reliso_rho_03 < 0.2',
+            'l1_id_mva_iso_90 == 1' ,
+
+            'hnl_q_01==0'           ,
+            
+            'nbj>=1'                ,
+            
+            'abs(hnl_dphi_01)>1.'   ,
+
+            'pass_met_filters==1'   ,
+            ])
+
         # convert to pandas readable queries
         self.selections_pd = OrderedDict()
         for k, v in self.selections.items():

@@ -3,7 +3,7 @@ from plotter.objects.plotter import Plotter
 from plotter.objects.selections import Selections
 from plotter.objects.utils import save_plotter_and_selections
 
-ch = 'eee'
+ch = 'mmm'
 
 cuts = Selections(ch)
 
@@ -15,6 +15,7 @@ selection = [
     cuts.selections['vetoes_02_OS'],
     cuts.selections['signal_region'], 
 #     cuts.selections['sideband'], 
+    'hlt_IsoMu27',
 ]
 
 # extra selection to be applied on variables that don't exist
@@ -36,9 +37,9 @@ training = '2018/all_channels__200528_23h_35m'
 
 plotter = Plotter (
     channel          = ch,
-    year             = 2018,
-    plot_dir         = '/'.join([env['BASE_DIR'], 'plotter', 'plots', '2018']), 
-    base_dir         = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2018']),
+    year             = 2017,
+    plot_dir         = '/'.join([env['BASE_DIR'], 'plotter', 'plots', '2017']), 
+    base_dir         = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2017']),
     post_fix         = 'HNLTreeProducer_%s/tree.root' %ch,
     dir_suffix       = 'signal_dd_datacards', #'signal',
 
@@ -47,15 +48,15 @@ plotter = Plotter (
     selection_tight  = selection_tight,
     pandas_selection = pandas_selection,
 
-    lumi             = 59700.,
+    lumi             = 41500.,
 
     model            = '/'.join([env['BASE_DIR'], 'nn', 'trainings', training, 'net_model_weighted.h5'           ]), 
     transformation   = '/'.join([env['BASE_DIR'], 'nn', 'trainings', training, 'input_tranformation_weighted.pck']),
     features         = '/'.join([env['BASE_DIR'], 'nn', 'trainings', training, 'input_features.pck'              ]),
 
-    process_signals  = True, # switch off for control regions
+    process_signals  = False, # switch off for control regions
     mini_signals     = False, # process only the signals that you'll plot
-    plot_signals     = True, 
+    plot_signals     = False, 
     blinded          = False,
 
     datacards        = ['log_hnl_2d_disp'        , 
