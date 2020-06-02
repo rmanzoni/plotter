@@ -164,7 +164,8 @@ class Sample(object):
                  toplot=True,
                  extra_signal_weights=[],
                  is_generator=False,
-                 mayfail=True):
+                 mayfail=True,
+                 year=2018):
         self.name                 = name
         self.samples              = samples
         self.channel              = channel
@@ -186,6 +187,7 @@ class Sample(object):
         self.extra_signal_weights = extra_signal_weights
         self.is_generator         = is_generator  
         self.mayfail              = mayfail  
+        self.year                 = year  
         
         self.tree_files = []
         
@@ -216,40 +218,42 @@ class Sample(object):
         # self awareness...
         self.df['channel'] = channel_dict[self.channel]
         # FIXME! extra features should be computed here once for all not in trainer or plotter
-        self.df['abs_l0_eta'         ] = np.abs(self.df.l0_eta)
-        self.df['abs_l1_eta'         ] = np.abs(self.df.l1_eta)
-        self.df['abs_l2_eta'         ] = np.abs(self.df.l2_eta)
-        self.df['abs_l0_pdgid'       ] = np.abs(self.df.l0_pdgid)
-        self.df['abs_l1_pdgid'       ] = np.abs(self.df.l1_pdgid)
-        self.df['abs_l2_pdgid'       ] = np.abs(self.df.l2_pdgid)
-        self.df['log_abs_l0_dxy'     ] = np.log10(np.abs(self.df.l0_dxy))
-        self.df['log_abs_l0_dz'      ] = np.log10(np.abs(self.df.l0_dz ))
-        self.df['log_abs_l1_dxy'     ] = np.log10(np.abs(self.df.l1_dxy))
-        self.df['log_abs_l1_dz'      ] = np.log10(np.abs(self.df.l1_dz ))
-        self.df['log_abs_l2_dxy'     ] = np.log10(np.abs(self.df.l2_dxy))
-        self.df['log_abs_l2_dz'      ] = np.log10(np.abs(self.df.l2_dz ))
-        self.df['abs_q_02'           ] = np.abs(self.df.hnl_q_02)
-        self.df['abs_q_01'           ] = np.abs(self.df.hnl_q_01)
-        self.df['abs_q_12'           ] = np.abs(self.df.hnl_q_12)
+        self.df['abs_l0_eta'    ] = np.abs(self.df.l0_eta)
+        self.df['abs_l1_eta'    ] = np.abs(self.df.l1_eta)
+        self.df['abs_l2_eta'    ] = np.abs(self.df.l2_eta)
+        self.df['abs_l0_pdgid'  ] = np.abs(self.df.l0_pdgid)
+        self.df['abs_l1_pdgid'  ] = np.abs(self.df.l1_pdgid)
+        self.df['abs_l2_pdgid'  ] = np.abs(self.df.l2_pdgid)
+        self.df['log_abs_l0_dxy'] = np.log10(np.abs(self.df.l0_dxy))
+        self.df['log_abs_l0_dz' ] = np.log10(np.abs(self.df.l0_dz ))
+        self.df['log_abs_l1_dxy'] = np.log10(np.abs(self.df.l1_dxy))
+        self.df['log_abs_l1_dz' ] = np.log10(np.abs(self.df.l1_dz ))
+        self.df['log_abs_l2_dxy'] = np.log10(np.abs(self.df.l2_dxy))
+        self.df['log_abs_l2_dz' ] = np.log10(np.abs(self.df.l2_dz ))
+        self.df['abs_q_02'      ] = np.abs(self.df.hnl_q_02)
+        self.df['abs_q_01'      ] = np.abs(self.df.hnl_q_01)
+        self.df['abs_q_12'      ] = np.abs(self.df.hnl_q_12)
         
-        self.df['log_l0_dxy_sig'     ] = np.log10(self.df.l0_dxy_error / np.abs(self.df.l0_dxy ))
-        self.df['log_l1_dxy_sig'     ] = np.log10(self.df.l1_dxy_error / np.abs(self.df.l1_dxy ))
-        self.df['log_l2_dxy_sig'     ] = np.log10(self.df.l2_dxy_error / np.abs(self.df.l2_dxy ))
-        self.df['log_l0_dz_sig'      ] = np.log10(self.df.l0_dz_error / np.abs(self.df.l0_dz ))
-        self.df['log_l1_dz_sig'      ] = np.log10(self.df.l1_dz_error / np.abs(self.df.l1_dz ))
-        self.df['log_l2_dz_sig'      ] = np.log10(self.df.l2_dz_error / np.abs(self.df.l2_dz ))
+        self.df['log_l0_dxy_sig'] = np.log10(self.df.l0_dxy_error / np.abs(self.df.l0_dxy ))
+        self.df['log_l1_dxy_sig'] = np.log10(self.df.l1_dxy_error / np.abs(self.df.l1_dxy ))
+        self.df['log_l2_dxy_sig'] = np.log10(self.df.l2_dxy_error / np.abs(self.df.l2_dxy ))
+        self.df['log_l0_dz_sig' ] = np.log10(self.df.l0_dz_error / np.abs(self.df.l0_dz ))
+        self.df['log_l1_dz_sig' ] = np.log10(self.df.l1_dz_error / np.abs(self.df.l1_dz ))
+        self.df['log_l2_dz_sig' ] = np.log10(self.df.l2_dz_error / np.abs(self.df.l2_dz ))
 
         self.df['log_hnl_2d_disp'    ] = np.log10(self.df.hnl_2d_disp)
         self.df['log_hnl_2d_disp_sig'] = np.log10(self.df.hnl_2d_disp_sig)
         
-        self.df['l0_ptcone'      ] = ptcone(self.df.l0_pt, self.df.l0_reliso_rho_03, 0.1) if len(self.df) else np.nan
-        self.df['l1_ptcone'      ] = ptcone(self.df.l1_pt, self.df.l1_reliso_rho_03, 0.2) if len(self.df) else np.nan
-        self.df['l2_ptcone'      ] = ptcone(self.df.l2_pt, self.df.l2_reliso_rho_03, 0.2) if len(self.df) else np.nan
+        self.df['l0_ptcone'] = ptcone(self.df.l0_pt, self.df.l0_reliso_rho_03, 0.1) if len(self.df) else np.nan
+        self.df['l1_ptcone'] = ptcone(self.df.l1_pt, self.df.l1_reliso_rho_03, 0.2) if len(self.df) else np.nan
+        self.df['l2_ptcone'] = ptcone(self.df.l2_pt, self.df.l2_reliso_rho_03, 0.2) if len(self.df) else np.nan
         
         # defined à la Martina
         self.df['hnl_2d_disp_sig_alt'] = self.df.hnl_2d_disp**2 / np.sqrt(self.df.sv_covxx * self.df.sv_x**2 + self.df.sv_covyy * self.df.sv_y**2)
         
-        self.df['_norm_'        ] = 0.
+        self.df['_norm_'] = 0.
+        
+        self.df['year'] = self.year
                 
         # scale to 1/pb 
         self.lumi_scaling = 1. if self.isdata else (self.xs / self.nevents)

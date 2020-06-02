@@ -41,6 +41,18 @@ from sklearn.metrics import roc_curve, roc_auc_score
 
 from plotter.objects.utils import get_time_str
 
+from plotter.samples.samples_2016 import get_data_samples   as get_data_samples_2016
+from plotter.samples.samples_2016 import get_mc_samples     as get_mc_samples_2016
+from plotter.samples.samples_2016 import get_signal_samples as get_signal_samples_2016
+
+from plotter.samples.samples_2017 import get_data_samples   as get_data_samples_2017
+from plotter.samples.samples_2017 import get_mc_samples     as get_mc_samples_2017
+from plotter.samples.samples_2017 import get_signal_samples as get_signal_samples_2017
+
+from plotter.samples.samples_2018 import get_data_samples   as get_data_samples_2018
+from plotter.samples.samples_2018 import get_mc_samples     as get_mc_samples_2018
+from plotter.samples.samples_2018 import get_signal_samples as get_signal_samples_2018
+
 # fix random seed for reproducibility (FIXME! not really used by Keras)
 np.random.seed(1986)
 
@@ -49,7 +61,6 @@ class Trainer(object):
         self               ,
         channel            ,
         nn_dir             ,
-        year               ,
         features           , 
         composed_features  , 
         base_dir           ,
@@ -64,7 +75,9 @@ class Trainer(object):
         selection_data_eem ,
         selection_mc_eem   ,
         selection_tight    ,
-        lumi               ,
+        lumi16             ,
+        lumi17             ,
+        lumi18             ,
         epochs=1000        ,
         early_stopping=True,
         skip_mc=False,
@@ -73,7 +86,6 @@ class Trainer(object):
 
         self.channel            = channel.split('_')[0]
         self.channel_extra      = channel.split('_')[1] if len(channel.split('_'))>1 else ''
-        self.year               = year
         self.features           = features 
         self.composed_features  = composed_features 
         self.base_dir           = base_dir 
@@ -88,7 +100,9 @@ class Trainer(object):
         self.selection_mc_eem   = ' & '.join(selection_mc_eem)  
         self.selection_tight   = selection_tight
         self.selection_lnt     = 'not (%s)' %self.selection_tight
-        self.lumi              = lumi
+        self.lumi16            = lumi16
+        self.lumi17            = lumi17
+        self.lumi18            = lumi18
         self.epochs            = epochs
         self.early_stopping    = early_stopping
         self.skip_mc           = skip_mc
@@ -96,15 +110,18 @@ class Trainer(object):
         self.scale_mc          = scale_mc
         self.nn_dir            = '/'.join([nn_dir, '_'.join([channel, dir_suffix, get_time_str()]) ]) 
 
-        if self.year==2018:
-            from plotter.samples.samples_2018 import get_data_samples, get_mc_samples, get_signal_samples
-        if self.year==2017:
-            from plotter.samples.samples_2017 import get_data_samples, get_mc_samples, get_signal_samples
-        if self.year==2016:
-            from plotter.samples.samples_2016 import get_data_samples, get_mc_samples, get_signal_samples
-        self.get_data_samples   = get_data_samples
-        self.get_mc_samples     = get_mc_samples
-        self.get_signal_samples = get_signal_samples
+        self.get_data_samples_2016   = get_data_samples_2016  
+        self.get_mc_samples_2016     = get_mc_samples_2016    
+        self.get_signal_samples_2016 = get_signal_samples_2016
+
+        self.get_data_samples_2017   = get_data_samples_2017  
+        self.get_mc_samples_2017     = get_mc_samples_2017    
+        self.get_signal_samples_2017 = get_signal_samples_2017
+
+        self.get_data_samples_2018   = get_data_samples_2018  
+        self.get_mc_samples_2018     = get_mc_samples_2018    
+        self.get_signal_samples_2018 = get_signal_samples_2018
+        
 
     def train(self):
 
@@ -112,17 +129,52 @@ class Trainer(object):
         print('============> starting reading the trees')
         print ('Net will be stored in: ', self.nn_dir)
         now = time()
-        data  = self.get_data_samples('mmm', self.base_dir, self.post_fix.replace('CHANNEL', 'mmm'), self.selection_data_mmm)
-        data += self.get_data_samples('mem', self.base_dir, self.post_fix.replace('CHANNEL', 'mem'), self.selection_data_mem)
-        data += self.get_data_samples('eee', self.base_dir, self.post_fix.replace('CHANNEL', 'eee'), self.selection_data_eee)
-        data += self.get_data_samples('eem', self.base_dir, self.post_fix.replace('CHANNEL', 'eem'), self.selection_data_eem)
-        if self.skip_mc:
-            mc = []
-        else:
-            mc  = self.get_mc_samples('mmm', self.base_dir, self.post_fix.replace('CHANNEL', 'mmm'), self.selection_mc_mmm)
-            mc += self.get_mc_samples('mem', self.base_dir, self.post_fix.replace('CHANNEL', 'mem'), self.selection_mc_mem)
-            mc += self.get_mc_samples('eee', self.base_dir, self.post_fix.replace('CHANNEL', 'eee'), self.selection_mc_eee)
-            mc += self.get_mc_samples('eem', self.base_dir, self.post_fix.replace('CHANNEL', 'eem'), self.selection_mc_eem)
+
+        data = []
+        data += self.get_data_samples_2016('mmm', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'mmm'), self.selection_data_mmm + '& (hlt_IsoMu24 | hlt_IsoTkMu24) & l0_pt>25')
+        data += self.get_data_samples_2016('mem', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'mem'), self.selection_data_mem + '& (hlt_IsoMu24 | hlt_IsoTkMu24) & l0_pt>25')
+        data += self.get_data_samples_2016('eee', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'eee'), self.selection_data_eee + '& hlt_Ele27_WPTight_Gsf & l0_pt>30'        )
+        data += self.get_data_samples_2016('eem', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'eem'), self.selection_data_eem + '& hlt_Ele27_WPTight_Gsf & l0_pt>30'        )
+        
+        data += self.get_data_samples_2017('mmm', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'mmm'), self.selection_data_mmm + '& (hlt_IsoMu24 | hlt_IsoMu27) & l0_pt>25'  )
+        data += self.get_data_samples_2017('mem', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'mem'), self.selection_data_mem + '& (hlt_IsoMu24 | hlt_IsoMu27) & l0_pt>25'  )
+        data += self.get_data_samples_2017('eee', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'eee'), self.selection_data_eee + '& hlt_Ele35_WPTight_Gsf & l0_pt>38'        )
+        data += self.get_data_samples_2017('eem', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'eem'), self.selection_data_eem + '& hlt_Ele35_WPTight_Gsf & l0_pt>38'        )
+
+        data += self.get_data_samples_2018('mmm', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'mmm'), self.selection_data_mmm + '& hlt_IsoMu24 & l0_pt>25'                  )
+        data += self.get_data_samples_2018('mem', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'mem'), self.selection_data_mem + '& hlt_IsoMu24 & l0_pt>25'                  )
+        data += self.get_data_samples_2018('eee', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'eee'), self.selection_data_eee + '& hlt_Ele32_WPTight_Gsf & l0_pt>35'        )
+        data += self.get_data_samples_2018('eem', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'eem'), self.selection_data_eem + '& hlt_Ele32_WPTight_Gsf & l0_pt>35'        )
+
+        mc = []
+
+        if not self.skip_mc:
+            
+            mc16 = []
+            mc16 += self.get_mc_samples_2016('mmm', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'mmm'), self.selection_mc_mmm + '& (hlt_IsoMu24 | hlt_IsoTkMu24) & l0_pt>25')
+            mc16 += self.get_mc_samples_2016('mem', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'mem'), self.selection_mc_mem + '& (hlt_IsoMu24 | hlt_IsoTkMu24) & l0_pt>25')
+            mc16 += self.get_mc_samples_2016('eee', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'eee'), self.selection_mc_eee + '& hlt_Ele27_WPTight_Gsf & l0_pt>30'        )
+            mc16 += self.get_mc_samples_2016('eem', '/'.join([self.base_dir, '2016']), self.post_fix.replace('CHANNEL', 'eem'), self.selection_mc_eem + '& hlt_Ele27_WPTight_Gsf & l0_pt>30'        )
+            for imc in mc16:
+                imc.lumi = self.lumi16
+
+            mc17 = []
+            mc17 += self.get_mc_samples_2017('mmm', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'mmm'), self.selection_mc_mmm + '& (hlt_IsoMu24 | hlt_IsoMu27) & l0_pt>25'  )
+            mc17 += self.get_mc_samples_2017('mem', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'mem'), self.selection_mc_mem + '& (hlt_IsoMu24 | hlt_IsoMu27) & l0_pt>25'  )
+            mc17 += self.get_mc_samples_2017('eee', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'eee'), self.selection_mc_eee + '& hlt_Ele35_WPTight_Gsf & l0_pt>38'        )
+            mc17 += self.get_mc_samples_2017('eem', '/'.join([self.base_dir, '2017']), self.post_fix.replace('CHANNEL', 'eem'), self.selection_mc_eem + '& hlt_Ele35_WPTight_Gsf & l0_pt>38'        )
+            for imc in mc17:
+                imc.lumi = self.lumi17
+
+            mc18 = []
+            mc18 += self.get_mc_samples_2018('mmm', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'mmm'), self.selection_mc_mmm + '& hlt_IsoMu24 & l0_pt>25'                  )
+            mc18 += self.get_mc_samples_2018('mem', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'mem'), self.selection_mc_mem + '& hlt_IsoMu24 & l0_pt>25'                  )
+            mc18 += self.get_mc_samples_2018('eee', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'eee'), self.selection_mc_eee + '& hlt_Ele32_WPTight_Gsf & l0_pt>35'        )
+            mc18 += self.get_mc_samples_2018('eem', '/'.join([self.base_dir, '2018']), self.post_fix.replace('CHANNEL', 'eem'), self.selection_mc_eem + '& hlt_Ele32_WPTight_Gsf & l0_pt>35'        )
+            for imc in mc18:
+                imc.lumi = self.lumi18
+            
+            mc = mc16 + mc17 + mc18
 
         print('============> it took %.2f seconds' %(time() - now))
 
@@ -143,8 +195,7 @@ class Trainer(object):
         else:
             for i, imc in enumerate(mc):
             
-#                 imc.df['weight'] = -1. * self.lumi * imc.lumi_scaling * imc.df.lhe_weight * self.scale_mc
-                imc.df['weight'] *= -1. * self.lumi * imc.lumi_scaling * self.scale_mc
+                imc.df['weight'] *= -1. * imc.lumi * imc.lumi_scaling * self.scale_mc
                 imc.df['isdata'] = 0
                 imc.df['ismc']   = i+1
 
