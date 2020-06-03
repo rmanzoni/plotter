@@ -408,7 +408,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     histo_lnt.fillcolor = 'skyblue'
                     histo_lnt.linewidth = 0
 
-                    histo_lnt_control = Hist(bins, title=idata.label, markersize=1, legendstyle='F')
+                    histo_lnt_control = Hist(bins, title=idata.label, markersize=1, legendstyle='LEP')
                     histo_lnt_control.fill_array(idata_df_lnt[variable])
                                 
                     data_nonprompt.append(histo_lnt)
@@ -456,6 +456,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             if self.data_driven:
                 all_obs_nonprompt_control = sum(data_nonprompt_control)
                 all_obs_nonprompt_control.title = 'observed'
+                all_obs_nonprompt_control.drawstyle = 'EP'
 
             # prepare the legend
             print(signals_to_plot)
@@ -597,11 +598,10 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     new_legend = Legend(stack_control.hists+[hist_error_control, all_obs_nonprompt_control], pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
                     new_legend.SetBorderSize(0)
                     new_legend.x1 = 0.55
-                    new_legend.y1 = 0.60
+                    new_legend.y1 = 0.71
                     new_legend.x2 = 0.88
-                    new_legend.y2 = 0.88
+                    new_legend.y2 = 0.90
                     new_legend.SetFillColor(0)
-                    new_legend.Draw('same')
                     
                     #finalstate.Draw('same')
 
@@ -609,7 +609,9 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     stack_nonprompt_control_scaled_list = []
                     for ihist in stack_control.hists:
                         new_hist = copy(ihist)
-                        new_hist.Scale(1./all_obs_nonprompt_control.integral())
+                        for ibin in new_hist.bins_range():                        
+                            new_hist.SetBinContent(ibin, np.nan_to_num(np.divide(new_hist.GetBinContent(ibin), all_obs_nonprompt_control.GetBinContent(ibin))))
+                            new_hist.SetBinError  (ibin, np.nan_to_num(np.divide(new_hist.GetBinError  (ibin), all_obs_nonprompt_control.GetBinContent(ibin))))
                         stack_nonprompt_control_scaled_list.append(new_hist)
 
                     stack_control_scaled = HistStack(stack_nonprompt_control_scaled_list, drawstyle='HIST', title='')
@@ -620,26 +622,34 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     stack_control_scaled_err.title     = 'stat. unc.'
                     stack_control_scaled_err.legendstyle = 'F'
 
-                    draw([stack_control_scaled, stack_control_scaled_err], xtitle=xlabel, ytitle='MC/data', pad=self.ratio_pad, logy=False, ylimits=(0., 0.1))
+                    draw([stack_control_scaled, stack_control_scaled_err], xtitle=xlabel, ytitle='MC/data', pad=self.ratio_pad, logy=False)
 
                     stack_control_scaled.xaxis.set_label_size(ithing.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
                     stack_control_scaled.yaxis.set_label_size(ithing.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
                     stack_control_scaled.xaxis.set_title_size(ithing.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
                     stack_control_scaled.yaxis.set_title_size(ithing.yaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
-                    stack_control_scaled.yaxis.set_ndivisions(410)
+                    stack_control_scaled.yaxis.set_ndivisions(405)
                     stack_control_scaled.yaxis.set_title_offset(0.4)
                     stack_control_scaled.SetMinimum(0.)
-                    stack_control_scaled.SetMaximum(1.)
+                    stack_control_scaled.SetMaximum(1.5)
 
                     CMS_lumi(self.main_pad, 4, 0, lumi_13TeV="%d, L = %.1f fb^{-1}" %(self.year, self.lumi/1000.))
                     
+                    self.canvas.cd()
+                    # remove old legend
+                    for iprim in self.canvas.primitives:
+                        if isinstance(iprim, Legend):
+                            self.canvas.primitives.remove(iprim)
+                    
+                    # draw new legend    
+                    new_legend.Draw('same')
+
                     self.canvas.Modified()
                     self.canvas.Update()
 
                     for iformat in ['pdf', 'png', 'root']:
                         self.canvas.SaveAs('/'.join([self.plt_dir, 'lnt_region', 'log' if islogy else 'lin', iformat if iformat!='pdf' else '','%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
-                    
-#                     import pdb ; pdb.set_trace()
+                
 
             # save only the datacards you want, don't flood everything
             if len(self.datacards) and label not in self.datacards:
