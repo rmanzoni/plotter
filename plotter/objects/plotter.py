@@ -262,6 +262,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             
             stack_prompt    = []
             stack_nonprompt = []
+            stack_nonprompt_control = []
             
             for imc in mc:
                 
@@ -282,7 +283,9 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 
                 stack_prompt.append(histo_tight)
                     
-                if self.data_driven:
+                # optionally remove the MC subtraction in loose-not-tight
+                # may help if MC stats is terrible (and it often is)
+                if self.data_driven and self.mc_subtraction:
                     histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label+'#lnt')
                     weights = self.total_weight_calculator(mc_df_lnt, ['weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
                     histo_lnt.fill_array(mc_df_lnt[variable], weights=weights*self.relaxed_mc_scaling)
@@ -290,17 +293,26 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     histo_lnt.fillstyle = 'solid'
                     histo_lnt.fillcolor = 'skyblue' if self.data_driven else imc.colour
                     histo_lnt.linewidth = 0
+
+                    histo_lnt_control = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label+'#lntcontrol')
+                    weights_control = self.total_weight_calculator(mc_df_lnt, ['weight']+imc.extra_signal_weights, [self.lumi, imc.lumi_scaling])
+                    histo_lnt_control.fill_array(mc_df_lnt[variable], weights=weights_control*self.relaxed_mc_scaling)
+
+                    histo_lnt_control.fillstyle = 'solid'
+                    histo_lnt_control.fillcolor = imc.colour
+                    histo_lnt_control.linewidth = 0
                 
-                    # optionally remove the MC subtraction in loose-not-tight
-                    # may help if MC stats is terrible (and it often is)
-                    if self.mc_subtraction:
-                        stack_nonprompt.append(histo_lnt)
+                    stack_nonprompt.append(histo_lnt)
+                    stack_nonprompt_control.append(histo_lnt_control)
 
             # merge different samples together (add the histograms)                
             # prepare two temporary containers for the post-grouping histograms
             stack_prompt_tmp = []
             stack_nonprompt_tmp = []
-            for ini, fin in [(stack_prompt, stack_prompt_tmp), (stack_nonprompt, stack_nonprompt_tmp)]:
+            stack_nonprompt_control_tmp = []
+            for ini, fin in [(stack_prompt, stack_prompt_tmp), 
+                             (stack_nonprompt, stack_nonprompt_tmp), 
+                             (stack_nonprompt_control, stack_nonprompt_control_tmp)]:
                 for k, v in groups.items():
                     grouped = []
                     for ihist in ini:
@@ -317,8 +329,9 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                         group.linewidth = grouped[0].linewidth
                     fin.append(group)
 
-            stack_prompt    = stack_prompt_tmp 
-            stack_nonprompt = stack_nonprompt_tmp
+            stack_prompt            = stack_prompt_tmp 
+            stack_nonprompt         = stack_nonprompt_tmp
+            stack_nonprompt_control = stack_nonprompt_control_tmp
             
             ######################################################################################
             # plot the signals
@@ -359,6 +372,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 
             data_prompt    = []
             data_nonprompt = []
+            data_nonprompt_control = []
             
             for idata in data:
 
@@ -381,8 +395,12 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     histo_lnt.fillstyle = 'solid'
                     histo_lnt.fillcolor = 'skyblue'
                     histo_lnt.linewidth = 0
-                
+
+                    histo_lnt_control = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
+                    histo_lnt_control.fill_array(idata_df_lnt[variable])
+                                
                     data_nonprompt.append(histo_lnt)
+                    data_nonprompt_control.append(histo_lnt_control)
 
             if self.data_driven:
                 # put the prompt backgrounds together
@@ -391,10 +409,14 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 
                 # put the nonprompt backgrounds together
                 all_exp_nonprompt = sum(stack_nonprompt+data_nonprompt)
+                all_exp_nonprompt.fillstyle = 'solid'
+                all_exp_nonprompt.fillcolor = 'skyblue'
+                all_exp_nonprompt.linewidth = 0               
                 all_exp_nonprompt.title = 'nonprompt'
 
                 # create the stacks
                 stack = HistStack([all_exp_prompt, all_exp_nonprompt], drawstyle='HIST', title='')
+                stack_control = HistStack(stack_nonprompt_control, drawstyle='HIST', title='')
             
             else:
                 stack = HistStack(stack_prompt, drawstyle='HIST', title='')
@@ -406,6 +428,14 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             hist_error.color     = 'gray'
             hist_error.title     = 'stat. unc.'
             hist_error.legendstyle = 'F'
+
+            if self.data_driven:
+                hist_error_control = stack.sum #sum([all_exp_prompt, all_exp_nonprompt])    
+                hist_error_control.drawstyle = 'E2'
+                hist_error_control.fillstyle = '/'
+                hist_error_control.color     = 'gray'
+                hist_error_control.title     = 'stat. unc.'
+                hist_error_control.legendstyle = 'F'
 
             # put the data together
             all_obs_prompt = sum(data_prompt)

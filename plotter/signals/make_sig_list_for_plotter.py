@@ -29,7 +29,7 @@ for signals in [sigs_18]:#, sigs_17, sigs_18]:
                 mode_label = 'majorana' 
             else:  assert False, 'ERROR: No mode could be determined. Check signal list.'
 
-            label = 'hnl_m_{mass}_v2_{v2_label}_{mode_label}'.format(mass=sig.mass, v2_label=v2_label, mode_label=mode_label)
+            label = 'hnl_m_{mass}_v2_{v2_label}_{mode_label}'.format(mass=int(sig.mass), v2_label=v2_label, mode_label=mode_label)
             if   sig.mass == 1:  color = 'darkorange'
             elif sig.mass == 2:  color = 'forestgreen'
             elif sig.mass == 3:  color = 'firebrick'

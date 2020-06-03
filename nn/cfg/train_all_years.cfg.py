@@ -106,6 +106,7 @@ trainer = Trainer (
 #          'l1_ptcone'      ,
 #          'l2_ptcone'      ,
          'log_hnl_2d_disp',
+         'isdata'         ,
     ],
     
     composed_features = composed_features,

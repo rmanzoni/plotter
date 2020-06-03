@@ -254,6 +254,8 @@ class Sample(object):
         self.df['_norm_'] = 0.
         
         self.df['year'] = self.year
+
+        self.df['isdata'] = self.isdata
                 
         # scale to 1/pb 
         self.lumi_scaling = 1. if self.isdata else (self.xs / self.nevents)

@@ -100,8 +100,7 @@ class Selections(object):
             '!(hnl_2d_disp<1.5 & abs(hnl_m_12-0.7827) < 0.08)', # omega veto
             '!(hnl_2d_disp<1.5 & abs(hnl_m_12-1.0190) < 0.08)', # phi veto
             ])
-
-           
+     
         self.selections['vetoes_01_OS'] = ' & '.join([
             # vetoes 01 (only is OS)
             '!(hnl_q_01==0 & abs(hnl_m_01-91.1876) < 10)'  , # Z veto
@@ -209,6 +208,30 @@ class Selections(object):
             'nbj>=1'                ,
             
             'abs(hnl_dphi_01)>1.'   ,
+
+            'pass_met_filters==1'   ,
+            ])
+
+        self.selections['ttbar_em*'] = ' & '.join([
+            'l0_pt > 28'            ,
+            'abs(l0_eta) < 2.4'     ,
+            'abs(l0_dxy) < 0.05'    ,
+            'abs(l0_dz) < 0.2'      ,
+            'l0_reliso_rho_03 < 0.2',
+            'l0_id_mva_iso_90 == 1' ,
+
+            'l2_pt > 10'            ,
+            'abs(l2_eta) < 2.4'     ,
+            'abs(l2_dxy) < 0.05'    ,
+            'abs(l2_dz) < 0.2'      ,
+            'l2_reliso_rho_03 < 0.2',
+            'l2_id_m == 1'          ,
+
+            'hnl_q_02==0'           ,
+            
+            'nbj>=1'                ,
+            
+            'abs(hnl_dphi_02)>1.'   ,
 
             'pass_met_filters==1'   ,
             ])

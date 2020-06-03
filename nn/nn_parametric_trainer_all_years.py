@@ -194,8 +194,9 @@ class Trainer(object):
             failing = failing_data
         else:
             for i, imc in enumerate(mc):
-            
+                
                 imc.df['weight'] *= -1. * imc.lumi * imc.lumi_scaling * self.scale_mc
+#                 imc.df['weight'] *= imc.lumi * imc.lumi_scaling * self.scale_mc
                 imc.df['isdata'] = 0
                 imc.df['ismc']   = i+1
 

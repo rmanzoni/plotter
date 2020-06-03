@@ -15,6 +15,7 @@ selection = [
     cuts.selections['vetoes_02_OS'],
     cuts.selections['signal_region'], 
 #     cuts.selections['sideband'], 
+    'hlt_Ele32_WPTight_Gsf',
 ]
 
 # extra selection to be applied on variables that don't exist
@@ -25,7 +26,9 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = '2018/all_channels__200528_23h_35m'
+training = 'run2/all_channels__200602_17h_26m'
+# training = 'run2/all_channels__200601_18h_20m'
+# training = '2018/all_channels__200528_23h_35m'
 # training = 'all_channels_200526_12h_46m'
 # training = 'all_channels_200525_19h_38m'
 # training = 'all_channels_200525_18h_55m'
@@ -41,6 +44,7 @@ plotter = Plotter (
     base_dir         = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2018']),
     post_fix         = 'HNLTreeProducer_%s/tree.root' %ch,
     dir_suffix       = 'signal_dd_datacards', #'signal',
+#     dir_suffix       = 'signal_dd_datacards', #'signal',
 
     selection_data   = selection,
     selection_mc     = selection_mc,
@@ -53,9 +57,9 @@ plotter = Plotter (
     transformation   = '/'.join([env['BASE_DIR'], 'nn', 'trainings', training, 'input_tranformation_weighted.pck']),
     features         = '/'.join([env['BASE_DIR'], 'nn', 'trainings', training, 'input_features.pck'              ]),
 
-    process_signals  = True, # switch off for control regions
+    process_signals  = False, # switch off for control regions
     mini_signals     = False, # process only the signals that you'll plot
-    plot_signals     = True, 
+    plot_signals     = False, 
     blinded          = False,
 
     datacards        = ['log_hnl_2d_disp'        , 
