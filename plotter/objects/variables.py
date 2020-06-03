@@ -172,10 +172,10 @@ variables = [
     Variable('fr'             , np.linspace( 0  ,  1, 15 + 1) , 'fake rate'         , 'events', extra_label='very_coarse'),
     Variable('fr'             , np.linspace( 0  ,  1, 10 + 1) , 'fake rate'         , 'events', extra_label='very_very_coarse'),
 
-    Variable('fr_corr', np.linspace( 0  ,  1, 30 + 1) , 'f/(1-f)', 'events'),
-    Variable('fr_corr', np.linspace( 0  ,  1, 20 + 1) , 'f/(1-f)', 'events', extra_label='coarse'),
-    Variable('fr_corr', np.linspace( 0  ,  1, 15 + 1) , 'f/(1-f)', 'events', extra_label='very_coarse'),
-    Variable('fr_corr', np.linspace( 0  ,  1, 10 + 1) , 'f/(1-f)', 'events', extra_label='very_very_coarse'),
+    Variable('fr_corr', np.linspace( 0  ,  2, 30 + 1) , 'f/(1-f)', 'events'),
+    Variable('fr_corr', np.linspace( 0  ,  2, 20 + 1) , 'f/(1-f)', 'events', extra_label='coarse'),
+    Variable('fr_corr', np.linspace( 0  ,  2, 15 + 1) , 'f/(1-f)', 'events', extra_label='very_coarse'),
+    Variable('fr_corr', np.linspace( 0  ,  2, 10 + 1) , 'f/(1-f)', 'events', extra_label='very_very_coarse'),
 ]
 
 

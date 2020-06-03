@@ -5,6 +5,7 @@ import ROOT
 import root_pandas
 import numpy as np
 import pandas as pd
+from copy import copy
 from os import makedirs
 from time import time
 from collections import OrderedDict
@@ -208,6 +209,12 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
         makedirs('/'.join([self.plt_dir, 'lin', 'root']), exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'log', 'png']), exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'log', 'root']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lnt_region', 'lin']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lnt_region', 'log']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lnt_region', 'lin', 'png']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lnt_region', 'lin', 'root']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lnt_region', 'log', 'png']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'lnt_region', 'log', 'root']), exist_ok=True)
 
         # NN evaluator
         print('============> starting reading the trees')
@@ -285,14 +292,16 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     
                 # optionally remove the MC subtraction in loose-not-tight
                 # may help if MC stats is terrible (and it often is)
-                if self.data_driven and self.mc_subtraction:
-                    histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label+'#lnt')
-                    weights = self.total_weight_calculator(mc_df_lnt, ['weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
-                    histo_lnt.fill_array(mc_df_lnt[variable], weights=weights*self.relaxed_mc_scaling)
+                if self.data_driven:
+                    if self.mc_subtraction:
+                        histo_lnt = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label+'#lnt')
+                        weights = self.total_weight_calculator(mc_df_lnt, ['weight', 'fr_corr']+imc.extra_signal_weights, [-1., self.lumi, imc.lumi_scaling])
+                        histo_lnt.fill_array(mc_df_lnt[variable], weights=weights*self.relaxed_mc_scaling)
 
-                    histo_lnt.fillstyle = 'solid'
-                    histo_lnt.fillcolor = 'skyblue' if self.data_driven else imc.colour
-                    histo_lnt.linewidth = 0
+                        histo_lnt.fillstyle = 'solid'
+                        histo_lnt.fillcolor = 'skyblue' if self.data_driven else imc.colour
+                        histo_lnt.linewidth = 0
+                        stack_nonprompt.append(histo_lnt)
 
                     histo_lnt_control = Hist(bins, title=imc.label, markersize=0, legendstyle='F', name=imc.datacard_name+'#'+label+'#lntcontrol')
                     weights_control = self.total_weight_calculator(mc_df_lnt, ['weight']+imc.extra_signal_weights, [self.lumi, imc.lumi_scaling])
@@ -302,7 +311,10 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     histo_lnt_control.fillcolor = imc.colour
                     histo_lnt_control.linewidth = 0
                 
-                    stack_nonprompt.append(histo_lnt)
+#                     print(histo_lnt_control)
+#                     print(histo_lnt_control.fillcolor)
+#                     print(imc.name, imc.colour)
+#                     print(histo_lnt_control.integral())
                     stack_nonprompt_control.append(histo_lnt_control)
 
             # merge different samples together (add the histograms)                
@@ -310,8 +322,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             stack_prompt_tmp = []
             stack_nonprompt_tmp = []
             stack_nonprompt_control_tmp = []
-            for ini, fin in [(stack_prompt, stack_prompt_tmp), 
-                             (stack_nonprompt, stack_nonprompt_tmp), 
+            for ini, fin in [(stack_prompt           , stack_prompt_tmp           ), 
+                             (stack_nonprompt        , stack_nonprompt_tmp        ), 
                              (stack_nonprompt_control, stack_nonprompt_control_tmp)]:
                 for k, v in groups.items():
                     grouped = []
@@ -396,7 +408,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     histo_lnt.fillcolor = 'skyblue'
                     histo_lnt.linewidth = 0
 
-                    histo_lnt_control = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
+                    histo_lnt_control = Hist(bins, title=idata.label, markersize=1, legendstyle='F')
                     histo_lnt_control.fill_array(idata_df_lnt[variable])
                                 
                     data_nonprompt.append(histo_lnt)
@@ -430,7 +442,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             hist_error.legendstyle = 'F'
 
             if self.data_driven:
-                hist_error_control = stack.sum #sum([all_exp_prompt, all_exp_nonprompt])    
+                hist_error_control = stack_control.sum    
                 hist_error_control.drawstyle = 'E2'
                 hist_error_control.fillstyle = '/'
                 hist_error_control.color     = 'gray'
@@ -440,6 +452,10 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
             # put the data together
             all_obs_prompt = sum(data_prompt)
             all_obs_prompt.title = 'observed'
+
+            if self.data_driven:
+                all_obs_nonprompt_control = sum(data_nonprompt_control)
+                all_obs_nonprompt_control.title = 'observed'
 
             # prepare the legend
             print(signals_to_plot)
@@ -489,7 +505,6 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 
                 for ithing in things_to_plot:
                     ithing.SetMaximum(yaxis_max)   
-
                 draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy)
                                 
                 # expectation uncertainty in the ratio pad
@@ -561,6 +576,70 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 self.canvas.Update()
                 for iformat in ['pdf', 'png', 'root']:
                     self.canvas.SaveAs('/'.join([self.plt_dir, 'log' if islogy else 'lin', iformat if iformat!='pdf' else '','%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
+
+                # plot distributions in loose not tight
+                # check MC contamination there
+                if self.data_driven:
+                    things_to_plot = [stack_control, hist_error_control, all_obs_nonprompt_control]
+                    # set the y axis range 
+                    # FIXME! setting it by hand to each object as it doesn't work if passed to draw
+                    if islogy : yaxis_max = 40.   * max([ithing.max() for ithing in things_to_plot])
+                    else      : yaxis_max =  1.65 * max([ithing.max() for ithing in things_to_plot])
+                    if islogy : yaxis_min = 0.01
+                    else      : yaxis_min = 0.
+
+                    for ithing in things_to_plot:
+                        ithing.SetMaximum(yaxis_max)   
+                        ithing.SetMinimum(yaxis_min)   
+                    
+                    
+                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, yaxis_max))
+                    new_legend = Legend(stack_control.hists+[hist_error_control, all_obs_nonprompt_control], pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
+                    new_legend.SetBorderSize(0)
+                    new_legend.x1 = 0.55
+                    new_legend.y1 = 0.60
+                    new_legend.x2 = 0.88
+                    new_legend.y2 = 0.88
+                    new_legend.SetFillColor(0)
+                    new_legend.Draw('same')
+                    
+                    #finalstate.Draw('same')
+
+                    # divide MC to subtract by data
+                    stack_nonprompt_control_scaled_list = []
+                    for ihist in stack_control.hists:
+                        new_hist = copy(ihist)
+                        new_hist.Scale(1./all_obs_nonprompt_control.integral())
+                        stack_nonprompt_control_scaled_list.append(new_hist)
+
+                    stack_control_scaled = HistStack(stack_nonprompt_control_scaled_list, drawstyle='HIST', title='')
+                    stack_control_scaled_err = stack_control_scaled.sum
+                    stack_control_scaled_err.drawstyle = 'E2'
+                    stack_control_scaled_err.fillstyle = '/'
+                    stack_control_scaled_err.color     = 'gray'
+                    stack_control_scaled_err.title     = 'stat. unc.'
+                    stack_control_scaled_err.legendstyle = 'F'
+
+                    draw([stack_control_scaled, stack_control_scaled_err], xtitle=xlabel, ytitle='MC/data', pad=self.ratio_pad, logy=False, ylimits=(0., 0.1))
+
+                    stack_control_scaled.xaxis.set_label_size(ithing.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.yaxis.set_label_size(ithing.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.xaxis.set_title_size(ithing.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.yaxis.set_title_size(ithing.yaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.yaxis.set_ndivisions(410)
+                    stack_control_scaled.yaxis.set_title_offset(0.4)
+                    stack_control_scaled.SetMinimum(0.)
+                    stack_control_scaled.SetMaximum(1.)
+
+                    CMS_lumi(self.main_pad, 4, 0, lumi_13TeV="%d, L = %.1f fb^{-1}" %(self.year, self.lumi/1000.))
+                    
+                    self.canvas.Modified()
+                    self.canvas.Update()
+
+                    for iformat in ['pdf', 'png', 'root']:
+                        self.canvas.SaveAs('/'.join([self.plt_dir, 'lnt_region', 'log' if islogy else 'lin', iformat if iformat!='pdf' else '','%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
+                    
+#                     import pdb ; pdb.set_trace()
 
             # save only the datacards you want, don't flood everything
             if len(self.datacards) and label not in self.datacards:
