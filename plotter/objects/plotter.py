@@ -668,7 +668,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     all_obs_prompt_norm.linecolor = 'black'
                     all_obs_prompt_norm.markersize = 0
                     all_obs_prompt_norm.legendstyle='LE'
-                    all_obs_prompt_norm.title='data - tight'
+                    all_obs_prompt_norm.title=''
+                    all_obs_prompt_norm.label='data - tight'
                     
                     # data MC subtracted in loose
                     all_obs_prompt_mc_sub_norm = copy(all_obs_prompt)
@@ -678,7 +679,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     all_obs_prompt_mc_sub_norm.linecolor = 'green'
                     all_obs_prompt_mc_sub_norm.markersize = 0
                     all_obs_prompt_mc_sub_norm.legendstyle='LE'
-                    all_obs_prompt_mc_sub_norm.title='MC sub. data - tight'
+                    all_obs_prompt_mc_sub_norm.title=''
+                    all_obs_prompt_mc_sub_norm.label='(data-MC) - tight'
 
                     # data in loose
                     all_obs_nonprompt_control_norm = copy(all_obs_nonprompt_control)
@@ -687,7 +689,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     all_obs_nonprompt_control_norm.linecolor = 'red'
                     all_obs_nonprompt_control_norm.markersize = 0
                     all_obs_nonprompt_control_norm.legendstyle='LE'
-                    all_obs_nonprompt_control_norm.title='data - loose-not-tight'
+                    all_obs_nonprompt_control_norm.title=''
+                    all_obs_nonprompt_control_norm.label='data - l-n-t'
                     
                     # data MC subtracted in loose
                     all_obs_nonprompt_control_mc_sub_norm = copy(all_obs_nonprompt_control)
@@ -697,8 +700,9 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     all_obs_nonprompt_control_mc_sub_norm.linecolor = 'blue'
                     all_obs_nonprompt_control_mc_sub_norm.markersize = 0
                     all_obs_nonprompt_control_mc_sub_norm.legendstyle='LE'
-                    all_obs_nonprompt_control_mc_sub_norm.title='MC sub. data - loose-not-tight'
-                                        
+                    all_obs_nonprompt_control_mc_sub_norm.title=''
+                    all_obs_nonprompt_control_mc_sub_norm.label='(data-MC) - l-n-t'
+                                                            
                     things_to_plot = [
                         all_obs_prompt_norm,
                         all_obs_prompt_mc_sub_norm,
@@ -708,7 +712,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     
                     yaxis_max = max([ii.GetMaximum() for ii in things_to_plot])
                     
-                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, 1.4*yaxis_max))
+                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, 1.55*yaxis_max))
 
                     self.canvas.cd()
                     # remove old legend
@@ -716,9 +720,13 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                         if isinstance(iprim, Legend):
                             self.canvas.primitives.remove(iprim)
 
-                    shape_legend = Legend(things_to_plot, pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
+                    shape_legend = Legend([], pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
+                    shape_legend.AddEntry(all_obs_prompt_norm                  , all_obs_prompt_norm                  .label, all_obs_prompt_norm                  .legendstyle)
+                    shape_legend.AddEntry(all_obs_prompt_mc_sub_norm           , all_obs_prompt_mc_sub_norm           .label, all_obs_prompt_mc_sub_norm           .legendstyle)
+                    shape_legend.AddEntry(all_obs_nonprompt_control_norm       , all_obs_nonprompt_control_norm       .label, all_obs_nonprompt_control_norm       .legendstyle)
+                    shape_legend.AddEntry(all_obs_nonprompt_control_mc_sub_norm, all_obs_nonprompt_control_mc_sub_norm.label, all_obs_nonprompt_control_mc_sub_norm.legendstyle)
                     shape_legend.SetBorderSize(0)
-                    shape_legend.x1 = 0.55
+                    shape_legend.x1 = 0.50
                     shape_legend.y1 = 0.71
                     shape_legend.x2 = 0.88
                     shape_legend.y2 = 0.90
@@ -731,17 +739,17 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     all_obs_nonprompt_control_norm_ratio        = copy(all_obs_nonprompt_control_norm       )
                     all_obs_nonprompt_control_mc_sub_norm_ratio = copy(all_obs_nonprompt_control_mc_sub_norm)
 
-                    all_obs_prompt_mc_sub_norm_ratio           .Divide(all_obs_prompt_norm_ratio)
-                    all_obs_nonprompt_control_norm_ratio       .Divide(all_obs_prompt_norm_ratio)
-                    all_obs_nonprompt_control_mc_sub_norm_ratio.Divide(all_obs_prompt_norm_ratio)
+                    all_obs_prompt_norm_ratio                  .Divide(all_obs_prompt_mc_sub_norm_ratio)
+                    all_obs_nonprompt_control_norm_ratio       .Divide(all_obs_prompt_mc_sub_norm_ratio)
+                    all_obs_nonprompt_control_mc_sub_norm_ratio.Divide(all_obs_prompt_mc_sub_norm_ratio)
 
-                    things_to_plot = [
-                        all_obs_prompt_mc_sub_norm_ratio           ,
+                    things_to_plot_ratio = [
+                        all_obs_prompt_norm_ratio                  ,
                         all_obs_nonprompt_control_norm_ratio       ,
                         all_obs_nonprompt_control_mc_sub_norm_ratio,
                     ]
                     
-                    for ithing in things_to_plot:
+                    for ithing in things_to_plot_ratio:
                         ithing.xaxis.set_label_size(ithing.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
                         ithing.yaxis.set_label_size(ithing.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
                         ithing.xaxis.set_title_size(ithing.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
@@ -751,10 +759,12 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                         ithing.SetMinimum(0.)
                         ithing.SetMaximum(2.)
                     
-                    draw(things_to_plot, xtitle=xlabel, ytitle='1/(data-MC)_{tight}', pad=self.ratio_pad, logy=False, ylimits=(0., 2.))
+                    draw(things_to_plot_ratio, xtitle=xlabel, ytitle='1/(data-MC)_{tight}', pad=self.ratio_pad, logy=False, ylimits=(0., 2.))
                     self.ratio_pad.cd()
                     line.Draw('same')
                     
+                    CMS_lumi(self.main_pad, 4, 0, lumi_13TeV="%d, L = %.1f fb^{-1}" %(self.year, self.lumi/1000.))
+
                     self.canvas.Modified()
                     self.canvas.Update()
 
