@@ -215,6 +215,12 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
         makedirs('/'.join([self.plt_dir, 'lnt_region', 'lin', 'root']), exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'lnt_region', 'log', 'png']), exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'lnt_region', 'log', 'root']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'shapes', 'lin']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'shapes', 'log']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'shapes', 'lin', 'png']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'shapes', 'lin', 'root']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'shapes', 'log', 'png']), exist_ok=True)
+        makedirs('/'.join([self.plt_dir, 'shapes', 'log', 'root']), exist_ok=True)
 
         # NN evaluator
         print('============> starting reading the trees')
@@ -569,6 +575,11 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                 finalstate.SetNDC()
                 finalstate.Draw('same')
                 
+                self.canvas.cd()
+                # remove old legend
+                for iprim in self.canvas.primitives:
+                    if isinstance(iprim, Legend):
+                        self.canvas.primitives.remove(iprim)
                 legend.Draw('same')
                 if self.plot_signals: 
                     legend_signals.Draw('same')
@@ -580,7 +591,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 
                 # plot distributions in loose not tight
                 # check MC contamination there
-                if self.data_driven:
+                if self.data_driven and variable not in ['fr', 'fr_corr']:
                     things_to_plot = [stack_control, hist_error_control, all_obs_nonprompt_control]
                     # set the y axis range 
                     # FIXME! setting it by hand to each object as it doesn't work if passed to draw
@@ -593,8 +604,8 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                         ithing.SetMaximum(yaxis_max)   
                         ithing.SetMinimum(yaxis_min)   
                     
-                    
                     draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, yaxis_max))
+
                     new_legend = Legend(stack_control.hists+[hist_error_control, all_obs_nonprompt_control], pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
                     new_legend.SetBorderSize(0)
                     new_legend.x1 = 0.55
@@ -603,8 +614,6 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     new_legend.y2 = 0.90
                     new_legend.SetFillColor(0)
                     
-                    #finalstate.Draw('same')
-
                     # divide MC to subtract by data
                     stack_nonprompt_control_scaled_list = []
                     for ihist in stack_control.hists:
@@ -624,10 +633,10 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
 
                     draw([stack_control_scaled, stack_control_scaled_err], xtitle=xlabel, ytitle='MC/data', pad=self.ratio_pad, logy=False)
 
-                    stack_control_scaled.xaxis.set_label_size(ithing.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
-                    stack_control_scaled.yaxis.set_label_size(ithing.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
-                    stack_control_scaled.xaxis.set_title_size(ithing.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
-                    stack_control_scaled.yaxis.set_title_size(ithing.yaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.xaxis.set_label_size(stack_control_scaled.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.yaxis.set_label_size(stack_control_scaled.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.xaxis.set_title_size(stack_control_scaled.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                    stack_control_scaled.yaxis.set_title_size(stack_control_scaled.yaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
                     stack_control_scaled.yaxis.set_ndivisions(405)
                     stack_control_scaled.yaxis.set_title_offset(0.4)
                     stack_control_scaled.SetMinimum(0.)
@@ -650,7 +659,109 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
                     for iformat in ['pdf', 'png', 'root']:
                         self.canvas.SaveAs('/'.join([self.plt_dir, 'lnt_region', 'log' if islogy else 'lin', iformat if iformat!='pdf' else '','%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
                 
+                    # compare shapes in tight and loose not tight
+                    
+                    # data in tight
+                    all_obs_prompt_norm = copy(all_obs_prompt)
+                    all_obs_prompt_norm.Scale(1./all_obs_prompt_norm.integral())
+                    all_obs_prompt_norm.drawstyle = 'hist e'
+                    all_obs_prompt_norm.linecolor = 'black'
+                    all_obs_prompt_norm.markersize = 0
+                    all_obs_prompt_norm.legendstyle='LE'
+                    all_obs_prompt_norm.title='data - tight'
+                    
+                    # data MC subtracted in loose
+                    all_obs_prompt_mc_sub_norm = copy(all_obs_prompt)
+                    all_obs_prompt_mc_sub_norm.add(all_exp_prompt, -1)
+                    all_obs_prompt_mc_sub_norm.Scale(1./all_obs_prompt_mc_sub_norm.integral())
+                    all_obs_prompt_mc_sub_norm.drawstyle = 'hist e'
+                    all_obs_prompt_mc_sub_norm.linecolor = 'green'
+                    all_obs_prompt_mc_sub_norm.markersize = 0
+                    all_obs_prompt_mc_sub_norm.legendstyle='LE'
+                    all_obs_prompt_mc_sub_norm.title='MC sub. data - tight'
 
+                    # data in loose
+                    all_obs_nonprompt_control_norm = copy(all_obs_nonprompt_control)
+                    all_obs_nonprompt_control_norm.Scale(1./all_obs_nonprompt_control_norm.integral())
+                    all_obs_nonprompt_control_norm.drawstyle = 'hist e'
+                    all_obs_nonprompt_control_norm.linecolor = 'red'
+                    all_obs_nonprompt_control_norm.markersize = 0
+                    all_obs_nonprompt_control_norm.legendstyle='LE'
+                    all_obs_nonprompt_control_norm.title='data - loose-not-tight'
+                    
+                    # data MC subtracted in loose
+                    all_obs_nonprompt_control_mc_sub_norm = copy(all_obs_nonprompt_control)
+                    all_obs_nonprompt_control_mc_sub_norm.add(stack_control.sum, -1)
+                    all_obs_nonprompt_control_mc_sub_norm.Scale(1./all_obs_nonprompt_control_mc_sub_norm.integral())
+                    all_obs_nonprompt_control_mc_sub_norm.drawstyle = 'hist e'
+                    all_obs_nonprompt_control_mc_sub_norm.linecolor = 'blue'
+                    all_obs_nonprompt_control_mc_sub_norm.markersize = 0
+                    all_obs_nonprompt_control_mc_sub_norm.legendstyle='LE'
+                    all_obs_nonprompt_control_mc_sub_norm.title='MC sub. data - loose-not-tight'
+                                        
+                    things_to_plot = [
+                        all_obs_prompt_norm,
+                        all_obs_prompt_mc_sub_norm,
+                        all_obs_nonprompt_control_norm,
+                        all_obs_nonprompt_control_mc_sub_norm,
+                    ]
+                    
+                    yaxis_max = max([ii.GetMaximum() for ii in things_to_plot])
+                    
+                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, 1.4*yaxis_max))
+
+                    self.canvas.cd()
+                    # remove old legend
+                    for iprim in self.canvas.primitives:
+                        if isinstance(iprim, Legend):
+                            self.canvas.primitives.remove(iprim)
+
+                    shape_legend = Legend(things_to_plot, pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
+                    shape_legend.SetBorderSize(0)
+                    shape_legend.x1 = 0.55
+                    shape_legend.y1 = 0.71
+                    shape_legend.x2 = 0.88
+                    shape_legend.y2 = 0.90
+                    shape_legend.SetFillColor(0)
+                    shape_legend.Draw('same')
+
+                    # plot ratios
+                    all_obs_prompt_norm_ratio                   = copy(all_obs_prompt_norm                  )
+                    all_obs_prompt_mc_sub_norm_ratio            = copy(all_obs_prompt_mc_sub_norm           )
+                    all_obs_nonprompt_control_norm_ratio        = copy(all_obs_nonprompt_control_norm       )
+                    all_obs_nonprompt_control_mc_sub_norm_ratio = copy(all_obs_nonprompt_control_mc_sub_norm)
+
+                    all_obs_prompt_mc_sub_norm_ratio           .Divide(all_obs_prompt_norm_ratio)
+                    all_obs_nonprompt_control_norm_ratio       .Divide(all_obs_prompt_norm_ratio)
+                    all_obs_nonprompt_control_mc_sub_norm_ratio.Divide(all_obs_prompt_norm_ratio)
+
+                    things_to_plot = [
+                        all_obs_prompt_mc_sub_norm_ratio           ,
+                        all_obs_nonprompt_control_norm_ratio       ,
+                        all_obs_nonprompt_control_mc_sub_norm_ratio,
+                    ]
+                    
+                    for ithing in things_to_plot:
+                        ithing.xaxis.set_label_size(ithing.xaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                        ithing.yaxis.set_label_size(ithing.yaxis.get_label_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                        ithing.xaxis.set_title_size(ithing.xaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                        ithing.yaxis.set_title_size(ithing.yaxis.get_title_size() * 3.) # the scale should match that of the main/ratio pad size ratio
+                        ithing.yaxis.set_ndivisions(405)
+                        ithing.yaxis.set_title_offset(0.4)
+                        ithing.SetMinimum(0.)
+                        ithing.SetMaximum(2.)
+                    
+                    draw(things_to_plot, xtitle=xlabel, ytitle='1/(data-MC)_{tight}', pad=self.ratio_pad, logy=False, ylimits=(0., 2.))
+                    self.ratio_pad.cd()
+                    line.Draw('same')
+                    
+                    self.canvas.Modified()
+                    self.canvas.Update()
+
+                    for iformat in ['pdf', 'png', 'root']:
+                        self.canvas.SaveAs('/'.join([self.plt_dir, 'shapes', 'log' if islogy else 'lin', iformat if iformat!='pdf' else '','%s%s.%s'  %(label, '_log' if islogy else '_lin', iformat)]))
+                    
+                    
             # save only the datacards you want, don't flood everything
             if len(self.datacards) and label not in self.datacards:
                 continue
