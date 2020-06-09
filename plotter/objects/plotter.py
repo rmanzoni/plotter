@@ -182,9 +182,9 @@ process                                                 0                       
 rate                                                    {signal:.4f}                   {nonprompt:.4f}                  {prompt:.4f}
 --------------------------------------------------------------------------------------------------------------------------------------------
 lumi                                    lnN             1.025                          -                                -   
-norm_prompt_{ch}_{cat}                  lnN             -                              -                                1.15   
-norm_nonprompt_{ch}_{cat}               lnN             -                              1.20                             -   
-norm_sig_{ch}_{cat}                     lnN             1.2                            -                                -   
+norm_prompt_{ch}_{y}_{cat}                  lnN             -                              -                                1.15   
+norm_nonprompt_{ch}_{y}_{cat}               lnN             -                              1.20                             -   
+norm_sig_{ch}_{y}_{cat}                     lnN             1.2                            -                                -   
 --------------------------------------------------------------------------------------------------------------------------------------------
 {cat} autoMCStats 0 0 1
 '''.format(cat         = label,
@@ -192,6 +192,7 @@ norm_sig_{ch}_{cat}                     lnN             1.2                     
            signal_name = isig.name,
            signal      = isig.integral(),
            ch          = self.full_channel,
+           y           = self.year,
            prompt      = bkgs['prompt'].integral(),
            nonprompt   = bkgs['nonprompt'].integral(),
            )
