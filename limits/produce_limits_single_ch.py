@@ -17,15 +17,16 @@ import pickle
 all_datacards = glob('datacards/datacard*hnl*m_12*.txt')
 all_datacards = [dd for dd in all_datacards if 'coarse' not in dd]
 all_datacards.sort()
-print all_datacards
+#print(all_datacards)
 
 
 signal_type = 'majorana'
 method = 'asymptotic' # 'toys'
 variable = 'hnl_m_12'
-categories_to_combine = OrderedDict(zip(['lxy_lt_0p5', 'lxy_0p5_to_2p0', 'lxy_mt_2p0'], ['disp1', 'disp2', 'disp3']))
-run_blind = True
-flavour = r'$|V|^2_{\mu}$'
+# categories_to_combine = OrderedDict(zip(['lxy_lt_0p5', 'lxy_0p5_to_2p0', 'lxy_mt_2p0'], ['disp1', 'disp2', 'disp3']))
+categories_to_combine = OrderedDict(zip(['lxy_lt_0p5', 'lxy_0p5_to_1p5', 'lxy_1p5_to_4p0', 'lxy_mt_4p0'], ['disp1', 'disp2', 'disp3', 'disp4']))
+run_blind = False
+flavour = r'$|V|^2_{e}$'
 
 # nested dictionary with mass and coupling as keys
 digested_datacards = OrderedDict()
@@ -55,7 +56,9 @@ for idc in all_datacards:
     
 for mass, couplings in digested_datacards.iteritems():
     
-    print 'mass =', mass
+    if mass in [1,10,11,12,20]: continue
+    
+    #print('mass =', mass)
     
     v2s       = []
     obs       = []
@@ -66,7 +69,7 @@ for mass, couplings in digested_datacards.iteritems():
     plus_two  = []
     
     for coupling in couplings.keys():
-        print '\tcoupling =', coupling
+        #print('\tcoupling =', coupling)
         datacards_to_combine = couplings[coupling]
         # gonna combine the cards    
         command = 'combineCards.py'
@@ -75,14 +78,14 @@ for mass, couplings in digested_datacards.iteritems():
                 command += ' %s=%s ' %(categories_to_combine[cat],idc)
         command += ' > datacard_combined_tmp.txt'
         
-        print '\t\t',command
+        #print('\t\t',command)
         os.system(command)
         
         command = 'combine -M AsymptoticLimits datacard_combined_tmp.txt'
         if run_blind:
             command += ' --run blind'
         
-        print '\t\t',command
+        #print('\t\t',command)
         results = subprocess.check_output(command.split())
         
         result_file_name = ('result_m_%d_v2_%.1E.txt' %(mass, Decimal(coupling))).replace('-', 'm')
@@ -190,6 +193,7 @@ import pickle
 with open('results.pck', 'w') as ff:
     pickle.dump(limits2D, ff)
     
+masses_obs       = []
 masses_central   = []
 masses_one_sigma = []
 masses_two_sigma = []
@@ -199,10 +203,15 @@ minus_one = []
 central   = []
 plus_one  = []
 plus_two  = []
+obs       = []
 
 # go through the different mass points first left to right to catch the lower exclusion bound
 # then right to left to catch the upper exclusion bound
 for mass in sorted(limits2D.keys()):
+
+    if len(limits2D[mass]['obs'])>0: 
+        obs.append( min(limits2D[mass]['obs']) )
+        masses_obs.append(mass)
 
     if len(limits2D[mass]['exp_central'])>0: 
         central.append( min(limits2D[mass]['exp_central']) )
@@ -219,6 +228,10 @@ for mass in sorted(limits2D.keys()):
         masses_two_sigma.append(mass)
     
 for mass in sorted(limits2D.keys(), reverse=True):
+
+    if len(limits2D[mass]['obs'])>1: 
+        obs.append( max(limits2D[mass]['obs']) )
+        masses_obs.append(mass)
 
     if len(limits2D[mass]['exp_central'])>1: 
         central.append( max(limits2D[mass]['exp_central'  ]) )
@@ -237,10 +250,69 @@ for mass in sorted(limits2D.keys(), reverse=True):
 # plot the 2D limits
 plt.clf()
 
+## NORMAL
 plt.fill_between(masses_two_sigma, minus_two, plus_two, color='gold'       , label=r'$\pm 2 \sigma$')
 plt.fill_between(masses_one_sigma, minus_one, plus_one, color='forestgreen', label=r'$\pm 1 \sigma$')
 plt.plot        (masses_central  , central            , color='red'        , label='central expected', linewidth=2)
+plt.plot        (masses_obs      , obs                , color='black'      , label='observed', linewidth=2)
 
+
+## SPLINE - 1
+# from scipy.interpolate import make_interp_spline, BSpline
+# xnew = np.linspace(min(masses_central), max(masses_central), 300) 
+# 
+# plus_two_spl  = make_interp_spline(masses_two_sigma, plus_two , k=3)
+# plus_one_spl  = make_interp_spline(masses_one_sigma, plus_one , k=3)
+# minus_two_spl = make_interp_spline(masses_two_sigma, minus_two, k=3)
+# minus_one_spl = make_interp_spline(masses_one_sigma, minus_one, k=3)
+# central_spl   = make_interp_spline(masses_central  , central  , k=3)
+# obs_spl       = make_interp_spline(masses_obs      , obs      , k=3)
+
+# plt.fill_between(masses_two_sigma, minus_two_spl, plus_two_spl, color='gold'       , label=r'$\pm 2 \sigma$')
+# plt.fill_between(masses_one_sigma, minus_one_spl, plus_one_spl, color='forestgreen', label=r'$\pm 1 \sigma$')
+# plt.plot        (masses_central  , central_spl                , color='red'        , label='central expected', linewidth=2)
+# plt.plot        (masses_obs      , obs_spl                    , color='black'      , label='observed', linewidth=2)
+
+## SPLINE - 2
+# https://stackoverflow.com/questions/33962717/interpolating-a-closed-curve-using-scipy
+# from scipy import interpolate
+
+# append the starting x,y coordinates
+# x = np.r_[masses_central, masses_central[0]]
+# y = np.r_[central       , central[0]]
+# x = masses_central
+# y = central       
+
+# fit splines to x=f(u) and y=g(u), treating both as periodic. also note that s=0
+# is needed in order to force the spline fit to pass through all the input points.
+# plt.clf()
+# tck, u = interpolate.splprep([x, y], s=0, k=1, t=100, per=True)
+# 
+# # evaluate the spline fits for 1000 evenly spaced distance values
+# xi, yi = interpolate.splev(np.linspace(0, 1, 1000), tck)
+# 
+# plt.plot(xi, yi, color='red', label='central expected', linewidth=2)
+# plt.plot(x, y, 'or', color='blue')
+
+
+## SPLINE-3
+# plt.clf()
+# from scipy.interpolate import interp1d # Different interface to the same function
+# 
+# i = np.arange(len(x))
+# 
+# # 5x the original number of points
+# interp_i = np.linspace(0, i.max(), 5 * i.max())
+# 
+# xi = interp1d(i, x, kind='cubic')(interp_i)
+# yi = interp1d(i, y, kind='cubic')(interp_i)
+# 
+# plt.plot(xi, yi, color='red', label='central expected', linewidth=2)
+# plt.plot(x, y, 'or', color='blue')
+
+
+
+## SAVE 
 plt.ylabel(flavour)
 plt.xlabel('mass (GeV)')
 plt.legend()
@@ -252,7 +324,8 @@ plt.grid(True)
 plt.savefig('2d_hnl_limit.pdf')
 
 
-
+# splines !
+# https://stackoverflow.com/questions/5283649/plot-smooth-line-with-pyplot
 
 
     
