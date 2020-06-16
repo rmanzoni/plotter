@@ -68,6 +68,7 @@ if __name__ == "__main__":
     plus_one  = []
     plus_two  = []
 
+    idd = 0
     for limitFile in files:
       if 'm_{}_'.format(mass) not in limitFile: continue
    
@@ -75,7 +76,7 @@ if __name__ == "__main__":
       signal_coupling = re.findall(r'\d+', limitFile.split('/')[len(limitFile.split('/'))-1])
       coupling = '{}.{}Em{}'.format(signal_coupling[3], signal_coupling[4], signal_coupling[5])
       val_coupling = float('{}.{}e-{}'.format(signal_coupling[3], signal_coupling[4], signal_coupling[5]))
-      
+    
       # get white/black listed coupling
       if opt.coupling_whitelist!='None':
         if str(val_coupling) not in opt.coupling_whitelist.split(','): continue 
@@ -86,56 +87,63 @@ if __name__ == "__main__":
       try:
         thefile = open('{}/result_m_{}_v2_{}.txt'.format(pathToResults, mass, coupling), 'r')
         
-        v2s.append(val_coupling)
-
         # get the necessary information from the result files
+        val_obs       = None
+        val_minus_two = None
+        val_minus_one = None
+        val_central   = None
+        val_plus_one  = None
+        val_plus_two  = None
+
         content = thefile.readlines()
         for line in content:
           if 'Observed' in line:
             values = re.findall(r'\d+', line)
             val_obs = values[0] + '.' + values[1]
-            obs.append(float(val_obs))
-          if 'Expected  2.5' in line: 
+          elif 'Expected  2.5' in line: 
             values = re.findall(r'\d+', line)
             val_minus_two = values[2] + '.' + values[3]
-            minus_two.append(float(val_minus_two))
           elif 'Expected 16' in line: 
             values = re.findall(r'\d+', line)
             val_minus_one = values[2] + '.' + values[3]
-            minus_one.append(float(val_minus_one))
           elif 'Expected 50' in line: 
             values = re.findall(r'\d+', line)
             val_central = values[2] + '.' + values[3]
-            central.append(float(val_central))
           elif 'Expected 84' in line: 
             values = re.findall(r'\d+', line)
             val_plus_one = values[2] + '.' + values[3]
-            plus_one.append(float(val_plus_one))
           elif 'Expected 97.5' in line: 
             values = re.findall(r'\d+', line)
             val_plus_two = values[2] + '.' + values[3]
-            plus_two.append(float(val_plus_two))
+        
+        if all([jj is None for jj in [val_minus_two, val_minus_one, val_central, val_plus_one, val_plus_two] ]): continue
+        if not opt.run_blind:
+          if val_obs is None: 
+            print 'WARNING: cannot plot unblinded if limits were produced blinded'
+            print '--> Aborting'
+            continue
+       
+        v2s.append(val_coupling)
+        minus_two.append(float(val_minus_two))
+        minus_one.append(float(val_minus_one))
+        central.append(float(val_central))
+        plus_one.append(float(val_plus_one))
+        plus_two.append(float(val_plus_two))
+        if not opt.run_blind: obs.append(float(val_obs))
 
       except:
         print 'Cannot open {}result_m_{}_v2_{}.txt'.format(pathToResults, mass, coupling)
 
-    # check that the result files have all the necessary information
-    if (len(minus_two) != len(minus_one)) or (len(minus_two) != len(central)) or (len(minus_two) != len(plus_one)) or (len(minus_two) != len(plus_two) or len(minus_two)==0): continue
-    if not opt.run_blind:
-      if len(obs)==0: 
-        print 'WARNING: cannot plot unblinded if limits were produced blinded'
-        print '--> Aborting'
-        continue
-   
 
     print '-> will plot 1D limit for mass {}'.format(mass)
     
     if not opt.run_blind:
         graph = zip(v2s, minus_two, minus_one, central, plus_one, plus_two, obs)
     else:
-        graph = zip(v2s, minus_two, minus_one, central, plus_one, plus_two)    
-    graph.sort(key = lambda x : x[0]) # sort by coupling
-    
+      graph = zip(v2s, minus_two, minus_one, central, plus_one, plus_two)    
+    graph.sort(key = lambda x : float(x[0])) # sort by coupling
+  
+
     v2s       = [jj[0] for jj in graph]
     minus_two = [jj[1] for jj in graph]
     minus_one = [jj[2] for jj in graph]
@@ -145,6 +153,7 @@ if __name__ == "__main__":
     if not opt.run_blind:
         obs = [jj[6] for jj in graph]
     
+        
     plt.clf()
     print '   couplings: {}'.format(v2s)
     plt.fill_between(v2s, minus_two, plus_two, color='gold', label=r'$\pm 2 \sigma$')
@@ -268,3 +277,4 @@ if __name__ == "__main__":
   plt.savefig('{}/2d_hnl_limit.png'.format(plotDir))
 
 print '\n-> Plots saved in {}'.format(plotDir)
+
