@@ -16,6 +16,10 @@ def getOptions():
   parser.add_argument('--version', type=str, dest='version', help='version label', default='L1')
   parser.add_argument('--signal', type=str, dest='signal', help='signal under consideration', default='majorana', choices=['majorana', 'dirac'])
   parser.add_argument('--channels', type=str, dest='channels', help='channels to combine', default='mmm,mem_os,mem_ss')
+  parser.add_argument('--mass_whitelist', type=str, dest='mass_whitelist', help='allowed values for masses', default='None')
+  parser.add_argument('--mass_blacklist', type=str, dest='mass_blacklist', help='values for masses to skip', default='None')
+  parser.add_argument('--coupling_whitelist', type=str, dest='coupling_whitelist', help='allowed values for couplings', default='None')
+  parser.add_argument('--coupling_blacklist', type=str, dest='coupling_blacklist', help='values for couplings to skip', default='None')
   parser.add_argument('--run_blind', dest='run_blind', help='run blinded or unblinded', action='store_true', default=False)
   return parser.parse_args()
 
@@ -47,6 +51,13 @@ if __name__ == "__main__":
   os.system('mkdir -p {d}'.format(d=plotDir)) 
    
   for mass in masses:
+    # get white/black listed mass
+    if opt.mass_whitelist!='None':
+      if mass not in opt.mass_whitelist.split(','): continue
+    
+    if opt.mass_blacklist!='None':
+      if mass in opt.mass_blacklist.split(','): continue
+
     print '\nmass {}'.format(mass)
 
     v2s       = []
@@ -64,6 +75,13 @@ if __name__ == "__main__":
       signal_coupling = re.findall(r'\d+', limitFile.split('/')[len(limitFile.split('/'))-1])
       coupling = '{}.{}Em{}'.format(signal_coupling[3], signal_coupling[4], signal_coupling[5])
       val_coupling = float('{}.{}e-{}'.format(signal_coupling[3], signal_coupling[4], signal_coupling[5]))
+      
+      # get white/black listed coupling
+      if opt.coupling_whitelist!='None':
+        if str(val_coupling) not in opt.coupling_whitelist.split(','): continue 
+      
+      if opt.coupling_blacklist!='None':
+        if str(val_coupling) in opt.coupling_blacklist.split(','): continue 
       
       try:
         thefile = open('{}/result_m_{}_v2_{}.txt'.format(pathToResults, mass, coupling), 'r')
@@ -249,4 +267,4 @@ if __name__ == "__main__":
   plt.savefig('{}/2d_hnl_limit.pdf'.format(plotDir))
   plt.savefig('{}/2d_hnl_limit.png'.format(plotDir))
 
-
+print '\n-> Plots saved in {}'.format(plotDir)

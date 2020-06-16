@@ -23,6 +23,10 @@ def getOptions():
   parser.add_argument('--run_blind', dest='run_blind', help='run blinded or unblinded', action='store_true', default=False)
   parser.add_argument('--years', type=str, dest='years', help='years to combine', default='2016,2017,2018')
   parser.add_argument('--channels', type=str, dest='channels', help='channels to combine', default='mmm,mem_os,mem_ss')
+  parser.add_argument('--mass_whitelist', type=str, dest='mass_whitelist', help='allowed values for masses', default=None)
+  parser.add_argument('--mass_blacklist', type=str, dest='mass_blacklist', help='values for masses to skip', default=None)
+  parser.add_argument('--coupling_whitelist', type=str, dest='coupling_whitelist', help='allowed values for couplings', default=None)
+  parser.add_argument('--coupling_blacklist', type=str, dest='coupling_blacklist', help='values for couplings to skip', default=None)
   parser.add_argument('--pathDC', type=str, dest='pathDC', help='path to datacards to be analysed', default='./datacards')
   parser.add_argument('--wildcard', type=str, dest='wildcard', help='datacard generic string', default='datacard*hnl_m_12*.txt')
   parser.add_argument('--submit_batch', dest='submit_batch', help='submit on the batch?', action='store_true', default=False)
@@ -36,17 +40,9 @@ version = opt.version
 
 signal_type = opt.signal 
 
-years = [] 
-idr=0
-while idr <= opt.years.count(','):
-  years.append(opt.years.split(',')[idr])
-  idr = idr + 1
+years = opt.years.split(',') 
 
-channels = []
-idr=0
-while idr <= opt.channels.count(','):
-  channels.append(opt.channels.split(',')[idr])
-  idr = idr + 1
+channels = opt.channels.split(',')
 
 path_to_datacards = opt.pathDC
 
@@ -122,10 +118,22 @@ for idc_ref in the_set_datacards:
     signal_mass = float(re.findall(r'\d+', re.findall(r'hnl_m_\d+_', signal_name)[0])[0])
     signal_coupling_raw = re.findall(r'\d+', re.findall(r'_\d+p\d+Em\d+', signal_name)[0])
     signal_coupling = float('%s.%se-%s' %(signal_coupling_raw[0], signal_coupling_raw[1], signal_coupling_raw[2]))
+   
+    # get white/black listed mass/couplings
+    if opt.mass_whitelist!='None':
+      if str(signal_mass) not in opt.mass_whitelist.split(','): continue
     
-    #if signal_coupling not in [1e-07, 1e-06]: continue 
-    #if signal_mass not in [10.0, 11.0, 12.0, 2.0]: continue
+    if opt.mass_blacklist!='None':
+      if str(signal_mass) in opt.mass_blacklist.split(','): continue
     
+    if opt.coupling_whitelist!='None':
+      if str(signal_coupling) not in opt.coupling_whitelist.split(','): continue 
+    
+    if opt.coupling_blacklist!='None':
+      if str(signal_coupling) in opt.coupling_blacklist.split(','): continue 
+    
+
+    # will fetch the datacards per year/channel
     if signal_mass not in digested_datacards.keys():
         digested_datacards[signal_mass] = OrderedDict()
     
@@ -175,7 +183,7 @@ for mass, couplings in digested_datacards.iteritems():
                 datacardtest = open(datacards_to_combine[channel][year][cat], 'r')
               except:
                 print "WARNING: {} doesn't exist".format(datacards_to_combine[channel][year][cat])
-                print "--> the grid point {m}-{c} will be ignore for {y}_{ch}".format(m=mass, c=coupling, y=year, ch=channel)
+                print "--> the grid point {m}-{c} will be ignored for {y}_{ch}".format(m=mass, c=coupling, y=year, ch=channel)
                 bad_channels.append([year, channel])
                                                               
         # gonna combine the cards    

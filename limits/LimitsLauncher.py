@@ -49,6 +49,17 @@ datacard_wildcard = 'datacard*hnl_m_12*.txt'
 # choose between 'dirac' and 'majorana'
 signal_type = 'majorana'
 
+# you may want to select the mass values you would like to run on
+mass_whiteList = ['10.0', '6.0'] #['10.0']
+
+# you may want to select the mass values you would like to ignore
+mass_blackList = [] 
+
+# you may want to select the coupling values you would like to run on
+coupling_whiteList = []
+
+# you may want to select the coupling values you would like to ignore
+coupling_blackList = [] #['1e-07'] 
 
 #'------------------------------------------------------'
 
@@ -61,13 +72,16 @@ def getStringParser(input):
     string_tmp += '{},'.format(input[idx])
     idx = idx + 1
   string = string_tmp[0:len(string_tmp)-1]
-  return string
+  if len(input)!= 0:
+    return string
+  else:
+    return None
 
 #.-.-.-.-.-.-.-.-.-.-.-.
 if do_combineDatacards:
   print 'Will create the datacards combined between the years {} and channels {}'.format(years, channels)
 
-  command_datacard = 'python combine_datacards.py --version {ver} --signal {sig} --years {ys} --channels {ch} --pathDC {pdc} --wildcard {wc}'.format(ver=version_label, sig=signal_type, ys=getStringParser(years), ch=getStringParser(channels), pdc=path_to_datacards, wc=datacard_wildcard)
+  command_datacard = 'python combine_datacards.py --version {ver} --signal {sig} --years {ys} --channels {ch} --pathDC {pdc} --wildcard {wc} --mass_whitelist {mwl} --mass_blacklist {mbl} --coupling_whitelist {cwl} --coupling_blacklist {cbl}'.format(ver=version_label, sig=signal_type, ys=getStringParser(years), ch=getStringParser(channels), pdc=path_to_datacards, wc=datacard_wildcard, mwl=getStringParser(mass_whiteList), mbl=getStringParser(mass_blackList), cwl=getStringParser(coupling_whiteList), cbl=getStringParser(coupling_blackList))
   if submit_batch:
     command_datacard += ' --submit_batch'
   if run_blind:
@@ -126,7 +140,7 @@ if do_producePlots:
  
   print 'will run the limit plotter'
 
-  command_plotter = 'python limit_plotter.py --version {ver} --signal {sig} --channels {ch}'.format(ver=version_label, sig=signal_type, ch=getStringParser(channels))
+  command_plotter = 'python limit_plotter.py --version {ver} --signal {sig} --channels {ch}  --mass_whitelist {mwl} --mass_blacklist {mbl} --coupling_whitelist {cwl} --coupling_blacklist {cbl}'.format(ver=version_label, sig=signal_type, ch=getStringParser(channels), mwl=getStringParser(mass_whiteList), mbl=getStringParser(mass_blackList), cwl=getStringParser(coupling_whiteList), cbl=getStringParser(coupling_blackList))
   if run_blind:
     command_plotter += ' --run_blind'
 
