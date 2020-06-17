@@ -23,6 +23,8 @@ def getOptions():
   parser.add_argument('--run_blind', dest='run_blind', help='run blinded or unblinded', action='store_true', default=False)
   return parser.parse_args()
 
+def sortList(input):
+  return float(input)
 
 if __name__ == "__main__":
 
@@ -42,6 +44,7 @@ if __name__ == "__main__":
  
   # get the list of the masses from the fileNames
   masses = getMassList(files)
+  masses.sort(key=sortList)
  
   # needed for the 2D limit plot
   limits2D = OrderedDict()
@@ -68,7 +71,6 @@ if __name__ == "__main__":
     plus_one  = []
     plus_two  = []
 
-    idd = 0
     for limitFile in files:
       if 'm_{}_'.format(mass) not in limitFile: continue
    
@@ -196,10 +198,10 @@ if __name__ == "__main__":
     limits2D[mass]['exp_plus_two' ] = x_plus_two 
     if not opt.run_blind:
         limits2D[mass]['obs'] = x_obs 
-   
+  
 
   print 'will plot 2D limits' 
-  with open('results.pck', 'w') as ff:
+  with open('{}/results.pck'.format(plotDir), 'w') as ff:
       pickle.dump(limits2D, ff)
 
   masses_obs       = []
@@ -216,7 +218,8 @@ if __name__ == "__main__":
 
   # go through the different mass points first left to right to catch the lower exclusion bound
   # then right to left to catch the upper exclusion bound
-  for mass in sorted(limits2D.keys()):
+  #for mass in sorted(limits2D.keys()):
+  for mass in sorted(limits2D.keys(), key=sortList):
       
       if not opt.run_blind:
         if len(limits2D[mass]['obs'])>0: 
@@ -237,23 +240,23 @@ if __name__ == "__main__":
           plus_two .append( min(limits2D[mass]['exp_plus_two' ]) )
           masses_two_sigma.append(float(mass))
       
-  for mass in sorted(limits2D.keys(), reverse=True):
+  for mass in sorted(limits2D.keys(), key=sortList, reverse=True):
 
       if not opt.run_blind:
         if len(limits2D[mass]['obs'])>1: 
             obs.append( max(limits2D[mass]['obs']) )
             masses_obs.append(mass)
       
-      if len(limits2D[mass]['exp_central'])>1: 
+      if len(limits2D[mass]['exp_central'])>1 and len(limits2D[mass]['exp_minus_one'])>1 and len(limits2D[mass]['exp_plus_one' ])>1 and len(limits2D[mass]['exp_minus_two'])>1 and len(limits2D[mass]['exp_plus_two' ])>1: 
           central.append( max(limits2D[mass]['exp_central'  ]) )
           masses_central.append(mass)
 
-      if len(limits2D[mass]['exp_minus_one'])>1 and len(limits2D[mass]['exp_plus_one' ])>1: 
+          #if len(limits2D[mass]['exp_minus_one'])>1 and len(limits2D[mass]['exp_plus_one' ])>1: 
           minus_one       .append( max(limits2D[mass]['exp_minus_one']) )
           plus_one        .append( max(limits2D[mass]['exp_plus_one' ]) )
           masses_one_sigma.append(float(mass))
 
-      if len(limits2D[mass]['exp_minus_two'])>1 and len(limits2D[mass]['exp_plus_two' ])>1: 
+          #if len(limits2D[mass]['exp_minus_two'])>1 and len(limits2D[mass]['exp_plus_two' ])>1: 
           minus_two       .append( max(limits2D[mass]['exp_minus_two']) )
           plus_two        .append( max(limits2D[mass]['exp_plus_two' ]) )
           masses_two_sigma.append(float(mass))
@@ -275,6 +278,7 @@ if __name__ == "__main__":
   plt.grid(True)
   plt.savefig('{}/2d_hnl_limit.pdf'.format(plotDir))
   plt.savefig('{}/2d_hnl_limit.png'.format(plotDir))
+
 
 print '\n-> Plots saved in {}'.format(plotDir)
 
