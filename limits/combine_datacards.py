@@ -198,4 +198,5 @@ for mass, couplings in digested_datacards.iteritems():
         command += (' > datacards_combined/%s/datacard_combined_%s_%.1E.txt' %(opt.version, str(mass), Decimal(coupling))).replace('-', 'm') 
 
         os.system(command)
-        print '\t\t-> combined datacards for years {} and channels {} in {}'.format(years, channels, 'datacards_combined/{v}/datacard_combined_{m}_{c}.txt'.format(v=version, m=str(mass), c=str(coupling))) 
+        
+        print ('\t\t -> combined datacards for years %s and channels %s in datacards_combined/%s/datacard_combined_%s_%.1E.txt' %(years, channels, opt.version, str(mass), Decimal(str(coupling)))).replace('E-', 'Em')
