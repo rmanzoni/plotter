@@ -218,7 +218,6 @@ if __name__ == "__main__":
 
   # go through the different mass points first left to right to catch the lower exclusion bound
   # then right to left to catch the upper exclusion bound
-  #for mass in sorted(limits2D.keys()):
   for mass in sorted(limits2D.keys(), key=sortList):
       
       if not opt.run_blind:
@@ -226,20 +225,21 @@ if __name__ == "__main__":
             obs.append( min(limits2D[mass]['obs']) )
             masses_obs.append(mass)
       
-      if len(limits2D[mass]['exp_central'])>0: 
+      if len(limits2D[mass]['exp_minus_one'])==len(limits2D[mass]['exp_plus_one']) and len(limits2D[mass]['exp_minus_two'])==len(limits2D[mass]['exp_plus_two']):
+        if len(limits2D[mass]['exp_central'])>0:
           central.append( min(limits2D[mass]['exp_central']) )
           masses_central.append(mass)
 
-      if len(limits2D[mass]['exp_minus_one'])>0 and len(limits2D[mass]['exp_plus_one' ])>0: 
+        if len(limits2D[mass]['exp_minus_one'])>0 and len(limits2D[mass]['exp_plus_one' ])>0: 
           minus_one.append( min(limits2D[mass]['exp_minus_one']) )
           plus_one .append( min(limits2D[mass]['exp_plus_one' ]) )
           masses_one_sigma.append(float(mass))
 
-      if len(limits2D[mass]['exp_minus_two'])>0 and len(limits2D[mass]['exp_plus_two' ])>0: 
+        if len(limits2D[mass]['exp_minus_two'])>0 and len(limits2D[mass]['exp_plus_two' ])>0: 
           minus_two.append( min(limits2D[mass]['exp_minus_two']) )
           plus_two .append( min(limits2D[mass]['exp_plus_two' ]) )
           masses_two_sigma.append(float(mass))
-      
+     
   for mass in sorted(limits2D.keys(), key=sortList, reverse=True):
 
       if not opt.run_blind:
@@ -251,12 +251,10 @@ if __name__ == "__main__":
           central.append( max(limits2D[mass]['exp_central'  ]) )
           masses_central.append(mass)
 
-          #if len(limits2D[mass]['exp_minus_one'])>1 and len(limits2D[mass]['exp_plus_one' ])>1: 
           minus_one       .append( max(limits2D[mass]['exp_minus_one']) )
           plus_one        .append( max(limits2D[mass]['exp_plus_one' ]) )
           masses_one_sigma.append(float(mass))
 
-          #if len(limits2D[mass]['exp_minus_two'])>1 and len(limits2D[mass]['exp_plus_two' ])>1: 
           minus_two       .append( max(limits2D[mass]['exp_minus_two']) )
           plus_two        .append( max(limits2D[mass]['exp_plus_two' ]) )
           masses_two_sigma.append(float(mass))
@@ -278,6 +276,7 @@ if __name__ == "__main__":
   plt.grid(True)
   plt.savefig('{}/2d_hnl_limit.pdf'.format(plotDir))
   plt.savefig('{}/2d_hnl_limit.png'.format(plotDir))
+
 
 
 print '\n-> Plots saved in {}'.format(plotDir)
