@@ -4,6 +4,7 @@ import glob
 import re
 import pickle
 import numpy as np
+import otherExp_limits as db 
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 from intersection import intersection
@@ -15,6 +16,7 @@ def getOptions():
   parser = ArgumentParser(description='Run limit on a single mass/coupling point', add_help=True)
   parser.add_argument('--version', type=str, dest='version', help='version label', default='L1')
   parser.add_argument('--signal', type=str, dest='signal', help='signal under consideration', default='majorana', choices=['majorana', 'dirac'])
+  parser.add_argument('--years', type=str, dest='years', help='years to combine', default='2016,2017,2018')
   parser.add_argument('--channels', type=str, dest='channels', help='channels to combine', default='mmm,mem_os,mem_ss')
   parser.add_argument('--mass_whitelist', type=str, dest='mass_whitelist', help='allowed values for masses', default='None')
   parser.add_argument('--mass_blacklist', type=str, dest='mass_blacklist', help='values for masses to skip', default='None')
@@ -31,8 +33,18 @@ if __name__ == "__main__":
   opt=getOptions()
 
   # get the parsed info
-  if 'mmm' in opt.channels or 'mem' in opt.channels: flavour = r'$|V|^2_{u}$'
+  if 'mmm' in opt.channels or 'mem' in opt.channels: flavour = r'$|V|^2_{\mu}$'
   elif 'eee' in opt.channels or 'eem' in opt.channels: flavour = r'$|V|^2_{e}$'
+
+  years = opt.years.split(',') 
+  lumitot = 0
+  if '2016' in years:
+    lumitot += 35.9
+  if '2017' in years:
+    lumitot += 41.5
+  if '2018' in years:
+    lumitot += 59.7
+  lumi = str(lumitot) + ' fb'+r'$^{-1}$'
 
   signal_type = opt.signal 
 
@@ -200,7 +212,7 @@ if __name__ == "__main__":
         limits2D[mass]['obs'] = x_obs 
   
 
-  print 'will plot 2D limits' 
+  print '\nwill plot 2D limits' 
   with open('{}/results.pck'.format(plotDir), 'w') as ff:
       pickle.dump(limits2D, ff)
 
@@ -228,7 +240,7 @@ if __name__ == "__main__":
       if len(limits2D[mass]['exp_minus_one'])==len(limits2D[mass]['exp_plus_one']) and len(limits2D[mass]['exp_minus_two'])==len(limits2D[mass]['exp_plus_two']):
         if len(limits2D[mass]['exp_central'])>0:
           central.append( min(limits2D[mass]['exp_central']) )
-          masses_central.append(mass)
+          masses_central.append(float(mass))
 
         if len(limits2D[mass]['exp_minus_one'])>0 and len(limits2D[mass]['exp_plus_one' ])>0: 
           minus_one.append( min(limits2D[mass]['exp_minus_one']) )
@@ -249,7 +261,7 @@ if __name__ == "__main__":
       
       if len(limits2D[mass]['exp_central'])>1 and len(limits2D[mass]['exp_minus_one'])>1 and len(limits2D[mass]['exp_plus_one' ])>1 and len(limits2D[mass]['exp_minus_two'])>1 and len(limits2D[mass]['exp_plus_two' ])>1: 
           central.append( max(limits2D[mass]['exp_central'  ]) )
-          masses_central.append(mass)
+          masses_central.append(float(mass))
 
           minus_one       .append( max(limits2D[mass]['exp_minus_one']) )
           plus_one        .append( max(limits2D[mass]['exp_plus_one' ]) )
@@ -261,22 +273,44 @@ if __name__ == "__main__":
   
   # plot the 2D limits
   plt.clf()
-  plt.fill_between(masses_two_sigma, minus_two, plus_two, color='gold'       , label=r'$\pm 2 \sigma$')
-  plt.fill_between(masses_one_sigma, minus_one, plus_one, color='forestgreen', label=r'$\pm 1 \sigma$')
-  plt.plot(masses_central, central, color='red', label='central expected', linewidth=2)
-  if not opt.run_blind:
-    plt.plot(masses_obs, obs, color='black', label='observed', linewidth=2)
+  ax = plt.axes()
+  f1 = plt.fill_between(masses_two_sigma, minus_two, plus_two, color='gold'       , label=r'$\pm 2 \sigma$')
+  f2 = plt.fill_between(masses_one_sigma, minus_one, plus_one, color='forestgreen', label=r'$\pm 1 \sigma$')
+  p1, = plt.plot(masses_central, central, color='red', label='central expected', linewidth=2)
+  p2, = plt.plot(db.masses_delphidisplaced, db.exp_delphidisplaced, color='black', label='Delphi displaced', linewidth=1.3, linestyle='dashed')
+  p3, = plt.plot(db.masses_delphiprompt, db.exp_delphiprompt, color='blueviolet', label='Delphi prompt', linewidth=1.3, linestyle='dashed')
+  if 'mmm' in opt.channels or 'mem' in opt.channels:
+    p4, = plt.plot(db.masses_atlasdisplacedmuonLNV, db.exp_atlasdisplacedmuonLNV, color='firebrick', label='Atlas displaced muon LNV', linewidth=1.3, linestyle='dashed')
+    p5, = plt.plot(db.masses_atlasdisplacedmuonLNC, db.exp_atlasdisplacedmuonLNC, color='darkorange', label='Atlas displaced muon LNC', linewidth=1.3, linestyle='dashed')
+    p7, = plt.plot(db.masses_cmspromptmuon, db.exp_cmspromptmuon, color='blue', label='CMS prompt muon', linewidth=1.3, linestyle='dashed')
+  else: 
+    p7, = plt.plot(db.masses_cmspromptelectron, db.exp_cmspromptelectron, color='blue', label='CMS prompt muon', linewidth=1.3, linestyle='dashed')
 
+  if not opt.run_blind:
+    p8, = plt.plot(masses_obs, obs, color='black', label='observed', linewidth=2)
+
+  if not opt.run_blind:
+    first_legend = plt.legend(handles=[p1, p8, f1, f2], loc='upper right')
+  else:
+    first_legend = plt.legend(handles=[p1, f1, f2], loc='upper right')
+  ax = plt.gca().add_artist(first_legend)
+  if 'mmm' in opt.channels or 'mem' in opt.channels:
+    second_legend = plt.legend(handles=[p2, p3, p4, p5, p7], loc='lower left')
+  else: 
+    second_legend = plt.legend(handles=[p2, p3, p7], loc='lower left')
+
+  plt.title('CMS Preliminary', loc='left')
+  plt.title(lumi + ' (13 TeV)', loc='right')
   plt.ylabel(flavour)
+  plt.ylim(1e-10, 1e-0)
   plt.xlabel('mass (GeV)')
-  plt.legend()
+  plt.xlim(0, max(masses_central))
   plt.ticklabel_format(axis='y', style='sci', scilimits=(0,0))
   plt.yscale('log')
   plt.xscale('linear')
   plt.grid(True)
   plt.savefig('{}/2d_hnl_limit.pdf'.format(plotDir))
   plt.savefig('{}/2d_hnl_limit.png'.format(plotDir))
-
 
 
 print '\n-> Plots saved in {}'.format(plotDir)
