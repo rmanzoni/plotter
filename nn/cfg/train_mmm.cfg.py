@@ -1,5 +1,5 @@
 import numpy as np
-from NN.nn_trainer import Trainer
+from nn.nn_trainer import Trainer
 from plotter.selections import Selections
 from plotter.utils import set_paths
 from collections import OrderedDict
