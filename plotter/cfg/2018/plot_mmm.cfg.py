@@ -26,7 +26,8 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'run2/all_channels__200601_18h_20m'
+#training = 'run2/all_channels__200601_18h_20m'
+training = 'all_channels_200213_14h_55m'
 # training = '2018/all_channels__200528_23h_35m'
 # training = 'all_channels_200526_12h_46m'
 # training = 'all_channels_200525_19h_38m'

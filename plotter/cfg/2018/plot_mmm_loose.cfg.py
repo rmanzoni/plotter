@@ -43,6 +43,8 @@ training = 'run2/all_channels__200604_15h_13m'
 # training = 'run2/all_channels__200601_18h_20m'
 # training = '2018/all_channels__200528_23h_35m'
 # training = 'all_channels_200526_12h_46m'
+# training = 'all_channels_200526_12h_14m'
+# training = 'all_channels_200213_14h_55m'
 # training = 'all_channels_200525_19h_38m'
 # training = 'all_channels_200525_18h_55m'
 # training = 'all_channels_200523_22h_39m' #<==== GOOD
