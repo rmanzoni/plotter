@@ -13,11 +13,13 @@ selection = [
     cuts.selections['vetoes_12_OS'], 
     cuts.selections['vetoes_01_OS'], 
     cuts.selections['vetoes_02_OS'],
+    cuts.selections['fsr_veto'],
 #     cuts.selections['signal_region'], 
     cuts.selections['sideband'], 
 
     'hlt_Ele32_WPTight_Gsf',
-    'hnl_2d_disp_sig>5' ,
+
+    'hnl_2d_disp_sig>5'  ,
     'sv_prob>0.0002'     ,
     'abs(l1_dxy) > 0.001',
     'abs(l2_dxy) > 0.001',
@@ -26,6 +28,15 @@ selection = [
     'abs(l2_dz)<10'      ,
     'hnl_pt_12>10'       ,
 
+#     '((hnl_w_vis_m<50 | hnl_w_vis_m>80) | nbj>0)',
+
+#     'hnl_2d_disp_sig>20'  ,
+#     'sv_prob>0.001'     ,
+    cuts.selections['sideband'], 
+    'nbj==0',
+#     'abs(l1_dxy) > 0.01',
+#     'abs(l2_dxy) > 0.01',
+#     cuts.selections['baseline'], 
 ]
 
 # extra selection to be applied on variables that don't exist
@@ -36,7 +47,8 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'run2/all_channels__200602_17h_26m'
+training = 'run2/all_channels__200604_16h_40m'
+# training = 'run2/all_channels__200604_15h_13m'
 # training = 'run2/all_channels__200601_18h_20m'
 # training = '2018/all_channels__200528_23h_35m'
 # training = 'all_channels_200526_12h_46m'
@@ -78,7 +90,7 @@ plotter = Plotter (
                         'hnl_m_12_lxy_1p5_to_4p0', 
                         'hnl_m_12_lxy_mt_4p0'], # FIXME! improve this to accept wildcards / regex
     
-    mc_subtraction   = False,
+    mc_subtraction   = True,
     
     data_driven      = True,
 )
