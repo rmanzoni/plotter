@@ -112,6 +112,8 @@ variables = [
     Variable('hnl_2d_disp'        , np.linspace( 0   ,  10   , 25 + 1) , 'L_{xy} (cm)'                 , 'events', extra_label='narrow'),
     Variable('hnl_2d_disp'        , np.linspace( 0   ,   2   , 25 + 1) , 'L_{xy} (cm)'                 , 'events', extra_label='very_narrow'),
     Variable('log_hnl_2d_disp'    , np.linspace( -1  ,   2   , 25 + 1) , 'log_{10}(L_{xy}) (cm)'       , 'events'),
+    Variable('log_hnl_2d_disp'    , np.linspace( -2  ,   2   , 30 + 1) , 'log_{10}(L_{xy}) (cm)'       , 'events', extra_label='extended'),
+    Variable('log_hnl_2d_disp'    , np.linspace( -2  ,   2   , 80 + 1) , 'log_{10}(L_{xy}) (cm)'       , 'events', extra_label='extended_fine'),
     Variable('hnl_2d_disp_sig'    , np.linspace( 0   , 200   , 25 + 1) , 'L_{xy}/\sigma_{xy}'          , 'events'),
     Variable('hnl_2d_disp_sig'    , np.linspace( 0   ,1000   , 25 + 1) , 'L_{xy}/\sigma_{xy}'          , 'events', extra_label='extended'),
     Variable('log_hnl_2d_disp_sig', np.linspace( -2  ,   3   , 25 + 1) , 'log_{10}(L_{xy}/\sigma_{xy})', 'events'),

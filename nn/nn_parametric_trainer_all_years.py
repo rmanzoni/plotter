@@ -317,6 +317,7 @@ class Trainer(object):
 
         # weight the events according to their displacement (favour high displacement)
 #         weight = np.array(main_df.weight * np.power(X['hnl_2d_disp'], 0.25))
+#         weight = np.array(main_df.weight * np.power(X['hnl_2d_disp'], 0.35))
         weight = np.array(main_df.weight)
 
         # train only the classifier. beta is set at 0 and the discriminator is not trained

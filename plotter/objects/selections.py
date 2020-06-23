@@ -81,8 +81,13 @@ class Selections(object):
         ])
 
         self.selections['sideband'] = '!(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' # THIS IS IMPORTANT!
-
+                
         self.selections['signal_region'] = '(hnl_w_vis_m > 50. & hnl_w_vis_m < 80.)' # THIS IS IMPORTANT!
+
+        # FSR veto
+        # remove events where the tree lepton make the Z mass
+        # and at least two same flavour OS leptons are present
+        self.selections['fsr_veto'] = '( (abs(hnl_w_vis_m-91.19)>10. & (l0_pdgid==-l1_pdgid | l0_pdgid==-l2_pdgid)) | !(l0_pdgid==-l1_pdgid | l0_pdgid==-l2_pdgid))'
 
 #         self.selections['vetoes_12_OS'] = ' & '.join([
 #             # vetoes 12 (always OS anyways)
@@ -239,5 +244,5 @@ class Selections(object):
         # convert to pandas readable queries
         self.selections_pd = OrderedDict()
         for k, v in self.selections.items():
-            vv = v.replace('&', 'and').replace('|', 'or').replace('!', 'not') 
+            vv = v.replace('&', 'and').replace('|', 'or').replace('!=', 'not').replace('!', 'not') 
             self.selections_pd[k] = vv
