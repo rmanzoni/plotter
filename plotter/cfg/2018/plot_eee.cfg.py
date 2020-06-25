@@ -13,8 +13,8 @@ selection = [
     cuts.selections['vetoes_12_OS'], 
     cuts.selections['vetoes_01_OS'], 
     cuts.selections['vetoes_02_OS'],
-    cuts.selections['signal_region'], 
-#     cuts.selections['sideband'], 
+#     cuts.selections['signal_region'], 
+    cuts.selections['sideband'], 
     'hlt_Ele32_WPTight_Gsf',
 ]
 
@@ -26,7 +26,10 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'run2/all_channels__200602_17h_26m'
+training = 'run2/all_channels__200623_19h_2m'
+# training = 'run2/all_channels__200623_16h_37m'
+# training = 'run2/all_channels__200604_16h_40m'
+# training = 'run2/all_channels__200604_15h_13m'
 # training = 'run2/all_channels__200601_18h_20m'
 # training = '2018/all_channels__200528_23h_35m'
 # training = 'all_channels_200526_12h_46m'
@@ -43,7 +46,8 @@ plotter = Plotter (
     plot_dir         = '/'.join([env['BASE_DIR'], 'plotter', 'plots', '2018']), 
     base_dir         = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2018']),
     post_fix         = 'HNLTreeProducer_%s/tree.root' %ch,
-    dir_suffix       = 'signal_dd_datacards', #'signal',
+    dir_suffix       = 'sideband', #'signal',
+#     dir_suffix       = 'signal_dd_datacards', #'signal',
 #     dir_suffix       = 'signal_dd_datacards', #'signal',
 
     selection_data   = selection,
@@ -77,6 +81,6 @@ plotter = Plotter (
 if __name__ == '__main__':
     plotter.plot()
     # save the plotter and all
-    save_plotter_and_selections(plotter, selection, selection_mc, selection_tight)
+    save_plotter_and_selections(plotter, selection, selection_mc, selection_tight, training)
     pass
     

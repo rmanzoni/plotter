@@ -3,19 +3,22 @@ from plotter.objects.plotter import Plotter
 from plotter.objects.selections import Selections
 from plotter.objects.utils import save_plotter_and_selections
 
-ch = 'mem'
+ch = 'mmm'
 
 cuts = Selections(ch)
 
 selection = [ 
     cuts.selections['pt_iso'], 
     cuts.selections['pre_baseline'], 
-    'l0_q==l2_q', 
-#     cuts.selections['sideband'], 
+    cuts.selections['vetoes_12_OS'], 
+    cuts.selections['vetoes_01_OS'], 
+    cuts.selections['vetoes_02_OS'],
 #     cuts.selections['signal_region'], 
+#     cuts.selections['sideband'], 
 
-    'hlt_IsoMu24'        ,
-
+    '(hlt_IsoMu24 | hlt_IsoTkMu24)',
+    'l0_pt>25',
+    
     'hnl_2d_disp_sig>5'  ,
     'sv_prob>0.0002'     ,
     'abs(l1_dxy) > 0.001',
@@ -52,10 +55,10 @@ training = 'run2/all_channels__200623_16h_37m'
 # training = 'all_channels_200523_15h_16m'
 
 plotter = Plotter (
-    channel          = ch+'_ss',
-    year             = 2018,
-    plot_dir         = '/'.join([env['BASE_DIR'], 'plotter', 'plots', '2018']), 
-    base_dir         = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2018']),
+    channel          = ch,
+    year             = 2016,
+    plot_dir         = '/'.join([env['BASE_DIR'], 'plotter', 'plots', '2016']), 
+    base_dir         = '/'.join([env['BASE_DIR'], 'ntuples', 'may20', '2016']),
     post_fix         = 'HNLTreeProducer_%s/tree.root' %ch,
     dir_suffix       = 'sideband',
 
@@ -64,7 +67,7 @@ plotter = Plotter (
     selection_tight  = selection_tight,
     pandas_selection = pandas_selection,
 
-    lumi             = 59700.,
+    lumi             = 35900.,
 
     model            = '/'.join([env['BASE_DIR'], 'nn', 'trainings', training, 'net_model_weighted.h5'           ]), 
     transformation   = '/'.join([env['BASE_DIR'], 'nn', 'trainings', training, 'input_tranformation_weighted.pck']),

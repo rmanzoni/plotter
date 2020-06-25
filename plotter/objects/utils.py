@@ -12,7 +12,7 @@ def get_time_str():
     time_str = date + '_' + hour + 'h_' + minit + 'm'
     return time_str
 
-def save_plotter_and_selections(plotter, sel_data, sel_mc, sel_tight):
+def save_plotter_and_selections(plotter, sel_data, sel_mc, sel_tight, training_name=''):
 
     with open('/'.join([plotter.plt_dir, 'plotter.pck']), 'wb') as plt_file:
         pickle.dump(plotter, plt_file)
@@ -34,4 +34,7 @@ def save_plotter_and_selections(plotter, sel_data, sel_mc, sel_tight):
         print('\n'*2+'#'*80+'\n'*2, file=selection_file)
 
         print("'selection_tight = '%s'" %sel_tight, file=selection_file)
-        
+
+    with open('/'.join([plotter.plt_dir, 'training.txt']), 'a') as training_file:
+        print('NN training: ', training_name, file=training_file)
+

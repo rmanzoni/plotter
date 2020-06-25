@@ -38,7 +38,9 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'run2/all_channels__200604_15h_13m'
+# training = 'run2/all_channels__200623_19h_2m'
+training = 'run2/all_channels__200623_16h_37m'
+# training = 'run2/all_channels__200604_15h_13m'
 # training = 'run2/all_channels__200602_17h_26m'
 # training = 'run2/all_channels__200601_18h_20m'
 # training = '2018/all_channels__200528_23h_35m'
@@ -83,7 +85,7 @@ plotter = Plotter (
                         'hnl_m_12_lxy_1p5_to_4p0', 
                         'hnl_m_12_lxy_mt_4p0'], # FIXME! improve this to accept wildcards / regex
     
-    mc_subtraction   = False,
+    mc_subtraction   = True,
     
     data_driven      = True,
 )
@@ -91,6 +93,6 @@ plotter = Plotter (
 if __name__ == '__main__':
     plotter.plot()
     # save the plotter and all
-    save_plotter_and_selections(plotter, selection, selection_mc, selection_tight)
+    save_plotter_and_selections(plotter, selection, selection_mc, selection_tight, training)
     pass
     

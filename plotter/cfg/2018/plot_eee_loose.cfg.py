@@ -15,7 +15,7 @@ selection = [
     cuts.selections['vetoes_02_OS'],
     cuts.selections['fsr_veto'],
 #     cuts.selections['signal_region'], 
-    cuts.selections['sideband'], 
+#     cuts.selections['sideband'], 
 
     'hlt_Ele32_WPTight_Gsf',
 
@@ -28,12 +28,16 @@ selection = [
     'abs(l2_dz)<10'      ,
     'hnl_pt_12>10'       ,
 
-#     '((hnl_w_vis_m<50 | hnl_w_vis_m>80) | nbj>0)',
+    '((hnl_w_vis_m<50 | hnl_w_vis_m>80) | nbj>0)',
+    
+    'l1_pt>7',
+    'l2_pt>7',
+    'hnl_m_12>0.5',
 
 #     'hnl_2d_disp_sig>20'  ,
 #     'sv_prob>0.001'     ,
-    cuts.selections['sideband'], 
-    'nbj==0',
+#     cuts.selections['sideband'], 
+#     'nbj==0',
 #     'abs(l1_dxy) > 0.01',
 #     'abs(l2_dxy) > 0.01',
 #     cuts.selections['baseline'], 
@@ -47,7 +51,10 @@ pandas_selection = ''
 selection_mc = selection + [cuts.selections['is_prompt_lepton']]
 selection_tight = cuts.selections_pd['tight']
 
-training = 'run2/all_channels__200604_16h_40m'
+training = 'run2/all_channels__200624_17h_45m'
+# training = 'run2/all_channels__200623_19h_2m'
+# training = 'run2/all_channels__200623_16h_37m' <=== this one
+# training = 'run2/all_channels__200604_16h_40m'
 # training = 'run2/all_channels__200604_15h_13m'
 # training = 'run2/all_channels__200601_18h_20m'
 # training = '2018/all_channels__200528_23h_35m'
@@ -98,6 +105,6 @@ plotter = Plotter (
 if __name__ == '__main__':
     plotter.plot()
     # save the plotter and all
-    save_plotter_and_selections(plotter, selection, selection_mc, selection_tight)
+    save_plotter_and_selections(plotter, selection, selection_mc, selection_tight, training)
     pass
     

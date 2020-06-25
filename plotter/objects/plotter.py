@@ -554,12 +554,12 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                 line.Draw('same')
 
 #                 chi2_score_text = '\chi^{2}/NDF = %.1f' %(all_obs_prompt.Chi2Test(hist_error, 'UW CHI2/NDF'))
-                chi2_score_text = 'p-value = %.2f' %(all_obs_prompt.Chi2Test(hist_error, 'UW'))
-                chi2_score = ROOT.TLatex(0.7, 0.81, chi2_score_text)
-                chi2_score.SetTextFont(43)
-                chi2_score.SetTextSize(15)
-                chi2_score.SetNDC()
-                chi2_score.Draw('same')
+#                 chi2_score_text = 'p-value = %.2f' %(all_obs_prompt.Chi2Test(hist_error, 'UW'))
+#                 chi2_score = ROOT.TLatex(0.7, 0.81, chi2_score_text)
+#                 chi2_score.SetTextFont(43)
+#                 chi2_score.SetTextSize(15)
+#                 chi2_score.SetNDC()
+#                 chi2_score.Draw('same')
 
                 self.canvas.cd()
                 # FIXME! add SS and OS channels
@@ -605,8 +605,8 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                         ithing.SetMaximum(yaxis_max)   
                         ithing.SetMinimum(yaxis_min)   
                     
-                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, yaxis_max))
-
+                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, max(1.,yaxis_max)))
+                    
                     new_legend = Legend(stack_control.hists+[hist_error_control, all_obs_nonprompt_control], pad=self.main_pad, leftmargin=0., rightmargin=0., topmargin=0., textfont=42, textsize=0.03, entrysep=0.01, entryheight=0.04)
                     new_legend.SetBorderSize(0)
                     new_legend.x1 = 0.55
@@ -664,7 +664,8 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                     
                     # data in tight
                     all_obs_prompt_norm = copy(all_obs_prompt)
-                    all_obs_prompt_norm.Scale(np.nan_to_num(np.divide(1., all_obs_prompt_norm.integral())))
+                    if all_obs_prompt_norm.integral()>0.:
+                        all_obs_prompt_norm.Scale(np.nan_to_num(np.divide(1., all_obs_prompt_norm.integral())))
                     all_obs_prompt_norm.drawstyle = 'hist e'
                     all_obs_prompt_norm.linecolor = 'black'
                     all_obs_prompt_norm.markersize = 0
@@ -675,7 +676,8 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                     # data MC subtracted in loose
                     all_obs_prompt_mc_sub_norm = copy(all_obs_prompt)
                     all_obs_prompt_mc_sub_norm.add(all_exp_prompt, -1)
-                    all_obs_prompt_mc_sub_norm.Scale(np.nan_to_num(np.divide(1., all_obs_prompt_mc_sub_norm.integral())))
+                    if all_obs_prompt_mc_sub_norm.integral()>0.:
+                        all_obs_prompt_mc_sub_norm.Scale(np.nan_to_num(np.divide(1., all_obs_prompt_mc_sub_norm.integral())))
                     all_obs_prompt_mc_sub_norm.drawstyle = 'hist e'
                     all_obs_prompt_mc_sub_norm.linecolor = 'green'
                     all_obs_prompt_mc_sub_norm.markersize = 0
@@ -685,7 +687,8 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
 
                     # data in loose
                     all_obs_nonprompt_control_norm = copy(all_obs_nonprompt_control)
-                    all_obs_nonprompt_control_norm.Scale(np.nan_to_num(np.divide(1., all_obs_nonprompt_control_norm.integral())))
+                    if all_obs_nonprompt_control_norm.integral()>0.:
+                        all_obs_nonprompt_control_norm.Scale(np.nan_to_num(np.divide(1., all_obs_nonprompt_control_norm.integral())))
                     all_obs_nonprompt_control_norm.drawstyle = 'hist e'
                     all_obs_nonprompt_control_norm.linecolor = 'red'
                     all_obs_nonprompt_control_norm.markersize = 0
@@ -696,7 +699,8 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                     # data MC subtracted in loose
                     all_obs_nonprompt_control_mc_sub_norm = copy(all_obs_nonprompt_control)
                     all_obs_nonprompt_control_mc_sub_norm.add(stack_control.sum, -1)
-                    all_obs_nonprompt_control_mc_sub_norm.Scale(np.nan_to_num(np.divide(1., all_obs_nonprompt_control_mc_sub_norm.integral())))
+                    if all_obs_nonprompt_control_mc_sub_norm.integral()>0.:
+                        all_obs_nonprompt_control_mc_sub_norm.Scale(np.nan_to_num(np.divide(1., all_obs_nonprompt_control_mc_sub_norm.integral())))
                     all_obs_nonprompt_control_mc_sub_norm.drawstyle = 'hist e'
                     all_obs_nonprompt_control_mc_sub_norm.linecolor = 'blue'
                     all_obs_nonprompt_control_mc_sub_norm.markersize = 0
@@ -713,7 +717,7 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                     
                     yaxis_max = max([ii.GetMaximum() for ii in things_to_plot])
                     
-                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, 1.55*yaxis_max))
+                    draw(things_to_plot, xtitle=xlabel, ytitle=ylabel, pad=self.main_pad, logy=islogy, ylimits=(yaxis_min, max(1., 1.55*yaxis_max)))
 
                     self.canvas.cd()
                     # remove old legend

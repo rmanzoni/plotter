@@ -40,6 +40,10 @@ variables = [
     Variable('l1_pt', np.linspace( 5., 50.,12 + 1), 'l_{2} p_{T} (GeV)', 'events'),
     Variable('l2_pt', np.linspace( 5., 30.,12 + 1), 'l_{3} p_{T} (GeV)', 'events'),
 
+    Variable('l0_pt', np.linspace(25.,100.,24 + 1), 'l_{1} p_{T} (GeV)', 'events', extra_label='fine'),
+    Variable('l1_pt', np.linspace( 5., 50.,24 + 1), 'l_{2} p_{T} (GeV)', 'events', extra_label='fine'),
+    Variable('l2_pt', np.linspace( 5., 30.,24 + 1), 'l_{3} p_{T} (GeV)', 'events', extra_label='fine'),
+
     Variable('l0_eta', np.linspace(-2.5, 2.5, 10 + 1), 'l_{1} \eta', 'events'),
     Variable('l1_eta', np.linspace(-2.5, 2.5, 10 + 1), 'l_{2} \eta', 'events'),
     Variable('l2_eta', np.linspace(-2.5, 2.5, 10 + 1), 'l_{3} \eta', 'events'),
@@ -96,7 +100,8 @@ variables = [
     Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='lxy_lt_0p5'    ),
     Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=1.5', extra_label='lxy_0p5_to_1p5'),
     Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>1.5 & hnl_2d_disp<=4.0', extra_label='lxy_1p5_to_4p0'),
-    Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>4.0'                   , extra_label='lxy_mt_4p0'    ),
+    Variable('hnl_m_12', m12_bins_martina_wide   , 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>4.0'                   , extra_label='lxy_mt_4p0'    ),
+    Variable('hnl_m_12', m12_bins_displaced_1_alt, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>4.0'                   , extra_label='fine_lxy_mt_4p0'),
 
     Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp<=0.5'                  , extra_label='widebins_lxy_lt_0p5'    ),
     Variable('hnl_m_12', m12_bins_martina, 'm_{23} (GeV)', 'events', extra_selection='hnl_2d_disp>0.5 & hnl_2d_disp<=1.5', extra_label='widebins_lxy_0p5_to_1p5'),
