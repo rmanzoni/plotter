@@ -54,7 +54,8 @@ class Plotter(object):
                  mc_subtraction=True  ,
                  dir_suffix=''        ,
                  relaxed_mc_scaling=1.,
-                 data_driven=True):
+                 data_driven=True     ,    
+                 save_synch_tuple=[]):
 
         self.channel              = channel.split('_')[0]
         self.year                 = year
@@ -80,6 +81,7 @@ class Plotter(object):
         self.mc_subtraction       = mc_subtraction
         self.relaxed_mc_scaling   = relaxed_mc_scaling
         self.data_driven          = data_driven
+        self.save_synch_tuple     = save_synch_tuple
         
         if self.year==2018:
             from plotter.samples.samples_2018 import get_data_samples, get_mc_samples, get_signal_samples
@@ -222,6 +224,8 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
         makedirs('/'.join([self.plt_dir, 'shapes', 'lin', 'root']), exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'shapes', 'log', 'png']), exist_ok=True)
         makedirs('/'.join([self.plt_dir, 'shapes', 'log', 'root']), exist_ok=True)
+        if len(self.save_synch_tuple):
+            makedirs('/'.join([self.plt_dir, 'synch_ntuples']), exist_ok=True)
 
         # NN evaluator
         print('============> starting reading the trees')
@@ -384,6 +388,14 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
 
                 all_signals.append(histo_tight)
                 if isig.toplot: signals_to_plot.append(histo_tight)
+                
+                if isig.name in self.save_synch_tuple:
+                    landing_spot = '/'.join([self.plt_dir, 'synch_ntuples', isig.name + '_' + self.full_channel + '.root'])
+                    # do not overwrite
+                    if os.path.isfile(landing_spot):
+                        continue
+                    # save synch tree
+                    isig_df_tight.to_root( landing_spot, key='tree' )
             
             ######################################################################################
             # plot the data
