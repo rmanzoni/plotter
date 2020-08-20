@@ -224,6 +224,12 @@ class Sample(object):
         self.df['abs_l0_pdgid'  ] = np.abs(self.df.l0_pdgid)
         self.df['abs_l1_pdgid'  ] = np.abs(self.df.l1_pdgid)
         self.df['abs_l2_pdgid'  ] = np.abs(self.df.l2_pdgid)
+        self.df['abs_l0_dxy'    ] = np.abs(self.df.l0_dxy)
+        self.df['abs_l0_dz'     ] = np.abs(self.df.l0_dz )
+        self.df['abs_l1_dxy'    ] = np.abs(self.df.l1_dxy)
+        self.df['abs_l1_dz'     ] = np.abs(self.df.l1_dz )
+        self.df['abs_l2_dxy'    ] = np.abs(self.df.l2_dxy)
+        self.df['abs_l2_dz'     ] = np.abs(self.df.l2_dz )
         self.df['log_abs_l0_dxy'] = np.log10(np.abs(self.df.l0_dxy))
         self.df['log_abs_l0_dz' ] = np.log10(np.abs(self.df.l0_dz ))
         self.df['log_abs_l1_dxy'] = np.log10(np.abs(self.df.l1_dxy))
@@ -233,6 +239,8 @@ class Sample(object):
         self.df['abs_q_02'      ] = np.abs(self.df.hnl_q_02)
         self.df['abs_q_01'      ] = np.abs(self.df.hnl_q_01)
         self.df['abs_q_12'      ] = np.abs(self.df.hnl_q_12)
+        
+        self.df['min_dphi_0_12' ] = np.minimum(np.abs(self.df.hnl_dphi_01), np.abs(self.df.hnl_dphi_02))
         
         self.df['log_l0_dxy_sig'] = np.log10(self.df.l0_dxy_error / np.abs(self.df.l0_dxy ))
         self.df['log_l1_dxy_sig'] = np.log10(self.df.l1_dxy_error / np.abs(self.df.l1_dxy ))

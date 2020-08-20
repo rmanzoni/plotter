@@ -69,7 +69,7 @@ class Selections(object):
 
         self.selections['baseline'] = ' & '.join([
             self.selections['pre_baseline'],
-            'nbj == 0'                     ,
+#             'nbj == 0'                     ,
             'hnl_2d_disp_sig>20'           ,
             'hnl_pt_12>15'                 ,
             'sv_cos>0.99'                  ,

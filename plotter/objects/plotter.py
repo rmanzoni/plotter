@@ -5,7 +5,7 @@ import ROOT
 import root_pandas
 import numpy as np
 import pandas as pd
-from copy import copy
+from copy import copy, deepcopy
 from os import makedirs
 from time import time
 from collections import OrderedDict
@@ -268,7 +268,7 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
         # now we plot 
         self.create_canvas(self.do_ratio)
 
-        for ivar in variables:
+        for var_index, ivar in enumerate(variables):
                         
             variable, bins, label, xlabel, ylabel, extra_sel = ivar.var, ivar.bins, ivar.label, ivar.xlabel, ivar.ylabel, ivar.extra_selection
 
@@ -389,13 +389,12 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                 all_signals.append(histo_tight)
                 if isig.toplot: signals_to_plot.append(histo_tight)
                 
-                if isig.name in self.save_synch_tuple:
+                if isig.name in self.save_synch_tuple and var_index==0:
                     landing_spot = '/'.join([self.plt_dir, 'synch_ntuples', isig.name + '_' + self.full_channel + '.root'])
                     # do not overwrite
-                    if os.path.isfile(landing_spot):
-                        continue
-                    # save synch tree
-                    isig_df_tight.to_root( landing_spot, key='tree' )
+                    if not os.path.isfile(landing_spot):
+                        # save synch tree
+                        isig_df_tight.to_root( landing_spot, key='tree' )
             
             ######################################################################################
             # plot the data
@@ -418,6 +417,11 @@ norm_sig_{ch}_{y}_{cat}                     lnN             1.2                 
                 histo_tight.fill_array(idata_df_tight[variable])
                 
                 data_prompt.append(histo_tight)
+
+                if 'data' in self.save_synch_tuple and var_index==0:
+                    landing_spot = '/'.join([self.plt_dir, 'synch_ntuples', 'data_' + self.full_channel + '.root'])
+                    # save synch tree
+                    idata_df_tight.to_root( landing_spot, key='tree', mode='a' )
                 
                 if self.data_driven:
                     histo_lnt = Hist(bins, title=idata.label, markersize=0, legendstyle='F')
