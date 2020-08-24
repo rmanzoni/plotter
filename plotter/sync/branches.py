@@ -433,7 +433,7 @@ branches = [
     ('bj2_genjet_pt'                , None                   ),
     ('nj'                           , None                   ),
     ('nj30'                         , None                   ),
-    ('nbj'                          , None                   ),
+    ('nbj'                          , 'numbjet'              , np.linspace( 0,  5  , 5 + 1)      ),
     ('lhe_weight'                   , None                   ),
     ('pass_mmm'                     , None                   ),
     ('pass_mem'                     , None                   ),

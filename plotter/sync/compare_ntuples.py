@@ -15,10 +15,13 @@ ROOT.gROOT.SetBatch(True)
 
 # base_dir = '/Users/manzoni/Documents/HNL/plotter/plots/2017/mmm/sideband_inverted_m3l_200820_14h_5m/synch_ntuples/'
 # base_dir = '/Users/manzoni/Documents/HNL/plotter/plots/2017/mmm/sideband_inverted_m3l_no_bjet_veto_200820_14h_7m/synch_ntuples/'
-base_dir = '/Users/manzoni/Documents/HNL/plotter/plots/2017/mmm/sideband_inverted_m3l_no_bjet_veto_200820_17h_56m/synch_ntuples/'
+# base_dir = '/Users/manzoni/Documents/HNL/plotter/plots/2017/mmm/sideband_inverted_m3l_no_bjet_veto_200820_17h_56m/synch_ntuples/'
+base_dir = '/Users/manzoni/Documents/HNL/plotter/plots/2017/mmm/sideband_inverted_m3l_no_bjet_veto_alt_sig_200821_11h_29m/synch_ntuples/'
 
 f1_name = '/'.join([base_dir, 'data_mmm.root'])
-f2_name = '/'.join([base_dir, 'tree_xcheck_data.root'])
+f2_name = '/'.join([base_dir, 'tree_xcheck_data_withbjet.root'])
+# f2_name = '/'.join([base_dir, 'tree_xcheck_data.root'])
+# f2_name = '/'.join([base_dir, 'tree_xcheck_data_nobjet_2017_21agosto.root'])
 # f2_name = '/'.join([base_dir, 'tree_xcheck_data_17_nobveto.root'])
 # f2_name = '/'.join([base_dir, 'tree_xcheck_data_2017.root'])
 
